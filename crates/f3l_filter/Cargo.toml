@@ -1,14 +1,15 @@
 [package]
-name = "f3l"
+name = "f3l_filter"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[workspace]
-members = [ 
-    "crates/f3l_filter",
-    "crates/f3l_search_tree"
-]
-
 [dependencies]
+f3l_search_tree = { path = "../f3l_search_tree" }
+rayon = "1.8"
+rclite = "0.2"
+
+[dev-dependencies]
+approx = "0.5"
+rand = "0.8"
