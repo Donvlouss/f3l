@@ -12,8 +12,8 @@ use crate::F3lFilter;
 #[derive(Debug)]
 pub struct RadiusOutlierRemoval<'a, P, T: BasicFloat, const D: usize>
 where
-    P:Into<[T; D]> + Send + Sync + Clone,
-    [T; D]: Into<P> + Send + Sync
+    P:Into<[T; D]> + Clone,
+    [T; D]: Into<P>
 {
     pub negative: bool,
     pub radius: T,
@@ -25,8 +25,8 @@ where
 
 impl<'a, P, T:BasicFloat, const D: usize> RadiusOutlierRemoval<'a, P, T, D>
 where
-    P:Into<[T; D]> + Send + Sync + Clone,
-    [T; D]: Into<P> + Send + Sync
+    P:Into<[T; D]> + Clone + Send + Sync,
+    [T; D]: Into<P>
 {
     pub fn new(radius: T, threshold: usize) -> Self {
         Self {
@@ -51,10 +51,10 @@ where
 
 }
 
-impl<'a, P, T:BasicFloat, const D: usize> F3lFilter<'a, P, T, D> for RadiusOutlierRemoval<'a, P, T, D>
+impl<'a, P, T:BasicFloat, const D: usize> F3lFilter<'a, P> for RadiusOutlierRemoval<'a, P, T, D>
 where
-    P:Into<[T; D]> + Send + Sync + Clone,
-    [T; D]: Into<P> + Send + Sync
+    P:Into<[T; D]> + Clone + Send + Sync,
+    [T; D]: Into<P>
 {
     fn set_negative(&mut self, negative: bool) {
         self.negative = negative;

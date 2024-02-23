@@ -1,9 +1,6 @@
 mod radius_outlier_removal;
 
-pub trait F3lFilter<'a, P, T: f3l_search_tree::BasicFloat, const D: usize>
-where
-    P:Into<[T; D]> + Send + Sync + Clone,
-    [T; D]: Into<P> + Send + Sync
+pub trait F3lFilter<'a, P>
 {
     /// if true, get outlier else inlier
     fn set_negative(&mut self, negative: bool);

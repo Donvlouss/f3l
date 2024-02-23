@@ -1,5 +1,3 @@
-use crate::BasicFloat;
-
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub enum SearchBy
 {
@@ -7,10 +5,7 @@ pub enum SearchBy
     Radius(f32)
 }
 
-pub trait TreeSearch<P, T: BasicFloat, const D: usize>
-where
-    P:Into<[T; D]> + Send + Sync + Clone,
-    [T; D]: Send + Sync
+pub trait TreeSearch<P>
 {
     fn search_knn(&self, point: &P, k: usize) -> Vec<(P, f32)>;
     fn search_radius(&self, point: &P, radius: f32) -> Vec<P>;
