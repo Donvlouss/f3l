@@ -57,6 +57,8 @@ mod filter {
 
     mod dimension_3d {
         use super::*;
+        use ply_rs as ply;
+        use ply_rs::ply::Property;
 
         #[test]
         fn radius_outlier_removal() {
@@ -84,6 +86,54 @@ mod filter {
                 .for_each(|(p1, p2)| {
                     assert_eq!(p1, p2);
                 });
+        }
+
+        fn parse_out(p: Property) -> f32 {
+            match p {
+                Property::Float(f) => f,
+                Property::Double(d) => d as f32,
+                _ => 0.
+            }
+        }
+
+        fn load_ply(path: &str) -> Vec<[f32; 3]> {
+            let f = std::fs::File::open(path).unwrap();
+            let mut f = std::io::BufReader::new(f);
+            // create a parser
+            let p = ply::parser::Parser::<ply::ply::DefaultElement>::new();
+            // use the parser: read the entire file
+            let ply = p.read_ply(&mut f);
+            // make sure it did work
+            assert!(ply.is_ok());
+
+            let ply_wrapper = ply.unwrap();
+
+            let vs = ply_wrapper.payload["vertex"].iter()
+                .map(|v| {
+                    [
+                        parse_out(v["x"].clone()),
+                        parse_out(v["y"].clone()),
+                        parse_out(v["z"].clone()),
+                    ]
+                })
+                .collect::<Vec<_>>();
+            vs
+        }
+
+        #[test]
+        fn table_radius_removal() {
+            use std::time::Instant;
+            let start = Instant::now();
+
+            let vertices = load_ply("data/Itable_scene_lms400.ply");
+
+            let end = start.elapsed().as_millis();
+            println!("Load Vertices Elapsed: {}", end);
+
+            let mut filter = RadiusOutlierRemoval::with_data(5f32, 5, &vertices);
+            let out = filter.filter_instance();
+
+            assert!(!out.is_empty());
         }
     }
 }
