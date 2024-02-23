@@ -36,8 +36,7 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
 
     pub fn set_data<P>(&mut self, data: &Vec<P>)
     where
-        P:Into<[T; D]> + Send + Sync + Clone,
-        [T; D]: Into<P> + Send + Sync
+        P:Into<[T; D]> + Clone
     {
         self.data = data.iter()
             .map(|p| {
@@ -168,8 +167,7 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
 
     pub fn search<R: TreeResult, P>(&self, data: P, by: SearchBy, result: &mut R)
     where
-        P:Into<[T; D]> + Send + Sync + Clone,
-        [T; D]: Into<P> + Send + Sync
+        P:Into<[T; D]> + Clone,
     {
         let mut search_queue = BinaryHeap::with_capacity(std::cmp::max(10, (self.data.len() as f32).sqrt() as usize));
         if self.root.is_none() {
@@ -197,8 +195,7 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
         min_dist: f32,
         queue: &mut BinaryHeap<Reverse<TreeHeapElement<&'a Box<KdLeaf>, f32>>>)
     where
-        P: Into<[T; D]> + Send + Sync + Clone,
-        [T; D]: Into<P> + Send + Sync,
+        P: Into<[T; D]> + Clone
     {
         if result.worst() < min_dist {
             return;
@@ -262,10 +259,10 @@ fn distance<T: BasicFloat, const D: usize>(a: &[T; D], b: &[T; D]) -> T {
         .fold(T::zero(), |acc, (a, b)| acc + (*a - *b).powi(2))
 }
 
-impl<P, T: BasicFloat, const D: usize>  TreeSearch<P, T, D> for KdTree<T, D> 
+impl<P, T: BasicFloat, const D: usize>  TreeSearch<P> for KdTree<T, D> 
 where
     P:Into<[T; D]> + Send + Sync + Clone,
-    [T; D]: Into<P> + Send + Sync
+    [T; D]: Into<P>,
 {
     fn search_knn(&self, point: &P, k: usize) -> Vec<(P, f32)> {
         let by = if k ==0 {SearchBy::Count(1)} else {SearchBy::Count(k)};
