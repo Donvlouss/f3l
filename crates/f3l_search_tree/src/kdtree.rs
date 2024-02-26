@@ -7,8 +7,8 @@ use std::{
     cmp::Reverse,
     collections::BinaryHeap
 };
+use f3l_core::BasicFloat;
 use crate::{
-    BasicFloat,
     SearchBy,
     TreeHeapElement,
     TreeKnnResult,
