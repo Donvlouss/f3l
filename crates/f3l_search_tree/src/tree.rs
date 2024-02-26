@@ -107,7 +107,28 @@ pub struct TreeRadiusResult
 {
     pub data: Vec<usize>,
     pub count: usize,
-    pub radius: f32
+    pub radius: f32,
+    pub size: Option<usize>,
+}
+
+impl TreeRadiusResult {
+    pub fn set_to_maximum_size(self, maximum_size: usize) -> Self {
+        let TreeRadiusResult { data, count, radius, ..} = self;
+        Self {
+            data,
+            count,
+            radius,
+            size: Some(maximum_size)
+        }
+    }
+
+    pub fn set_maximum_size(&mut self, maximum_size: usize) {
+        self.size = Some(maximum_size);
+    }
+
+    pub fn maximum_size(&self) -> Option<usize> {
+        self.size
+    }
 }
 
 impl TreeResult for TreeRadiusResult
@@ -119,7 +140,8 @@ impl TreeResult for TreeRadiusResult
         Self {
             data: Vec::new(),
             count: 0,
-            radius: arg
+            radius: arg,
+            size: None
         }
     }
 
@@ -127,7 +149,8 @@ impl TreeResult for TreeRadiusResult
         Self {
             data: Vec::with_capacity(capacity),
             count: 0,
-            radius: arg
+            radius: arg,
+            size: None,
         }
     }
 
@@ -144,7 +167,10 @@ impl TreeResult for TreeRadiusResult
     }
 
     fn is_full(&self) -> bool {
-        false
+        match self.size {
+            None => false,
+            Some(size) => self.count >= size,
+        }
     }
 
     fn worst(&self) -> f32 {

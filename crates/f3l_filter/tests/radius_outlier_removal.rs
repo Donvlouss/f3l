@@ -130,7 +130,7 @@ mod filter {
             let end = start.elapsed().as_millis();
             println!("Load Vertices Elapsed: {}", end);
 
-            let mut filter = RadiusOutlierRemoval::with_data(5f32, 5, &vertices);
+            let mut filter = RadiusOutlierRemoval::with_data(0.003f32, 5, &vertices);
             let out = filter.filter_instance();
 
             assert!(!out.is_empty());
