@@ -27,6 +27,7 @@ nalgebra   = { version = "0.30", features = ["rand"], optional = true}
 approx = "0.5"
 rand = "0.8"
 ply-rs = "0.1.3"
+glam = "0.25.0"
 
 [features]
 default = []
@@ -40,4 +41,9 @@ app_kiss3d = [ "kiss3d", "nalgebra" ]
 [[example]]
 name = "radius_outlier_removal"
 path = "examples/radius_outlier_removal.rs"
+required-features = ["app_kiss3d"]
+
+[[example]]
+name = "voxel_grid"
+path = "examples/voxel_grid.rs"
 required-features = ["app_kiss3d"]

@@ -27,14 +27,17 @@ fn main() {
     window.set_point_size(10.0); // (Not supported by all graphic drivers)
 
     let vertices = load_ply("data/Itable_scene_lms400.ply");
-    let mut filter = RadiusOutlierRemoval::with_data(0.003f32, 5, &vertices);
+
+    let mut filter = VoxelGrid::with_data(&vertices, &[0.05; 3]);
+    use std::time::Instant;
+    let start = Instant::now();
+
     let out = filter.filter_instance();
 
+    let end = start.elapsed().as_millis();
+    println!("Elapsed: {}", end);
+
     while window.render() {
-        vertices.iter()
-            .for_each(|v| {
-                window.draw_point(&Point3::new(v[0], v[1], v[2]), &Point3::new(1.0, 1.0, 1.0));
-            });
         out.iter()
             .for_each(|v| {
                 window.draw_point(&Point3::new(v[0], v[1], v[2]), &Point3::new(0.0, 1.0, 0.0));
