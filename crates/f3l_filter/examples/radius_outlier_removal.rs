@@ -8,8 +8,6 @@ use nalgebra::Point3;
 mod util;
 use util::load_ply;
 
-use ply_rs as ply;
-use ply_rs::ply::Property;
 use f3l_filter::*;
 
 #[cfg(not(feature = "app_kiss3d"))]
