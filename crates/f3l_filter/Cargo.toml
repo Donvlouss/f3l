@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+f3l_core = { path = "../f3l_core"}
 f3l_search_tree = { path = "../f3l_search_tree" }
 rayon = "1.8"
 rclite = "0.2"
