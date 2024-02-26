@@ -12,7 +12,7 @@ use crate::F3lFilter;
 #[derive(Debug)]
 pub struct RadiusOutlierRemoval<'a, P, T: BasicFloat, const D: usize>
 where
-    P:Into<[T; D]> + Clone,
+    P:Into<[T; D]> + Clone + Copy,
     [T; D]: Into<P>
 {
     pub negative: bool,
@@ -25,7 +25,7 @@ where
 
 impl<'a, P, T:BasicFloat, const D: usize> RadiusOutlierRemoval<'a, P, T, D>
 where
-    P:Into<[T; D]> + Clone + Send + Sync,
+    P:Into<[T; D]> + Clone + Copy + Send + Sync,
     [T; D]: Into<P>
 {
     pub fn new(radius: T, threshold: usize) -> Self {
@@ -53,7 +53,7 @@ where
 
 impl<'a, P, T:BasicFloat, const D: usize> F3lFilter<'a, P> for RadiusOutlierRemoval<'a, P, T, D>
 where
-    P:Into<[T; D]> + Clone + Send + Sync,
+    P:Into<[T; D]> + Clone + Copy + Send + Sync,
     [T; D]: Into<P>
 {
     fn set_negative(&mut self, negative: bool) {
@@ -82,12 +82,12 @@ where
         self.inlier.iter()
             .enumerate()
             .filter(|&(_, f)| self.ok(*f))
-            .map(|(i, _)| data[i].clone())
+            .map(|(i, _)| data[i])
             .collect()
     }
 
     fn apply_filter(&mut self) -> bool {
-        if self.tree.data.len() == 0 {
+        if self.tree.data.is_empty() {
             return false;
         }
         self.tree.build();
@@ -107,7 +107,7 @@ where
             .map(|(i, p)| {
                 let mut result = TreeRadiusResult::with_capacity(r, capacity)
                     .set_to_maximum_size(self.threshold);
-                self.tree.search((*p).clone(), by, &mut result);
+                self.tree.search(*p, by, &mut result);
                 (i, result.data.len() >= th)
             })
             .collect::<Vec<_>>();

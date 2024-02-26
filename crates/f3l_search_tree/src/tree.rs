@@ -25,6 +25,7 @@ pub trait TreeResult
     fn clear(&mut self);
 }
 
+#[derive(Debug, Clone)]
 pub struct TreeKnnResult
 {
     pub data: Vec<(usize, f32)>,
@@ -103,6 +104,7 @@ impl TreeResult for TreeKnnResult
 
 }
 
+#[derive(Debug, Clone)]
 pub struct TreeRadiusResult
 {
     pub data: Vec<usize>,

@@ -1,4 +1,5 @@
 mod radius_outlier_removal;
+mod voxel_grid;
 
 pub trait F3lFilter<'a, P>
 {
@@ -11,3 +12,4 @@ pub trait F3lFilter<'a, P>
 }
 
 pub use radius_outlier_removal::RadiusOutlierRemoval;
+pub use voxel_grid::VoxelGrid;

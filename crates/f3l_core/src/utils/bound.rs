@@ -2,17 +2,17 @@ use crate::traits::BasicFloat;
 
 pub fn get_minmax<P, T:BasicFloat, const D: usize>(cloud: &Vec<P>) -> (P, P)
 where
-    P: Into<[T; D]> + Clone,
+    P: Into<[T; D]> + Clone + Copy,
     [T; D]: Into<P>
 {
-    assert!(cloud.is_empty());
+    assert!(!cloud.is_empty());
 
-    let mut min: [T; D] = cloud[0].clone().into();
-    let mut max: [T; D] = cloud[0].clone().into();
+    let mut min: [T; D] = cloud[0].into();
+    let mut max: [T; D] = cloud[0].into();
 
     cloud.iter()
         .for_each(|v| {
-            let pt: [T; D] = (*v).clone().into();
+            let pt: [T; D] = (*v).into();
             (0..D)
                 .for_each(|i| {
                     if pt[i] < min[i] {
