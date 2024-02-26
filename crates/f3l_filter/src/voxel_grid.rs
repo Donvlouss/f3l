@@ -132,8 +132,8 @@ where
         }
 
         let keys = self.voxel_map.keys();
-        keys.into_iter()
-            .map(|k| *k)
+        keys.into_iter().copied()
+            .map(|k| k)
             .collect()
     }
 
@@ -144,12 +144,12 @@ where
 
         let maps = &self.voxel_map;
         let data = self.data.unwrap();
-        maps.into_iter()
+        maps.iter()
             .map(|(_, pts)| {
                 let nb = T::from(pts.len()).unwrap();
                 let factor = T::one() / nb;
                 let mut sum = [T::zero(); D];
-                pts.into_iter()
+                pts.iter()
                     .for_each(|p| {
                         let p: [T; D] = data[*p].into();
                         (0..D)
@@ -181,7 +181,7 @@ where
             });
         
         let points = self.data.unwrap();
-        points.into_iter()
+        points.iter()
             .enumerate()
             .for_each(|(i, p)| {
                 let p: [T; D] = (*p).into();
@@ -195,7 +195,7 @@ where
                         };
                         dim += d * inc[i];
                     });
-                let vec = self.voxel_map.entry(dim).or_insert(vec![]);
+                let vec = self.voxel_map.entry(dim).or_default();
                 vec.push(i);
             });
         true

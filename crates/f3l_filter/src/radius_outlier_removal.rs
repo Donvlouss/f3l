@@ -87,7 +87,7 @@ where
     }
 
     fn apply_filter(&mut self) -> bool {
-        if self.tree.data.len() == 0 {
+        if self.tree.data.is_empty() {
             return false;
         }
         self.tree.build();
