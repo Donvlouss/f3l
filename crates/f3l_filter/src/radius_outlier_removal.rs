@@ -1,5 +1,5 @@
+use f3l_core::BasicFloat;
 use f3l_search_tree::{
-    BasicFloat,
     KdTree,
     SearchBy,
     TreeRadiusResult,
