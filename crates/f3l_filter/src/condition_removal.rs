@@ -1,30 +1,28 @@
 use std::ops::{
     Bound,
-    Range
+    Range,
 };
 
 use f3l_core::BasicFloat;
 use super::F3lFilter;
 
-pub struct PassThrough<'a, P, T: BasicFloat, const D: usize>
+pub struct ConditionRemoval<'a, P, T: BasicFloat, const D: usize>
 where
     P:Into<[T; D]> + Clone + Copy,
 {
     pub negative: bool,
-    pub dim: usize,
-    pub bound: Option<Range<Bound<T>>>,
+    pub bound: Option<&'a Vec<(usize, Range<Bound<T>>)>>,
     data: Option<&'a Vec<P>>,
     inliers: Vec<usize>,
 }
 
-impl<'a, P, T: BasicFloat, const D: usize> Default for PassThrough<'a, P, T, D>
+impl<'a, P, T: BasicFloat, const D: usize> Default for ConditionRemoval<'a, P, T, D>
 where
     P:Into<[T; D]> + Clone + Copy
 {
     fn default() -> Self {
         Self {
             negative: false,
-            dim: Default::default(),
             bound: Default::default(),
             data: Default::default(),
             inliers: Default::default()
@@ -32,27 +30,27 @@ where
     }
 }
 
-impl<'a, P, T: BasicFloat, const D: usize> PassThrough<'a, P, T, D>
+impl<'a, P, T: BasicFloat, const D: usize> ConditionRemoval<'a, P, T, D>
 where
     P:Into<[T; D]> + Clone + Copy,
 {
-    pub fn with_data(data: &'a Vec<P>, bound: Range<Bound<T>>, dim: usize) -> Self {
+    // pub fn with_data(data: &'a Vec<P>, bound: &'a Vec<(usize, Bound<T>, Bound<T>)>) -> Self {
+    pub fn with_data(data: &'a Vec<P>, bound: &'a Vec<(usize, Range<Bound<T>>)>) -> Self {
         Self {
             negative: false,
-            dim,
             bound: Some(bound),
             data: Some(data),
             inliers: Default::default()
         }
     }
 
-    pub fn set_parameter(&mut self, dim: usize, bound: Range<Bound<T>>) {
-        self.dim = dim;
+    pub fn set_parameter(&mut self, bound: &'a Vec<(usize, Range<Bound<T>>)>) {
         self.bound = Some(bound);
     }
 }
 
-impl<'a, P, T: BasicFloat, const D: usize> F3lFilter<'a, P> for PassThrough<'a, P, T, D>
+
+impl<'a, P, T: BasicFloat, const D: usize> F3lFilter<'a, P> for ConditionRemoval<'a, P, T, D>
 where
     P:Into<[T; D]> + Clone + Copy + Send + Sync,
     [T; D]: Into<P>
@@ -83,12 +81,8 @@ where
     }
 
     fn apply_filter(&mut self) -> bool {
-        if self.dim >= D {
-            return false;
-        }
-
-        let (start, end) = if let Some(bound) = &self.bound {
-            (bound.start, bound.end)
+        let bounds = if let Some(bound) = self.bound {
+            bound
         } else {
             return false;
         };
@@ -105,20 +99,30 @@ where
             .enumerate()
             .filter_map(|(i, &p)| {
                 let p: [T; D] = p.into();
-                let p = p[self.dim];
-                let b_start =  match start {
-                    Bound::Included(v) => p >= v,
-                    Bound::Excluded(v) => p > v,
-                    Bound::Unbounded => true,
-                };
-                let b_end = match end {
-                    Bound::Included(v) => p <= v,
-                    Bound::Excluded(v) => p < v,
-                    Bound::Unbounded => true,
-                };
-                if !self.negative && (b_start && b_end) {
-                    Some(i)
-                } else if self.negative && !(b_start && b_end) {
+                let mut ok = true;
+                bounds.iter()
+                    .for_each(|(dim, bound)| {
+                        let p = p[*dim];
+                        let b_start =  match bound.start {
+                            Bound::Included(v) => p >= v,
+                            Bound::Excluded(v) => p >  v,
+                            Bound::Unbounded => true,
+                        };
+                        let b_end = match bound.end {
+                            Bound::Included(v) => p <= v,
+                            Bound::Excluded(v) => p <  v,
+                            Bound::Unbounded => true,
+                        };
+                        if !self.negative && (b_start && b_end) {
+                            ok &= true;
+                        } else if self.negative && !(b_start && b_end) {
+                            ok &= true;
+                        } else {
+                            ok = false;
+                            return;
+                        }
+                    });
+                if ok {
                     Some(i)
                 } else {
                     None
