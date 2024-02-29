@@ -26,8 +26,8 @@ fn main() {
 
     let vertices = load_ply("data/Itable_scene_lms400.ply");
 
-    let mut filter = VoxelGrid::with_data(&vertices, &[0.05; 3]);
-    use std::time::Instant;
+    let mut filter = PassThrough::with_data(&vertices, (Bound::Included(0.), Bound::Included(0.5)), 0);
+    use std::{ops::Bound, time::Instant};
     let start = Instant::now();
 
     let out = filter.filter_instance();

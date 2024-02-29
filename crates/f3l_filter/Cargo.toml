@@ -47,3 +47,13 @@ required-features = ["app_kiss3d"]
 name = "voxel_grid"
 path = "examples/voxel_grid.rs"
 required-features = ["app_kiss3d"]
+
+[[example]]
+name = "pass_through"
+path = "examples/pass_through.rs"
+required-features = ["app_kiss3d"]
+
+[[example]]
+name = "condition_removal"
+path = "examples/condition_removal.rs"
+required-features = ["app_kiss3d"]

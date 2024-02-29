@@ -26,8 +26,13 @@ fn main() {
 
     let vertices = load_ply("data/Itable_scene_lms400.ply");
 
-    let mut filter = VoxelGrid::with_data(&vertices, &[0.05; 3]);
-    use std::time::Instant;
+    let range = vec![
+        (0, Bound::Included(-0.3)..Bound::Included(0.5)),
+        (1, Bound::Included(0.)..Bound::Included(0.8)),
+        (2, Bound::Included(-1.4)..Bound::Included(-1.3)),
+    ];
+    let mut filter = ConditionRemoval::with_data(&vertices, &range);
+    use std::{ops::Bound, time::Instant};
     let start = Instant::now();
 
     let out = filter.filter_instance();
