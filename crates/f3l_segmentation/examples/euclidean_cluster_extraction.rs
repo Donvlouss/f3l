@@ -2,8 +2,6 @@
 use kiss3d::light::Light;
 #[cfg(feature = "app_kiss3d")]
 use kiss3d::window::Window;
-#[cfg(feature = "app_kiss3d")]
-use nalgebra::Point3;
 
 mod util;
 use util::load_ply;
@@ -17,6 +15,7 @@ fn main() {
 
 #[cfg(feature = "app_kiss3d")]
 fn main() {
+    use kiss3d::nalgebra::Point3;
     use util::random_color;
 
     println!("Using Kiss3d app");
