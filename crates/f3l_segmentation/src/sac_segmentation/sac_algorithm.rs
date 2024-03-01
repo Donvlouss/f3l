@@ -17,6 +17,7 @@ pub struct SacAlgorithmParameter {
     pub probability: f32,
     pub threshold: f32,
     pub max_iterations: usize,
+    pub threads: usize
 }
 
 impl Default for SacAlgorithmParameter {
@@ -24,7 +25,8 @@ impl Default for SacAlgorithmParameter {
         Self {
             probability: 0.99,
             threshold: 0.1,
-            max_iterations: 100,
+            max_iterations: 1000,
+            threads: 1,
         }
     }
 }

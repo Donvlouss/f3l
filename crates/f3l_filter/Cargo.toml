@@ -11,15 +11,6 @@ f3l_search_tree = { path = "../f3l_search_tree" }
 rayon = "1.8"
 rclite = "0.2"
 
-# For 3d visualize, maybe too large for example
-bevy = { version = "0.12", optional = true}
-bevy_egui ={ version = "0.24", optional = true}
-bevy_mod_picking = { version = "0.17", optional = true}
-bevy_panorbit_camera = { version = "0.13", optional = true}
-bevy_viewcube = { git = "https://github.com/Donvlouss/bevy_viewcube.git", optional = true}
-bevy_points = { version = "0.4", optional = true}
-bevy_polyline = { git = "https://github.com/Donvlouss/bevy_polyline.git", optional = true}
-
 kiss3d = { version = "0.35.0", optional = true }
 nalgebra   = { version = "0.30", features = ["rand"], optional = true}
 
@@ -31,10 +22,6 @@ glam = "0.25.0"
 
 [features]
 default = []
-app_bevy = [
-    "bevy", "bevy_egui", "bevy_mod_picking", "bevy_viewcube",
-    "bevy_panorbit_camera", "bevy_points", "bevy_polyline"
-]
 app_kiss3d = [ "kiss3d", "nalgebra" ]
 
 

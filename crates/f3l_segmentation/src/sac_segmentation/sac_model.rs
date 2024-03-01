@@ -26,12 +26,12 @@ pub trait SacModel<'a, P, T: BasicFloat> {
     fn get_coefficient(&self) -> Self::CoefficientsIdxType;
 
     fn samples(&self) -> &Vec<Self::DataType>;
-    fn samples_len(&self) -> usize {
+    fn data_len(&self) -> usize {
         self.samples().len()
     }
     fn get_random_sample_id(&self) -> Vec<usize> {
         let mut rng = rand::thread_rng();
-        let nb = self.samples_len();
+        let nb = self.data_len();
         use std::collections::HashSet;
         let mut set = HashSet::new();
         while set.len() < Self::NB_SAMPLE {

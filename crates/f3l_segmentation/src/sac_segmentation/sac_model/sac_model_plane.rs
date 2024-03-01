@@ -118,7 +118,7 @@ where
         if let Some(data) = self.data {
             data.iter()
                 .map(|p| {
-                    let p: Vec4 = (<P as Into<Vec3>>::into(*p), 0f32).into();
+                    let p: Vec4 = (<P as Into<Vec3>>::into(*p), 1f32).into();
                     T::from(factor.dot(p).abs()).unwrap()
                 })
                 .collect::<Vec<_>>()
@@ -133,7 +133,7 @@ where
             data.iter()
                 .enumerate()
                 .filter_map(|(i, p)| {
-                    let p: Vec4 = (<P as Into<Vec3>>::into(*p), 0f32).into();
+                    let p: Vec4 = (<P as Into<Vec3>>::into(*p), 1f32).into();
                     if T::from(factor.dot(p).abs()).unwrap() < tolerance {
                         Some(i)
                     } else {

@@ -1,7 +1,5 @@
 use f3l_segmentation::sac_model::*;
 use f3l_segmentation::sac_algorithm::*;
-use glam::Vec3;
-use nalgebra::Point3;
 
 mod sac_segmentation {
     use super::*;
@@ -53,7 +51,8 @@ mod sac_segmentation {
             let parameter = SacAlgorithmParameter {
                 probability: 0.99, 
                 threshold: 0.02, 
-                max_iterations: 200
+                max_iterations: 200,
+                threads: 1
             };
             let mut model = SacModelPlane::with_data(&vertices);
             let mut algorithm = SacRansac{

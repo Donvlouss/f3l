@@ -31,14 +31,23 @@ fn main() {
     let parameter = SacAlgorithmParameter {
         probability: 0.99, 
         threshold: 0.02, 
-        max_iterations: 2000
+        max_iterations: 2000,
+        threads: 1,
     };
     let mut model = SacModelPlane::with_data(&vertices);
     let mut algorithm = SacRansac{
         parameter,
         inliers: vec![],
     };
+
+    use std::time::Instant;
+    let start = Instant::now();
+    
     let result = algorithm.compute(&mut model);
+
+    let end = start.elapsed().as_millis();
+    println!("Elapsed: {}", end);
+
     if !result {
         println!("Segmentation Failed");
         return;
