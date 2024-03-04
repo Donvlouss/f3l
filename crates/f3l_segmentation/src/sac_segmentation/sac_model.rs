@@ -9,7 +9,6 @@ pub enum SacModelType {
     #[default]
     SacModelPlane,
     SacModelLine,
-    SacModelCircle2d,
     SacModelCircle3d,
     SacModelSphere,
 }

@@ -124,6 +124,7 @@ where
                     self.clusters.push(cluster);
                 }
             });
+        self.clusters.sort_by(|a, b| b.len().partial_cmp(&a.len()).unwrap());
         true
     }
 
