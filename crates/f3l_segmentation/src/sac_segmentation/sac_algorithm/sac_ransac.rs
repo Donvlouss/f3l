@@ -88,7 +88,7 @@ where
                     let mut lock = iterations.lock().unwrap();
                     *lock += 1;
                     
-                    if k > 0. && *lock as f32 > k {
+                    if k > 1. && *lock as f32 > k {
                         break;
                     }
                 }

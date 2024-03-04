@@ -2,7 +2,9 @@ use rand::Rng;
 use f3l_core::BasicFloat;
 
 mod sac_model_plane;
+mod sac_model_line;
 pub use sac_model_plane::*;
+pub use sac_model_line::*;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub enum SacModelType {
