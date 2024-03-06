@@ -31,11 +31,14 @@ impl Default for SacAlgorithmParameter {
     }
 }
 
-pub trait SacAlgorithm<'a, P, T, R>
+pub trait SacAlgorithmGetter {
+    fn get_inliers(&self) -> &Vec<usize>;
+}
+
+pub trait SacAlgorithm<'a, P, T, R>: SacAlgorithmGetter
 where
     T: BasicFloat,
     R: SacModel<'a, P, T>
 {
-    fn get_inliers(&self) -> &Vec<usize>;
     fn compute(&mut self, model: &mut R) -> bool;
 }

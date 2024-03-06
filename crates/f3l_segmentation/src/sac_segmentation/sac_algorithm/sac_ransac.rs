@@ -6,8 +6,7 @@ use std::sync::{
 use f3l_core::BasicFloat;
 
 use super::{
-    SacAlgorithm,
-    SacAlgorithmParameter
+    SacAlgorithm, SacAlgorithmGetter, SacAlgorithmParameter
 };
 use crate::sac_model::SacModel;
 
@@ -17,15 +16,18 @@ pub struct SacRansac {
     pub inliers: Vec<usize>
 }
 
+impl SacAlgorithmGetter for SacRansac {
+    fn get_inliers(&self) -> &Vec<usize> {
+        &self.inliers
+    }
+}
+
 impl<'a, P, T, R> SacAlgorithm<'a, P, T, R> for SacRansac
 where
     T: BasicFloat,
     R: SacModel<'a, P, T> + Send + Sync,
-    <R as SacModel<'a, P, T>>::CoefficientsIdxType: Send + Sync
+    <R as SacModel<'a, P, T>>::CoefficientsType: Send + Sync
 {
-    fn get_inliers(&self) -> &Vec<usize> {
-        &self.inliers
-    }
 
     fn compute(&mut self, model: &mut R) -> bool {
         let SacAlgorithmParameter { probability, threshold, max_iterations, threads }

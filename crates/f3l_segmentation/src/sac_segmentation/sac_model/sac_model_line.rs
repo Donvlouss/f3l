@@ -1,4 +1,7 @@
-use f3l_core::{BasicFloat, SimpleSliceMath};
+use f3l_core::{
+    BasicFloat,
+    SimpleSliceMath
+};
 use std::marker::PhantomData;
 
 use super::SacModel;
@@ -34,22 +37,6 @@ where
             _value_type: PhantomData::default()
         }
     }
-
-    #[inline]
-    /// Compute point to target line.<br>
-    /// * P0: target point
-    /// * P1: point of line
-    /// * Dir: direction of line ( p2 - p1 ) 
-    /// * PDir: norm(p1 - p0)<br>
-    /// by: Parallelogram,
-    /// cause ||PDir x Dir|| = ||Dir|| * ||PDir|| * sin(theta) = ||Dir|| * distance(P0 to line)<br>
-    /// distance = ||PDir x Dir|| / ||Dir||, let ||Dir|| = 1, then distance = ||PDir x Dir||
-    pub fn compute_distance(point: P, coefficients: &([T; 3], [T; 3])) -> T {
-        let (p0, (p1, dir)): ([T; 3], ([T;3], [T;3])) = (point.into(), (coefficients.0.into(), coefficients.1.into()));
-        let p_dir = [p1[0]-p0[0], p1[1]-p0[1], p1[2]-p0[2]];
-        let dir = dir.normalized();     
-        p_dir.cross(&dir).len()
-    }
 }
 
 impl<'a, P, T: BasicFloat> SacModel<'a, P, T> for SacModelLine<'a, P, T>
@@ -60,21 +47,36 @@ where
 
     type SampleIdxType = [usize; 2];
 
-    type CoefficientsIdxType = ([T; 3], [T; 3]);
+    type CoefficientsType = ([T; 3], [T; 3]);
 
     const NB_SAMPLE:usize = 2;
 
     const NB_COEFFICIENTS: usize = 6;
 
+    /// Compute point to target line.<br>
+    /// * P0: target point
+    /// * P1: point of line
+    /// * Dir: direction of line ( p2 - p1 ) 
+    /// * PDir: norm(p1 - p0)<br>
+    /// by: Parallelogram,
+    /// cause ||PDir x Dir|| = ||Dir|| * ||PDir|| * sin(theta) = ||Dir|| * distance(P0 to line)<br>
+    /// distance = ||PDir x Dir|| / ||Dir||, let ||Dir|| = 1, then distance = ||PDir x Dir||
+    fn compute_point_to_model(p: P, coefficients: &Self::CoefficientsType) -> T {
+        let (p0, (p1, dir)): ([T; 3], ([T;3], [T;3])) = (p.into(), (coefficients.0.into(), coefficients.1.into()));
+        let p_dir = [p1[0]-p0[0], p1[1]-p0[1], p1[2]-p0[2]];
+        let dir = dir.normalized();     
+        p_dir.cross(&dir).len()
+    }
+
     fn set_data(&mut self, data: &'a Vec<P>) {
         self.data = Some(data);
     }
 
-    fn set_coefficient(&mut self, factor: &Self::CoefficientsIdxType) {
+    fn set_coefficient(&mut self, factor: &Self::CoefficientsType) {
         self.coefficients = *factor;
     }
 
-    fn get_coefficient(&self) -> Self::CoefficientsIdxType {
+    fn get_coefficient(&self) -> Self::CoefficientsType {
         (
             self.coefficients.0.into(),
             self.coefficients.1.into(),
@@ -91,9 +93,9 @@ where
     }
 
     /// Samples 0 as Point of line. norm(samples 1-samples 0) as direction
-    fn compute_model_coefficients(&self, samples: &Self::SampleIdxType) -> Result<Self::CoefficientsIdxType, String> {
+    fn compute_model_coefficients(&self, samples: &Self::SampleIdxType) -> Result<Self::CoefficientsType, String> {
         let [p0, p1] = samples;
-        let (p0, p1): Self::CoefficientsIdxType = if let Some(data) = self.data {
+        let (p0, p1): Self::CoefficientsType = if let Some(data) = self.data {
             (
                 data[*p0].into(),
                 data[*p1].into()
@@ -105,11 +107,11 @@ where
         Ok((p0.into(), dir.into()))
     }
 
-    fn get_distance_to_model(&self, coefficients: &Self::CoefficientsIdxType) -> Vec<T> {
+    fn get_distance_to_model(&self, coefficients: &Self::CoefficientsType) -> Vec<T> {
         if let Some(data) = self.data {
             data.iter()
                 .map(|&p| {
-                    Self::compute_distance(p, coefficients)
+                    Self::compute_point_to_model(p, coefficients)
                 })
                 .collect()
         } else {
@@ -117,11 +119,11 @@ where
         }
     }
 
-    fn select_indices_within_tolerance(&self, coefficients: &Self::CoefficientsIdxType, tolerance: T) -> Vec<usize> {
+    fn select_indices_within_tolerance(&self, coefficients: &Self::CoefficientsType, tolerance: T) -> Vec<usize> {
         if let Some(data) = self.data {
             (0..data.len())
                 .filter(|&i| {
-                    let d = Self::compute_distance(data[i], coefficients);
+                    let d = Self::compute_point_to_model(data[i], coefficients);
                     d  <= tolerance
                 })
                 .collect()
@@ -130,10 +132,10 @@ where
         }
     }
 
-    fn count_indices_within_tolerance(&self, coefficients: &Self::CoefficientsIdxType, tolerance: T) -> usize {
+    fn count_indices_within_tolerance(&self, coefficients: &Self::CoefficientsType, tolerance: T) -> usize {
         if let Some(data) = self.data {
             (0..data.len())
-                .filter(|&i| Self::compute_distance(data[i], coefficients) <= tolerance)
+                .filter(|&i| Self::compute_point_to_model(data[i], coefficients) <= tolerance)
                 .sum()
         } else {
             0

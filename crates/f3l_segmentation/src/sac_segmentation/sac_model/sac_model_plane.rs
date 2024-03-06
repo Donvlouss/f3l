@@ -1,10 +1,7 @@
-use f3l_core::BasicFloat;
-use std::marker::PhantomData;
-use glam::{
-    Vec3,
-    Vec4
+use f3l_core::{
+    apply_both, BasicFloat, SimpleSliceMath
 };
-
+use std::marker::PhantomData;
 use super::SacModel;
 
 
@@ -14,7 +11,7 @@ pub struct SacModelPlane<'a, P, T: BasicFloat>
 where
     P: Into<[T; 3]> + Clone + Copy
 {
-    pub coefficients: Vec4,
+    pub coefficients: [T; 4],
     data: Option<&'a Vec<P>>,
     _value_type: PhantomData<T>
 }
@@ -25,7 +22,7 @@ where
 {
     pub fn new() -> Self {
         Self {
-            coefficients: Vec4::ZERO,
+            coefficients: [T::zero(); 4],
             data: None,
             _value_type: PhantomData::default()
         }
@@ -33,7 +30,7 @@ where
 
     pub fn with_data(data: &'a Vec<P>) -> Self {
         Self {
-            coefficients: Vec4::ZERO,
+            coefficients: [T::zero(); 4],
             data: Some(data),
             _value_type: PhantomData::default()
         }
@@ -42,27 +39,33 @@ where
 
 impl<'a, P, T: BasicFloat> SacModel<'a, P, T> for SacModelPlane<'a, P, T>
 where
-    P: Into<[T; 3]> + Clone + Copy + Into<Vec3>,
+    P: Into<[T; 3]> + Clone + Copy,
 {
     type DataType = P;
 
     type SampleIdxType = [usize; 3];
 
-    type CoefficientsIdxType = [f32; 4];
+    type CoefficientsType = [T; 4];
 
     const NB_SAMPLE:usize = 3;
 
     const NB_COEFFICIENTS: usize = 4;
 
+    fn compute_point_to_model(p: P, coefficients: &Self::CoefficientsType) -> T {
+        let p: [T; 3] = p.into();
+        let p = [p[0], p[1], p[2], T::one()];
+        p.dot(coefficients)
+    }
+
     fn set_data(&mut self, data: &'a Vec<P>) {
         self.data = Some(data);
     }
 
-    fn set_coefficient(&mut self, factor: &Self::CoefficientsIdxType) {
+    fn set_coefficient(&mut self, factor: &Self::CoefficientsType) {
         self.coefficients = (*factor).into();
     }
 
-    fn get_coefficient(&self) -> Self::CoefficientsIdxType {
+    fn get_coefficient(&self) -> Self::CoefficientsType {
         [
             self.coefficients[0],
             self.coefficients[1],
@@ -80,46 +83,40 @@ where
         [sample[0], sample[1], sample[2]]
     }
 
-    fn compute_model_coefficients(&self, samples: &Self::SampleIdxType) -> Result<Self::CoefficientsIdxType, String> {
+    fn compute_model_coefficients(&self, samples: &Self::SampleIdxType) -> Result<Self::CoefficientsType, String> {
         let [p0, p1, p2] = *samples;
-        let (p0, p1, p2) = if let Some(data) = self.data {
-            let p0: Vec3 = data[p0].into();
-            let p1: Vec3 = data[p1].into();
-            let p2: Vec3 = data[p2].into();
-            (p0, p1, p2)
+        let [p0, p1, p2]: [[T; 3]; 3] = if let Some(data) = self.data {
+            [data[p0].into(), data[p1].into(), data[p2].into()]
         } else {
             return Err("Data Empty".to_owned());
         };
-        let p1p0 = p1 - p0;
-        let p2p0 = p2 - p0;
-        let dpp = p2p0 / p1p0;
+        let p1p0 = apply_both(&p1, &p0, std::ops::Sub::sub);
+        let p2p0 = apply_both(&p2, &p0, std::ops::Sub::sub);
+        let dpp = apply_both(&p2p0, &p1p0, std::ops::Div::div);
         if dpp[0] == dpp[1] && dpp[1] == dpp[2] {
             return Err("Parallel or overlay".to_owned());
         }
-        let coefficient = Vec4::new(
+        let coefficient =[
             p1p0[1] * p2p0[2] - p1p0[2] * p2p0[1],
             p1p0[2] * p2p0[0] - p1p0[0] * p2p0[2],
             p1p0[0] * p2p0[1] - p1p0[1] * p2p0[0],
-            0.
-        );
-        let mut coefficient = coefficient.normalize();
-        coefficient[3] = -1. * (
+            T::zero()
+        ];
+        let mut coefficient = coefficient.normalized();
+        coefficient[3] = -T::one() * (
             coefficient[0] * p0[0] +
             coefficient[1] * p0[1] +
             coefficient[2] * p0[2]
         );
 
-        let v: [f32; 4] = coefficient.into();
-        Ok(v)
+        Ok(coefficient)
     }
 
-    fn get_distance_to_model(&self, coefficients: &Self::CoefficientsIdxType) -> Vec<T> {
-        let factor: Vec4 = (*coefficients).into();
+    fn get_distance_to_model(&self, coefficients: &Self::CoefficientsType) -> Vec<T> {
         if let Some(data) = self.data {
             data.iter()
                 .map(|p| {
-                    let p: Vec4 = (<P as Into<Vec3>>::into(*p), 1f32).into();
-                    T::from(factor.dot(p).abs()).unwrap()
+                    SacModelPlane::compute_point_to_model(*p, coefficients).abs()
                 })
                 .collect::<Vec<_>>()
         } else{
@@ -127,14 +124,12 @@ where
         }
     }
 
-    fn select_indices_within_tolerance(&self, coefficients: &Self::CoefficientsIdxType, tolerance: T) -> Vec<usize> {
-        let factor: Vec4 = (*coefficients).into();
+    fn select_indices_within_tolerance(&self, coefficients: &Self::CoefficientsType, tolerance: T) -> Vec<usize> {
         if let Some(data) = self.data {
             data.iter()
                 .enumerate()
                 .filter_map(|(i, p)| {
-                    let p: Vec4 = (<P as Into<Vec3>>::into(*p), 1f32).into();
-                    if T::from(factor.dot(p).abs()).unwrap() < tolerance {
+                    if SacModelPlane::compute_point_to_model(*p, coefficients).abs() < tolerance {
                         Some(i)
                     } else {
                         None
@@ -146,14 +141,11 @@ where
         }
     }
 
-    fn count_indices_within_tolerance(&self, coefficients: &Self::CoefficientsIdxType, tolerance: T) -> usize {
-        let factor: Vec4 = (*coefficients).into();
+    fn count_indices_within_tolerance(&self, coefficients: &Self::CoefficientsType, tolerance: T) -> usize {
         if let Some(data) = self.data {
             data.iter()
                 .map(|p| {
-                    let p: Vec4 = (<P as Into<Vec3>>::into(*p), 1f32).into();
-                    let v = T::from(factor.dot(p).abs()).unwrap();
-                    if v < tolerance {
+                    if SacModelPlane::compute_point_to_model(*p, coefficients).abs() < tolerance {
                         1
                     } else {
                         0
