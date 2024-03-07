@@ -97,7 +97,7 @@ where
         };
 
         if threads > 1 {
-            let pool = rayon::ThreadPoolBuilder::new()
+            let pool = f3l_core::rayon::ThreadPoolBuilder::new()
                 .num_threads(threads)
                 .build()
                 .unwrap();

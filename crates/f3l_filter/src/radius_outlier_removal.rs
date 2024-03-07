@@ -5,7 +5,7 @@ use f3l_search_tree::{
     TreeRadiusResult,
     TreeResult
 };
-use rayon::prelude::*;
+use f3l_core::rayon::prelude::*;
 
 use crate::F3lFilter;
 
