@@ -15,6 +15,27 @@ where
     _value_type: PhantomData<T>,
 }
 
+impl<'a, P, T: BasicFloat> SacModelCircle3d<'a, P, T>
+where
+    P: Into<[T; 3]> + Clone + Copy,
+{
+    pub fn new() -> Self {
+        Self {
+            coefficients: ([T::zero(); 3], [T::zero(); 3], T::zero()),
+            data: None,
+            _value_type: PhantomData::default(),
+        }
+    }
+
+    pub fn with_data(data: &'a Vec<P>) -> Self {
+        Self {
+            coefficients: ([T::zero(); 3], [T::zero(); 3], T::zero()),
+            data: Some(data),
+            _value_type: PhantomData::default(),
+        }
+    }
+}
+
 impl<'a, P, T: BasicFloat> SacModel<'a, P, T> for SacModelCircle3d<'a, P, T>
 where
     P: Into<[T; 3]> + Clone + Copy,

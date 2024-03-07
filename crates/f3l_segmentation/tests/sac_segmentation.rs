@@ -1,6 +1,7 @@
 use f3l_segmentation::sac_model::*;
 use f3l_segmentation::sac_algorithm::*;
 
+#[cfg(test)]
 mod sac_segmentation {
     use super::*;
 
@@ -243,5 +244,46 @@ mod sac_segmentation {
             println!("Projected: {:?}", project_point);
             assert_eq!(round_n(target_distance, 4), round_n(distance, 4));
         }
+    }
+
+    mod sphere {
+        use super::*;
+        use f3l_core::{round_n, round_slice_n};
+        use glam::Vec3A;
+
+        #[test]
+        fn sphere_coefficients() {
+            let center = Vec3A::new(10., -20., 30.);
+            let center_slice: [f32; 3] = center.into();
+            let radius = 35f32;
+
+            let data = (0..10).flat_map(|i| {
+                let theta = ((i as f32) * 36.).to_radians();
+                (0..10).map(|ii| {
+                    let phi = ((ii as f32) * 36.).to_radians();
+                    center + radius * Vec3A::new(
+                        theta.sin() * phi.cos(),
+                        theta.sin() * phi.sin(),
+                        theta.cos()
+                    )
+                }).collect::<Vec<_>>()
+            }).collect::<Vec<_>>();
+
+            let parameter = SacAlgorithmParameter {
+                threshold: 1f32,
+                ..Default::default()
+            };
+            let mut model = SacModelSphere::with_data(&data);
+            let mut algorithm = SacRansac{parameter, inliers: vec![]};
+            let ok = algorithm.compute(&mut model);
+
+            assert!(ok);
+            let (center, r) = model.get_coefficient();
+
+            assert_eq!(round_n(r, 4), radius);
+            assert_eq!(center_slice, round_slice_n(center, 4));
+            
+        }
+
     }
 }

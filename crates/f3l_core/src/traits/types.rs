@@ -36,6 +36,11 @@ where
             .sqrt()
     }
     #[inline]
+    fn len_squared(&self) -> T {
+        (0..D)
+            .fold(T::zero(), |acc, i| acc + self[i].powi(2))
+    }
+    #[inline]
     fn normalize(&mut self) {
         let d = T::one() / self.len();
         (0..D)

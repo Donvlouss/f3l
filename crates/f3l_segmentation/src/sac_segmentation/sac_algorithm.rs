@@ -11,13 +11,12 @@ pub enum SacAlgorithmType {
     RANSAC,
 }
 
-
 #[derive(Debug, Clone, Copy)]
 pub struct SacAlgorithmParameter {
     pub probability: f32,
     pub threshold: f32,
     pub max_iterations: usize,
-    pub threads: usize
+    pub threads: usize,
 }
 
 impl Default for SacAlgorithmParameter {
@@ -38,7 +37,7 @@ pub trait SacAlgorithmGetter {
 pub trait SacAlgorithm<'a, P: Copy, T, R>: SacAlgorithmGetter
 where
     T: BasicFloat,
-    R: SacModel<'a, P, T>
+    R: SacModel<'a, P, T>,
 {
     fn compute(&mut self, model: &mut R) -> bool;
 }
