@@ -10,6 +10,6 @@ members = [
     "crates/f3l_core", 
     "crates/f3l_filter",
     "crates/f3l_search_tree"
-]
+, "crates/f3l_segmentation"]
 
 [dependencies]
