@@ -53,6 +53,15 @@ where
             });
         out
     }
+    #[inline]
+    fn distance_between(&self, other: &Self) -> T {
+        self.distance_square_between(other).sqrt()
+    }
+    #[inline]
+    fn distance_square_between(&self, other: &Self) -> T {
+        (0..D)
+            .fold(T::zero(), |acc, i| acc + (self[i]-other[i]).powi(2))
+    }
 }
 
 pub trait F3lSlice<T> {

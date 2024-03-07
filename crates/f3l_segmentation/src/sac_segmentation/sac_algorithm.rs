@@ -35,7 +35,7 @@ pub trait SacAlgorithmGetter {
     fn get_inliers(&self) -> &Vec<usize>;
 }
 
-pub trait SacAlgorithm<'a, P, T, R>: SacAlgorithmGetter
+pub trait SacAlgorithm<'a, P: Copy, T, R>: SacAlgorithmGetter
 where
     T: BasicFloat,
     R: SacModel<'a, P, T>

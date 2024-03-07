@@ -1,30 +1,26 @@
-use f3l_core::{
-    apply_both, BasicFloat, SimpleSliceMath
-};
-use std::marker::PhantomData;
 use super::SacModel;
-
-
+use f3l_core::{apply_both, BasicFloat, SimpleSliceMath};
+use std::marker::PhantomData;
 
 #[derive(Debug, Clone, Default)]
 pub struct SacModelPlane<'a, P, T: BasicFloat>
 where
-    P: Into<[T; 3]> + Clone + Copy
+    P: Into<[T; 3]> + Clone + Copy,
 {
     pub coefficients: [T; 4],
     data: Option<&'a Vec<P>>,
-    _value_type: PhantomData<T>
+    _value_type: PhantomData<T>,
 }
 
 impl<'a, P, T: BasicFloat> SacModelPlane<'a, P, T>
 where
-    P: Into<[T; 3]> + Clone + Copy
+    P: Into<[T; 3]> + Clone + Copy,
 {
     pub fn new() -> Self {
         Self {
             coefficients: [T::zero(); 4],
             data: None,
-            _value_type: PhantomData::default()
+            _value_type: PhantomData::default(),
         }
     }
 
@@ -32,7 +28,7 @@ where
         Self {
             coefficients: [T::zero(); 4],
             data: Some(data),
-            _value_type: PhantomData::default()
+            _value_type: PhantomData::default(),
         }
     }
 }
@@ -41,13 +37,11 @@ impl<'a, P, T: BasicFloat> SacModel<'a, P, T> for SacModelPlane<'a, P, T>
 where
     P: Into<[T; 3]> + Clone + Copy,
 {
-    type DataType = P;
-
     type SampleIdxType = [usize; 3];
 
     type CoefficientsType = [T; 4];
 
-    const NB_SAMPLE:usize = 3;
+    const NB_SAMPLE: usize = 3;
 
     const NB_COEFFICIENTS: usize = 4;
 
@@ -74,16 +68,19 @@ where
         ]
     }
 
-    fn samples(&self) -> &Vec<Self::DataType> {
+    fn samples(&self) -> &Vec<P> {
         self.data.unwrap()
     }
-    
+
     fn get_random_samples(&self) -> Self::SampleIdxType {
         let sample = self.get_random_sample_id();
         [sample[0], sample[1], sample[2]]
     }
 
-    fn compute_model_coefficients(&self, samples: &Self::SampleIdxType) -> Result<Self::CoefficientsType, String> {
+    fn compute_model_coefficients(
+        &self,
+        samples: &Self::SampleIdxType,
+    ) -> Result<Self::CoefficientsType, String> {
         let [p0, p1, p2] = *samples;
         let [p0, p1, p2]: [[T; 3]; 3] = if let Some(data) = self.data {
             [data[p0].into(), data[p1].into(), data[p2].into()]
@@ -96,64 +93,16 @@ where
         if dpp[0] == dpp[1] && dpp[1] == dpp[2] {
             return Err("Parallel or overlay".to_owned());
         }
-        let coefficient =[
+        let coefficient = [
             p1p0[1] * p2p0[2] - p1p0[2] * p2p0[1],
             p1p0[2] * p2p0[0] - p1p0[0] * p2p0[2],
             p1p0[0] * p2p0[1] - p1p0[1] * p2p0[0],
-            T::zero()
+            T::zero(),
         ];
         let mut coefficient = coefficient.normalized();
-        coefficient[3] = -T::one() * (
-            coefficient[0] * p0[0] +
-            coefficient[1] * p0[1] +
-            coefficient[2] * p0[2]
-        );
+        coefficient[3] =
+            -T::one() * (coefficient[0] * p0[0] + coefficient[1] * p0[1] + coefficient[2] * p0[2]);
 
         Ok(coefficient)
-    }
-
-    fn get_distance_to_model(&self, coefficients: &Self::CoefficientsType) -> Vec<T> {
-        if let Some(data) = self.data {
-            data.iter()
-                .map(|p| {
-                    SacModelPlane::compute_point_to_model(*p, coefficients).abs()
-                })
-                .collect::<Vec<_>>()
-        } else{
-            vec![]
-        }
-    }
-
-    fn select_indices_within_tolerance(&self, coefficients: &Self::CoefficientsType, tolerance: T) -> Vec<usize> {
-        if let Some(data) = self.data {
-            data.iter()
-                .enumerate()
-                .filter_map(|(i, p)| {
-                    if SacModelPlane::compute_point_to_model(*p, coefficients).abs() < tolerance {
-                        Some(i)
-                    } else {
-                        None
-                    }
-                })
-                .collect::<Vec<_>>()
-        } else {
-            vec![]
-        }
-    }
-
-    fn count_indices_within_tolerance(&self, coefficients: &Self::CoefficientsType, tolerance: T) -> usize {
-        if let Some(data) = self.data {
-            data.iter()
-                .map(|p| {
-                    if SacModelPlane::compute_point_to_model(*p, coefficients).abs() < tolerance {
-                        1
-                    } else {
-                        0
-                    }
-                })
-                .sum()
-        } else {
-            0
-        }
     }
 }

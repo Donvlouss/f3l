@@ -1,6 +1,4 @@
-use f3l_core::{
-    apply_both, apply_each, project_vector, BasicFloat, SimpleSliceMath
-};
+use f3l_core::{apply_both, apply_each, project_vector, BasicFloat, SimpleSliceMath};
 use std::marker::PhantomData;
 
 use super::SacModel;
@@ -8,26 +6,24 @@ use super::SacModel;
 #[derive(Debug, Clone, Default)]
 pub struct SacModelCircle3d<'a, P, T: BasicFloat>
 where
-    P: Into<[T; 3]> + Clone + Copy
+    P: Into<[T; 3]> + Clone + Copy,
 {
     /// - Point on Line
     /// - Direction
     pub coefficients: ([T; 3], [T; 3], T),
     data: Option<&'a Vec<P>>,
-    _value_type: PhantomData<T>
+    _value_type: PhantomData<T>,
 }
 
 impl<'a, P, T: BasicFloat> SacModel<'a, P, T> for SacModelCircle3d<'a, P, T>
 where
     P: Into<[T; 3]> + Clone + Copy,
 {
-    type DataType = P;
-
     type SampleIdxType = [usize; 3];
 
     type CoefficientsType = ([T; 3], [T; 3], T);
 
-    const NB_SAMPLE:usize = 3;
+    const NB_SAMPLE: usize = 3;
 
     const NB_COEFFICIENTS: usize = 7;
 
@@ -53,7 +49,8 @@ where
         let p_to_circle = apply_both(
             &c,
             &apply_each(&dir_to_proj, r, std::ops::Mul::mul),
-            std::ops::Add::add);
+            std::ops::Add::add,
+        );
         apply_both(&p, &p_to_circle, std::ops::Sub::sub).len()
     }
 
@@ -69,7 +66,7 @@ where
         self.coefficients
     }
 
-    fn samples(&self) -> &Vec<Self::DataType> {
+    fn samples(&self) -> &Vec<P> {
         self.data.unwrap()
     }
 
@@ -79,14 +76,13 @@ where
     }
 
     /// Ref: [Cartesian coordinates from cross- and dot-products](https://en.wikipedia.org/wiki/Circumcircle)
-    fn compute_model_coefficients(&self, samples: &Self::SampleIdxType) -> Result<Self::CoefficientsType, String> {
+    fn compute_model_coefficients(
+        &self,
+        samples: &Self::SampleIdxType,
+    ) -> Result<Self::CoefficientsType, String> {
         let [p1, p2, p3] = *samples;
-        let (p1, p2, p3): ([T;3],[T;3],[T;3]) = if let Some(data) = self.data {
-            (
-                data[p1].into(),
-                data[p2].into(),
-                data[p3].into(),
-            )
+        let (p1, p2, p3): ([T; 3], [T; 3], [T; 3]) = if let Some(data) = self.data {
+            (data[p1].into(), data[p2].into(), data[p3].into())
         } else {
             return Err("Data corrupted.".to_owned());
         };
@@ -96,7 +92,7 @@ where
         let v31 = apply_both(&p3, &p1, std::ops::Sub::sub);
         let v23 = apply_both(&p2, &p3, std::ops::Sub::sub);
         let v32 = apply_both(&p3, &p2, std::ops::Sub::sub);
-        
+
         let normal = v12.cross(&v23);
         let common_divided = T::one() / T::from(2.).unwrap() * normal.len().powi(2);
 
@@ -109,41 +105,16 @@ where
 
         let radius = apply_both(&pc, &p1, std::ops::Sub::sub).len();
 
-        Ok(
-            (pc.into(), normal.normalized().into(), radius)
-        )
+        Ok((pc.into(), normal.normalized().into(), radius))
     }
 
     fn get_distance_to_model(&self, coefficients: &Self::CoefficientsType) -> Vec<T> {
         if let Some(data) = self.data {
             data.iter()
-                .map(|&p| {
-                    Self::compute_point_to_model(p, coefficients)
-                })
+                .map(|&p| Self::compute_point_to_model(p, coefficients))
                 .collect()
         } else {
             vec![]
-        }
-    }
-
-    fn select_indices_within_tolerance(&self, coefficients: &Self::CoefficientsType, tolerance: T) -> Vec<usize> {
-        if let Some(data) = self.data {
-            (0..data.len())
-                .filter(|&i| Self::compute_point_to_model(data[i], coefficients) < tolerance)
-                .collect()
-        } else {
-            vec![]
-        }
-    }
-
-    fn count_indices_within_tolerance(&self, coefficients: &Self::CoefficientsType, tolerance: T) -> usize {
-        if let Some(data) = self.data {
-            (0..data.len())
-                .filter(|&i| Self::compute_point_to_model(data[i], coefficients) < tolerance)
-                .map(|_| 1)
-                .sum()
-        } else {
-            0
         }
     }
 }
