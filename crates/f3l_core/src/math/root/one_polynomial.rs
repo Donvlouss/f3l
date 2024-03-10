@@ -132,7 +132,7 @@ fn test_root3_d0() {
 #[test]
 fn test_root3_by_eigenvalues() {
     use crate::matrix3x3::compute_eigenvalues;
-    use glam::{Mat3, Vec3};
+    use f3l_glam::glam::{Mat3, Vec3};
 
     let factor = [0f32, -15., -4.];
 

@@ -1,4 +1,4 @@
-use crate::F3lMatrix;
+use f3l_glam::F3lMatrix;
 
 /// Ref: [Gaussian elimination (wiki)](https://en.wikipedia.org/wiki/Gaussian_elimination)
 pub fn gaussian_elimination<M: F3lMatrix + Copy, O: F3lMatrix + Copy>(a: &M, b: &O) -> O {
@@ -42,7 +42,7 @@ pub fn gaussian_elimination<M: F3lMatrix + Copy, O: F3lMatrix + Copy>(a: &M, b: 
 #[cfg(test)]
 mod gaussian_elimination {
     use super::gaussian_elimination;
-    use glam::{Mat3, Vec3};
+    use f3l_glam::glam::{Mat3, Vec3};
     use crate::{is_slice_ok, round_slice_n};
 
     #[test]
