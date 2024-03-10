@@ -8,5 +8,6 @@ pub use utils::*;
 pub use types::*;
 pub use math::*;
 
-pub use glam;
+pub use f3l_glam::*;
+pub use f3l_glam::glam;
 pub use rayon;

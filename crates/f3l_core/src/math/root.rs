@@ -1,4 +1,4 @@
-use crate::F3lMatrix;
+use f3l_glam::{F3lMatrix, glam};
 
 pub mod one_polynomial;
 pub mod n_polynomial;

@@ -1,9 +1,14 @@
-mod rref;
+pub mod mat2;
+pub mod mat3;
+pub mod mat3a;
+pub mod mat4;
+pub mod vec2;
+pub mod vec3;
+pub mod vec3a;
+pub mod vec4;
 
-pub mod matrix3x3;
 use std::ops::Index;
 
-pub use rref::*;
 
 pub trait F3lMatrix {
     type RowType: Copy;
@@ -34,18 +39,4 @@ pub trait ArrayRowMajor
     fn from_cols_array_2d(m: &Self::Mat) -> Self;
     fn to_rows_array_2d(&self) -> Self::Mat;
     fn write_rows_to_slice(self, slice: &mut[f32]);
-}
-
-#[test]
-fn test_new() {
-    use f3l_glam::{glam::{Mat3, Vec3}, ArrayRowMajor};
-    assert_eq!(
-        Mat3::from_cols(
-            Vec3::ONE, Vec3::ONE * 2., Vec3::ONE * 3.),
-        Mat3::from_rows(&[
-            Vec3::new(1f32, 2., 3.),
-            Vec3::new(1f32, 2., 3.),
-            Vec3::new(1f32, 2., 3.),
-        ])
-    );
 }

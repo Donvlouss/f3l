@@ -1,8 +1,9 @@
 use std::ops::Index;
 
-use glam::{Mat3, Vec3};
+use f3l_glam::ArrayRowMajor;
+use crate::glam::{Mat3, Vec3};
 
-use crate::{one_polynomial::root3,  BasicFloat, MatrixLinAlg};
+use crate::{one_polynomial::root3, rref, BasicFloat, MatrixLinAlg};
 
 pub fn compute_covariance_matrix<P, T: BasicFloat>(points: &[P]) -> Mat3
 where
@@ -74,6 +75,7 @@ pub fn compute_eigenvectors<T: BasicFloat, V: Into<[f32; 3]>>(cov: Mat3, eigenva
         .for_each(|i| {
             let lambda = vs[i as usize];
             let mat = cov - lambda * Mat3::IDENTITY;
+            let mat = Mat3::from_rows(&rref(mat.to_rows_array_2d()));
             let vector = mat.solve(Vec3::ZERO);
             out[i as usize] = vector;
         });
@@ -82,7 +84,7 @@ pub fn compute_eigenvectors<T: BasicFloat, V: Into<[f32; 3]>>(cov: Mat3, eigenva
 
 #[test]
 fn test_eigenvalues() {
-    use glam::Vec3;
+    use f3l_glam::glam::Vec3;
     use crate::round_slice_n;
 
     let cov = Mat3::from_cols(
@@ -101,8 +103,7 @@ fn test_eigenvalues() {
 
 #[test]
 fn test_eigenvectors() {
-    use glam::Vec3;
-    use crate::round_slice_n;
+    use f3l_glam::glam::Vec3;
 
     let cov = Mat3::from_cols(
         Vec3::new(1., 2., 3.),
