@@ -16,7 +16,7 @@ mod filter {
     }
 
     fn brute_force<const D: usize>(data: &Vec<[f32; D]>, radius: f32, threshold: usize) -> Vec<usize> {
-        use rayon::prelude::*;
+        use f3l_core::rayon::prelude::*;
         data.par_iter()
             .enumerate()
             .filter(|(_, p)| {

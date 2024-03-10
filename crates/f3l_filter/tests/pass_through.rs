@@ -34,7 +34,7 @@ mod filter {
 
     mod dimension_3d {
         use super::*;
-        use glam::Vec3;
+        use f3l_core::glam::Vec3;
 
         #[test]
         fn pass_through_3d() {

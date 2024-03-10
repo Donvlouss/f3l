@@ -1,6 +1,6 @@
 mod kd_tree{
     use approx::assert_relative_eq;
-    use glam::{Vec2, Vec3};
+    use f3l_core::glam::{Vec2, Vec3};
     use nalgebra::Point3;
     use f3l_search_tree::*;
 

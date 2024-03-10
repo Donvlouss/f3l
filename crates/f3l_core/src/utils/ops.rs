@@ -1,6 +1,21 @@
 use num_traits::{Float, Num, Pow};
 
 #[inline]
+pub fn is_float_ok<T: Float>(v: T) -> bool {
+    !(v.is_infinite() || v.is_nan())
+}
+
+#[inline]
+pub fn is_slice_ok<T: Float, const D: usize>(target: [T; D]) -> bool {
+    for &t in target.iter() {
+        if t.is_infinite() || t.is_nan() {
+            return false;
+        }
+    }
+    true
+}
+
+#[inline]
 pub fn round_n<T: Float>(me: T, n: usize) -> T {
     (me * T::from(10.pow(n)).unwrap()).round() / T::from(10.pow(n)).unwrap()
 }

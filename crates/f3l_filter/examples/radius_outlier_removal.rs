@@ -5,8 +5,8 @@ use kiss3d::window::Window;
 #[cfg(feature = "app_kiss3d")]
 use nalgebra::Point3;
 
-mod util;
-use util::load_ply;
+mod filter_util;
+use filter_util::load_ply;
 
 use f3l_filter::*;
 

@@ -3,8 +3,8 @@ use kiss3d::light::Light;
 #[cfg(feature = "app_kiss3d")]
 use kiss3d::window::Window;
 
-mod util;
-use util::load_ply;
+mod segmentation_util;
+use segmentation_util::load_ply;
 
 use f3l_segmentation::*;
 
@@ -16,7 +16,7 @@ fn main() {
 #[cfg(feature = "app_kiss3d")]
 fn main() {
     use kiss3d::nalgebra::Point3;
-    use util::random_color;
+    use segmentation_util::random_color;
 
     println!("Using Kiss3d app");
 

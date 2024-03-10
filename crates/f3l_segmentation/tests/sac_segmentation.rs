@@ -161,7 +161,7 @@ mod sac_segmentation {
 
     mod circle3d {
         use f3l_core::{apply_both, round_n, round_slice_n, SimpleSliceMath};
-        use glam::{Mat3, Mat4, Vec4, Vec3, Vec3A, Quat};
+        use f3l_core::glam::{Mat3, Mat4, Vec4, Vec3, Vec3A, Quat};
         use super::*;
 
         #[test]
@@ -179,7 +179,7 @@ mod sac_segmentation {
                     ].into()
                 }).collect::<Vec<Vec3A>>();
 
-            let mat = Mat3::from_euler(glam::EulerRot::XYZ, 20f32.to_radians(), -40f32.to_radians(), 65f32.to_radians());
+            let mat = Mat3::from_euler(f3l_core::glam::EulerRot::XYZ, 20f32.to_radians(), -40f32.to_radians(), 65f32.to_radians());
             let mat4 = Mat4::from_rotation_translation(Quat::from_mat3(&mat), Vec3::new(10f32, -20f32, 30f32));
 
             let point = point.iter()
@@ -224,7 +224,7 @@ mod sac_segmentation {
 
         #[test]
         fn distance_between_point_circle() {
-            let mat = Mat3::from_euler(glam::EulerRot::XYZ, 20f32.to_radians(), -40f32.to_radians(), 65f32.to_radians());
+            let mat = Mat3::from_euler(f3l_core::glam::EulerRot::XYZ, 20f32.to_radians(), -40f32.to_radians(), 65f32.to_radians());
             let mat4 = Mat4::from_rotation_translation(Quat::from_mat3(&mat), Vec3::new(10f32, -20f32, 30f32));
 
             let project_point = Vec3::new(3., 0., 5.);
@@ -249,7 +249,7 @@ mod sac_segmentation {
     mod sphere {
         use super::*;
         use f3l_core::{round_n, round_slice_n};
-        use glam::Vec3A;
+        use f3l_core::glam::Vec3A;
 
         #[test]
         fn sphere_coefficients() {
