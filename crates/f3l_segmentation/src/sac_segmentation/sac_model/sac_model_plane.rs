@@ -48,7 +48,7 @@ where
     fn compute_point_to_model(p: P, coefficients: &Self::CoefficientsType) -> T {
         let p: [T; 3] = p.into();
         let p = [p[0], p[1], p[2], T::one()];
-        p.dot(coefficients)
+        (p.dot(coefficients)).abs()
     }
 
     fn set_data(&mut self, data: &'a Vec<P>) {
