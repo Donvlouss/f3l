@@ -5,6 +5,12 @@ use crate::glam::{Mat3, Vec3};
 
 use crate::{one_polynomial::root3, rref, BasicFloat, MatrixLinAlg};
 
+#[derive(Debug, Clone, Copy, Default)]
+pub struct EigenVector {
+    pub eigenvalues: f32,
+    pub eigenvector: Vec3
+}
+
 pub fn compute_covariance_matrix<P, T: BasicFloat>(points: &[P]) -> Mat3
 where
     P: Index<usize, Output = T>
@@ -68,6 +74,13 @@ pub fn compute_eigenvalues<T: BasicFloat>(cov: Mat3) -> [T; 3] {
     ]
 }
 
+/// Compute 3 x 3 eigenvectors<br>
+/// M = (A - lambda * I)<br>
+/// take any 2 rows, become:<br>
+/// |   i   j   k  |<br>
+/// | m00 m01 m02  |<br>
+/// | m10 m11 m12  |<br>
+/// get eigenvector from product 2 rows
 pub fn compute_eigenvectors<T: BasicFloat, V: Into<[f32; 3]>>(cov: Mat3, eigenvalues: V) -> [Vec3; 3] {
     let mut out = [Vec3::ZERO; 3];
     let vs: [f32; 3] = eigenvalues.into();
@@ -75,9 +88,21 @@ pub fn compute_eigenvectors<T: BasicFloat, V: Into<[f32; 3]>>(cov: Mat3, eigenva
         .for_each(|i| {
             let lambda = vs[i as usize];
             let mat = cov - lambda * Mat3::IDENTITY;
-            let mat = Mat3::from_rows(&rref(mat.to_rows_array_2d()));
-            let vector = mat.solve(Vec3::ZERO);
-            out[i as usize] = vector;
+            out[i as usize] = mat.row(0).cross(mat.row(1)).normalize();
+        });
+    out
+}
+
+pub fn compute_eigen(cov: Mat3) -> [EigenVector; 3] {
+    let mut out = [EigenVector::default(); 3];
+    compute_eigenvalues::<f32>(cov).into_iter()
+        .enumerate()
+        .for_each(|(i, v)| {
+            let mat = cov - v * Mat3::IDENTITY;
+            out[i] = EigenVector {
+                eigenvalues: v,
+                eigenvector: mat.row(0).cross(mat.row(1)).normalize()
+            };
         });
     out
 }
@@ -111,9 +136,14 @@ fn test_eigenvectors() {
         Vec3::new(3., 1., 3.)
     );
     
-    let eigenvalues = compute_eigenvalues::<f32>(cov);
-    let eigenvectors = compute_eigenvectors::<f32, [f32; 3]>(cov, eigenvalues);
+    let eigenvectors = compute_eigen(cov);
     println!("{:?}", eigenvectors[0]);
     println!("{:?}", eigenvectors[1]);
     println!("{:?}", eigenvectors[2]);
+
+    use nalgebra::Matrix3;
+    let mat = Matrix3::<f32>::new(1., 3., 3., 2., 2., 1., 3., 1., 3.);
+    let solve = mat.symmetric_eigen();
+    println!("Eigen values: {}", solve.eigenvalues);
+    println!("Eigen vector: {}", solve.eigenvectors);
 }
