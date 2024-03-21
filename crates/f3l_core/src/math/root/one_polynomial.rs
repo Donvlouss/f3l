@@ -147,7 +147,11 @@ fn test_root3_by_eigenvalues() {
         Vec3::new(-factor[2], -factor[1], -factor[0])
     );
 
-    let answer = crate::round_slice_n([-3.732050807568877, -0.26794919243112064, 4f32], 4);
-    let target = crate::round_slice_n(compute_eigenvalues::<f32>(mat), 4);
+    let mut answer = crate::round_slice_n([-3.732050807568877, -0.26794919243112064, 4f32], 4);
+    let mut target = crate::round_slice_n(compute_eigenvalues::<f32>(mat), 4);
+    
+    answer.sort_by(|&a, b| a.partial_cmp(b).unwrap());
+    target.sort_by(|&a, b| a.partial_cmp(b).unwrap());
+
     assert_eq!(answer, target);
 }

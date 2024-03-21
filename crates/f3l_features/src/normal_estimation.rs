@@ -1,11 +1,7 @@
-use std::{ops::Index, process::Output};
+use std::ops::Index;
 
-use super::Eigenvectors3;
 use f3l_core::{
-    BasicFloat,
-    glam::Vec3,
-    matrix3x3::*,
-    rayon::prelude::*,
+    glam::Vec3, matrix3x3::*, rayon::prelude::*, BasicFloat
 };
 use f3l_search_tree::*;
 
@@ -14,15 +10,11 @@ where
     P:Into<[T; D]> + Clone + Copy,
     [T; D]: Into<P>
 {
-    pub radius: T,
+    pub method: SearchBy,
+    fast: bool,
     data: Option<&'a Vec<P>>,
     tree: KdTree<T, D>,
-    normals: Vec<Vec3>
-}
-
-fn ortho(v: Vec3) {
-    let mut out = Vec3::ZERO;
-
+    normals: Vec<Option<Vec3>>,
 }
 
 impl<'a, P, T:BasicFloat, const D: usize> NormalEstimation<'a, P, T, D>
@@ -30,17 +22,26 @@ where
     P:Into<[T; D]> + Clone + Copy + Send + Sync + Index<usize, Output=T>,
     [T; D]: Into<P>
 {
-    pub fn new(radius: T) -> Self {
+    pub fn new(method: SearchBy) -> Self {
         Self {
-            radius,
+            method,
+            fast: true,
             data: None,
             tree: KdTree::<T, D>::new(),
-            normals: vec![]
+            normals: vec![],
         }
     }
 
-    pub fn with_data(radius: T, data: &'a Vec<P>) -> Self {
-        let mut entity = Self::new(radius);
+    pub fn fast(&self) -> bool {
+        self.fast
+    }
+
+    pub fn set_fast(&mut self, use_fast: bool) {
+        self.fast = use_fast;
+    }
+
+    pub fn with_data(method: SearchBy, data: &'a Vec<P>) -> Self {
+        let mut entity = Self::new(method);
         entity.set_data(data);
         entity
     }
@@ -50,7 +51,7 @@ where
         self.tree.set_data(data);
     }
 
-    pub fn normals(&self) -> Vec<Vec3> {
+    pub fn normals(&self) -> Vec<Option<Vec3>> {
         self.normals.clone()
     }
 
@@ -60,35 +61,36 @@ where
         }
         self.tree.build();
         let data = self.data.unwrap();
-        let radius = self.radius.to_f32().unwrap();
         
         let normals = (0..data.len())
-            // .into_par_iter()
-            .into_iter()
+            .into_par_iter()
             .map(|i| {
-                let cloud = self.tree.search_radius(&data[i], radius);
+                let cloud = match self.method {
+                    SearchBy::Count(k) => 
+                        self.tree.search_knn(&data[i], k)
+                            .iter().map(|&(p, _)| p).collect(),
+                    SearchBy::Radius(r) => self.tree.search_radius(&data[i], r),
+                };
+
+                if cloud.len() == 1 {
+                    return (i, None);
+                }
                 let cov = compute_covariance_matrix(&cloud);
 
-                let max_v = cov.to_cols_array().iter().max_by(|&&a, &b| a.partial_cmp(b).unwrap()).unwrap().to_owned();
-                let mat = 1. / max_v * cov;
-
-                let eigenvalues = compute_eigenvalues::<f32>(mat);
-
-                let eigenvector =
-                    if eigenvalues[1] - eigenvalues[0] > f32::EPSILON {
-                        compute_eigenvector(mat, eigenvalues[0])
-                    } else if eigenvalues[2] - eigenvalues[0] > f32::EPSILON {
-                        compute_eigenvector(mat, eigenvalues[0]).any_orthonormal_vector()
-                    } else {
-                        Vec3::Z
-                    };
-
+                let eigen_set = if self.fast {
+                    compute_eigen(cov)
+                } else {
+                    compute_eigen_rigorous(cov)
+                };
+                let eigenvector: Option<Vec3> = Some(eigen_set.minimal().eigenvector.into());
 
                 (i, eigenvector)
             }).collect::<Vec<_>>();
-        self.normals = vec![Vec3::ZERO; data.len()];
+        self.normals = vec![None; data.len()];
         normals.into_iter()
-            .for_each(|(i, n)| self.normals[i]=n);
+            .for_each(|(i, n)| {
+                self.normals[i]=n;
+            });
         true
     }
 

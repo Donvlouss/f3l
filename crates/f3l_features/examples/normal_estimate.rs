@@ -46,6 +46,7 @@ pub fn load_ply(path: &str) -> Vec<Vec3> {
 
 #[cfg(feature = "app_kiss3d")]
 fn main() {
+    use f3l_search_tree::SearchBy;
     use kiss3d::nalgebra::{Point3, Vector3};
 
     println!("Using Kiss3d app");
@@ -54,19 +55,22 @@ fn main() {
 
     window.set_light(Light::StickToCamera);
     window.set_point_size(10.0); // (Not supported by all graphic drivers)
-    // let vertices = load_ply("../../data/table_voxel_down.ply");
+
     let vertices = load_ply("../../data/table_voxel_down.ply");
-    let mut estimator = NormalEstimation::with_data(0.01f32, &vertices);
+    let normal_len = 0.02f32;
+
+    // Use radius or knn to search neighbors
+    // let mut estimator = NormalEstimation::with_data(SearchBy::Radius(0.08f32), &vertices);
+    let mut estimator = NormalEstimation::with_data(SearchBy::Count(10), &vertices);
+
     if !estimator.compute() {
         println!("Compute Normal Failed. Exit...");
         return;
     }
     let normals = estimator.normals();
-    let normal_len = 0.05f32;
 
     let color_v = Point3::new(1.0, 1.0, 1.0);
-    let color_start = Point3::new(1.0, 0.0, 0.0);
-    let color_end = Point3::new(0.0, 1.0, 0.0);
+    let color_n = Point3::new(0.0, 1.0, 1.0);
 
     let o = Point3::<f32>::origin();
     let x = Point3::<f32>::new(1., 0., 0.);
@@ -82,13 +86,15 @@ fn main() {
         window.draw_line(&o, &z, &zc);
 
         vertices.iter().zip(&normals)
-            .for_each(|(v,n)| {
+            .enumerate()
+            .for_each(|(_,(v, n))| {
                 let p = Point3::new(v[0], v[1], v[2]);
                 window.draw_point(&p, &color_v);
-                let p1 = p + Vector3::new(n[0], n[1], n[2]) * normal_len;
-                let p2 = p1 + Vector3::new(n[0], n[1], n[2]) * normal_len;
-                window.draw_line(&p, &p1, &color_start);
-                window.draw_line(&p1, &p2, &color_end);
+                if let Some(n) = n {
+                    let dir = if n[1] < 0f32 { -1f32 } else { 1. } ;
+                    let p1 = p + Vector3::new(n[0], n[1], n[2]) * normal_len * dir;
+                    window.draw_line(&p, &p1, &color_n);
+                };
             });
     }
 }
