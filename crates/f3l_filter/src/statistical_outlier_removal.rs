@@ -3,7 +3,7 @@ use f3l_search_tree::{
     KdTree,
     TreeSearch
 };
-use rayon::prelude::*;
+use f3l_core::rayon::prelude::*;
 use crate::F3lFilter;
 
 

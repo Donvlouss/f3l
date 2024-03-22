@@ -93,7 +93,7 @@ where
             return false;
         };
         
-        use rayon::prelude::*;
+        use f3l_core::rayon::prelude::*;
         self.inliers = data
             .par_iter()
             .enumerate()

@@ -67,7 +67,7 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
         let mut data_l = indices[..index].to_owned();
         let mut data_r = indices[index..].to_owned();
 
-        rayon::scope(|s| {
+        f3l_core::rayon::scope(|s| {
             s.spawn(|_| {
                 node.left = Some(self.build_recursive(&mut data_l));
             });

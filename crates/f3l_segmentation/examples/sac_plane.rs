@@ -13,8 +13,8 @@ fn main() {
     println!("Add --features=app_kiss3d")
 }
 
-mod util;
-use util::load_ply;
+mod segmentation_util;
+use segmentation_util::load_ply;
 
 #[cfg(feature = "app_kiss3d")]
 fn main() {
