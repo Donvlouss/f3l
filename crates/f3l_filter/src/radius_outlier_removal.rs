@@ -102,11 +102,11 @@ where
 
         self.inlier.resize(data.len(), false);
         let inlier = data
-                        .par_iter()
+            .par_iter()
             .enumerate()
             .map(|(i, p)| {
                 let mut result = TreeRadiusResult::with_capacity(r, capacity)
-                    .set_to_maximum_size(self.threshold);
+                    .set_to_maximum_size(th);
                 self.tree.search(*p, by, &mut result);
                 (i, result.data.len() >= th)
             })

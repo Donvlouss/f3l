@@ -85,13 +85,14 @@ fn main() {
 
     let parameter = F3lClusterParameter {
         tolerance: 0.02f32,
-        nb_in_tolerance: 1,
+        nb_in_tolerance: 20,
         min_nb_data: 100,
-        max_nb_data: 25000,
+        max_nb_data: vertices.len(),
         max_nb_cluster: 5,
     };
-    let mut extractor = EuclideanClusterExtractor::with_data(parameter, &vertices);
+    let mut extractor = DBScan::with_data(parameter, &vertices);
     let clusters = extractor.extract();
+
     let colors = (0..clusters.len())
         .map(|_| random_color())
         .collect::<Vec<_>>();

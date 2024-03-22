@@ -123,10 +123,10 @@ mod filter {
         #[test]
         fn table_radius_removal() {
             use std::path::Path;
-            if !Path::new("data/Itable_scene_lms400.ply").exists() {
+            if !Path::new("../../data/table_scene_lms400.ply").exists() {
                 return;
             }
-            let vertices = load_ply("data/Itable_scene_lms400.ply");
+            let vertices = load_ply("../../data/table_scene_lms400.ply");
             let mut filter = RadiusOutlierRemoval::with_data(0.003f32, 5, &vertices);
             let out = filter.filter_instance();
 
