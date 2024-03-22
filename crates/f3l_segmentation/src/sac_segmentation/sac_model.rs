@@ -26,11 +26,11 @@ pub trait SacModel<'a, P: Copy, T: BasicFloat> {
     const NB_SAMPLE: usize;
     const NB_COEFFICIENTS: usize;
 
-    fn set_data(&mut self, data: &'a Vec<P>);
+    fn set_data(&mut self, data: &'a [P]);
     fn set_coefficient(&mut self, factor: &Self::CoefficientsType);
     fn get_coefficient(&self) -> Self::CoefficientsType;
 
-    fn samples(&self) -> &Vec<P>;
+    fn samples(&self) -> &[P];
     fn data_len(&self) -> usize {
         self.samples().len()
     }
@@ -42,7 +42,7 @@ pub trait SacModel<'a, P: Copy, T: BasicFloat> {
         while set.len() < Self::NB_SAMPLE {
             set.insert(rng.gen_range(0..nb));
         }
-        set.into_iter().map(|v| v).collect()
+        set.into_iter().collect()
     }
     fn get_distance_to_model(&self, coefficients: &Self::CoefficientsType) -> Vec<T> {
         self.samples()

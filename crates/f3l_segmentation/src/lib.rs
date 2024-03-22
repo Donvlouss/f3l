@@ -29,7 +29,7 @@ pub trait F3lCluster<'a, T: BasicFloat, P> {
     fn set_parameter(&mut self, parameter: F3lClusterParameter<T>);
     fn parameter(&self) -> F3lClusterParameter<T>;
 
-    fn set_data(&mut self, data: &'a Vec<P>);
+    fn set_data(&mut self, data: &'a [P]);
     fn clusters(&self) -> usize;
     /// vector of points of cluster nb
     fn extract(&mut self) -> Vec<Vec<usize>>;

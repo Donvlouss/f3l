@@ -10,7 +10,7 @@ where
     pub negative: bool,
     pub multiply: T,
     pub k_neighbors: usize,
-    data: Option<&'a Vec<P>>,
+    data: Option<&'a [P]>,
     tree: KdTree<T, D>,
     inlier: Vec<bool>,
 }
@@ -31,7 +31,7 @@ where
         }
     }
 
-    pub fn with_data(multiply: T, k_neighbors: usize, data: &'a Vec<P>) -> Self {
+    pub fn with_data(multiply: T, k_neighbors: usize, data: &'a [P]) -> Self {
         let mut entity = Self::new(multiply, k_neighbors);
         entity.set_data(data);
         entity
@@ -53,7 +53,7 @@ where
         self.negative = negative;
     }
 
-    fn set_data(&mut self, data: &'a Vec<P>) {
+    fn set_data(&mut self, data: &'a [P]) {
         self.data = Some(data);
         self.tree.set_data(data);
     }

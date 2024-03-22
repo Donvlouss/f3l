@@ -37,7 +37,7 @@ where
     pub fn compute(cloud: &[P]) -> Self {
         assert!(D <= 3);
 
-        let (cov, _) = compute_covariance_matrix(&cloud);
+        let (cov, _) = compute_covariance_matrix(cloud);
 
         let eigen = EigenSet(jacobi_eigen_square_n(cov));
 

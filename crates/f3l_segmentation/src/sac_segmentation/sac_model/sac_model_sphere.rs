@@ -11,7 +11,7 @@ where
     /// - center
     /// - radius
     pub coefficients: ([T; 3], T),
-    data: Option<&'a Vec<P>>,
+    data: Option<&'a [P]>,
     _value_type: PhantomData<T>,
 }
 
@@ -23,15 +23,15 @@ where
         Self {
             coefficients: ([T::zero(); 3], T::zero()),
             data: None,
-            _value_type: PhantomData::default(),
+            _value_type: PhantomData,
         }
     }
 
-    pub fn with_data(data: &'a Vec<P>) -> Self {
+    pub fn with_data(data: &'a [P]) -> Self {
         Self {
             coefficients: ([T::zero(); 3], T::zero()),
             data: Some(data),
-            _value_type: PhantomData::default(),
+            _value_type: PhantomData,
         }
     }
 }
@@ -53,7 +53,7 @@ where
         (p.distance_between(&coefficients.0) - coefficients.1).abs()
     }
 
-    fn set_data(&mut self, data: &'a Vec<P>) {
+    fn set_data(&mut self, data: &'a [P]) {
         self.data = Some(data);
     }
 
@@ -65,7 +65,7 @@ where
         self.coefficients
     }
 
-    fn samples(&self) -> &Vec<P> {
+    fn samples(&self) -> &[P] {
         self.data.unwrap()
     }
 

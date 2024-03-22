@@ -37,7 +37,7 @@ where
     fn normalize(&mut self) {
         let d = T::one() / self.len();
         (0..D).for_each(|i| {
-            self[i] = self[i] * d;
+            self[i] *= d;
         })
     }
     #[inline]

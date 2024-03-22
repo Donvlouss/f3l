@@ -8,7 +8,7 @@ where
     P: Into<[T; 3]> + Clone + Copy,
 {
     pub coefficients: [T; 4],
-    data: Option<&'a Vec<P>>,
+    data: Option<&'a [P]>,
     _value_type: PhantomData<T>,
 }
 
@@ -20,7 +20,7 @@ where
         Self {
             coefficients: [T::zero(); 4],
             data: None,
-            _value_type: PhantomData::default(),
+            _value_type: PhantomData,
         }
     }
 
@@ -28,7 +28,7 @@ where
         Self {
             coefficients: [T::zero(); 4],
             data: Some(data),
-            _value_type: PhantomData::default(),
+            _value_type: PhantomData,
         }
     }
 }
@@ -51,12 +51,12 @@ where
         (p.dot(coefficients)).abs()
     }
 
-    fn set_data(&mut self, data: &'a Vec<P>) {
+    fn set_data(&mut self, data: &'a [P]) {
         self.data = Some(data);
     }
 
     fn set_coefficient(&mut self, factor: &Self::CoefficientsType) {
-        self.coefficients = (*factor).into();
+        self.coefficients = *factor;
     }
 
     fn get_coefficient(&self) -> Self::CoefficientsType {
@@ -68,7 +68,7 @@ where
         ]
     }
 
-    fn samples(&self) -> &Vec<P> {
+    fn samples(&self) -> &[P] {
         self.data.unwrap()
     }
 

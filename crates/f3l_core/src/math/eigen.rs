@@ -109,7 +109,7 @@ impl<T: BasicFloat, const D: usize, const N: usize> EigenSet<T, D, N> {
     pub fn largest(&self) -> Eigen<T, D> {
         self.iter()
             .max_by(|a, b| Self::compare(a, b).unwrap())
-            .map(|entry| *entry)
+            .copied()
             .unwrap()
     }
 
@@ -124,7 +124,7 @@ impl<T: BasicFloat, const D: usize, const N: usize> EigenSet<T, D, N> {
     pub fn minimal(&self) -> Eigen<T, D> {
         self.iter()
             .min_by(|a, b| Self::compare(a, b).unwrap())
-            .map(|entry| *entry)
+            .copied()
             .unwrap()
     }
 }

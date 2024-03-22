@@ -11,7 +11,7 @@ where
     /// - Point on Line
     /// - Direction
     pub coefficients: ([T; 3], [T; 3]),
-    data: Option<&'a Vec<P>>,
+    data: Option<&'a [P]>,
     _value_type: PhantomData<T>,
 }
 
@@ -23,7 +23,7 @@ where
         Self {
             coefficients: ([T::zero(); 3], [T::zero(); 3]),
             data: None,
-            _value_type: PhantomData::default(),
+            _value_type: PhantomData,
         }
     }
 
@@ -31,7 +31,7 @@ where
         Self {
             coefficients: ([T::zero(); 3], [T::zero(); 3]),
             data: Some(data),
-            _value_type: PhantomData::default(),
+            _value_type: PhantomData,
         }
     }
 }
@@ -58,13 +58,13 @@ where
     /// distance = ||PDir x Dir|| / ||Dir||, let ||Dir|| = 1, then distance = ||PDir x Dir||
     fn compute_point_to_model(p: P, coefficients: &Self::CoefficientsType) -> T {
         let (p0, (p1, dir)): ([T; 3], ([T; 3], [T; 3])) =
-            (p.into(), (coefficients.0.into(), coefficients.1.into()));
+            (p.into(), (coefficients.0, coefficients.1));
         let p_dir = [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]];
         let dir = dir.normalized();
         p_dir.cross(&dir).len()
     }
 
-    fn set_data(&mut self, data: &'a Vec<P>) {
+    fn set_data(&mut self, data: &'a [P]) {
         self.data = Some(data);
     }
 
@@ -73,10 +73,10 @@ where
     }
 
     fn get_coefficient(&self) -> Self::CoefficientsType {
-        (self.coefficients.0.into(), self.coefficients.1.into())
+        (self.coefficients.0, self.coefficients.1)
     }
 
-    fn samples(&self) -> &Vec<P> {
+    fn samples(&self) -> &[P] {
         self.data.unwrap()
     }
 
@@ -97,6 +97,6 @@ where
             return Err("Data corrupted".to_owned());
         };
         let dir = [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]].normalized();
-        Ok((p0.into(), dir.into()))
+        Ok((p0, dir))
     }
 }

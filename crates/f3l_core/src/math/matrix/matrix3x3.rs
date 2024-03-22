@@ -89,7 +89,7 @@ pub fn compute_eigenvectors<T: BasicFloat, V: Into<[f32; 3]>>(
     let mut out = [Vec3::ZERO; 3];
     let vs: [f32; 3] = eigenvalues.into();
     (0..3).for_each(|i| {
-        let lambda = vs[i as usize];
+        let lambda = vs[i];
         out[i] = compute_eigenvector(cov, lambda);
     });
     out
@@ -146,15 +146,15 @@ pub fn compute_eigen_rigorous(cov: Mat3) -> EigenSet<f32, 3, 3> {
     eigenvalues.sort_by(|&a, b| a.abs().partial_cmp(&b.abs()).unwrap());
 
     let mut eigenvectors = Mat3::IDENTITY;
-    if (eigenvalues[2] - eigenvalues[0]) < f32::EPSILON {
+    if (eigenvalues[2] - eigenvalues[0]).abs() < f32::EPSILON {
         // all equal
-    } else if (eigenvalues[1] - eigenvalues[0]) < f32::EPSILON {
+    } else if (eigenvalues[1] - eigenvalues[0]).abs() < f32::EPSILON {
         // first and second equal
         eigenvectors.z_axis = compute_eigenvector(mat, eigenvalues[2]);
         // eigenvectors.y_axis = eigenvectors.z_axis.any_orthonormal_vector();
         eigenvectors.y_axis = unit_orthogonal(eigenvectors.z_axis);
         eigenvectors.x_axis = eigenvectors.y_axis.cross(eigenvectors.z_axis);
-    } else if (eigenvalues[2] - eigenvalues[1]) < f32::EPSILON {
+    } else if (eigenvalues[2] - eigenvalues[1]).abs() < f32::EPSILON {
         // second and third equal
         eigenvectors.z_axis = compute_eigenvector(mat, eigenvalues[0]);
         // eigenvectors.y_axis = eigenvectors.z_axis.any_orthonormal_vector();

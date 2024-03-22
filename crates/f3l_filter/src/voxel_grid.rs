@@ -26,8 +26,18 @@ where
 {
     pub leaf: [T; D],
     pub parameter: VoxelGridParameter<T, D>,
-    data: Option<&'a Vec<P>>,
+    data: Option<&'a [P]>,
     voxel_map: HashMap<usize, Vec<usize>>,
+}
+
+impl<'a, P, T: BasicFloat, const D: usize> Default for VoxelGrid<'a, P, T, D>
+where
+    P: Into<[T; D]> + Clone + Copy,
+    [T; D]: Into<P>,
+{
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<'a, P, T: BasicFloat, const D: usize> VoxelGrid<'a, P, T, D>
@@ -117,7 +127,7 @@ where
 {
     fn set_negative(&mut self, _negative: bool) {}
 
-    fn set_data(&mut self, data: &'a Vec<P>) {
+    fn set_data(&mut self, data: &'a [P]) {
         self.data = Some(data)
     }
 
@@ -127,7 +137,7 @@ where
         }
 
         let keys = self.voxel_map.keys();
-        keys.into_iter().copied().map(|k| k).collect()
+        keys.into_iter().copied().collect()
     }
 
     fn filter_instance(&mut self) -> Vec<P> {

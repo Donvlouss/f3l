@@ -1,5 +1,3 @@
-use std::mem::take;
-
 use f3l_core::{rayon::iter::FromParallelIterator, BasicFloat};
 use f3l_search_tree::{KdTree, SearchBy, TreeRadiusResult, TreeResult};
 
@@ -11,7 +9,7 @@ where
     P: Into<[T; D]> + Clone + Copy,
 {
     pub parameter: F3lClusterParameter<T>,
-    data: Option<&'a Vec<P>>,
+    data: Option<&'a [P]>,
     tree: KdTree<T, D>,
     clusters: Vec<Vec<usize>>,
 }
@@ -31,7 +29,7 @@ where
         }
     }
 
-    pub fn with_data(parameter: F3lClusterParameter<T>, data: &'a Vec<P>) -> Self {
+    pub fn with_data(parameter: F3lClusterParameter<T>, data: &'a [P]) -> Self {
         let mut entity = Self::new(parameter);
         entity.set_data(data);
         entity
@@ -52,7 +50,7 @@ where
         self.parameter
     }
 
-    fn set_data(&mut self, data: &'a Vec<P>) {
+    fn set_data(&mut self, data: &'a [P]) {
         self.data = Some(data);
         self.tree.set_data(data);
     }

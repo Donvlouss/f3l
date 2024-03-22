@@ -31,7 +31,7 @@ where
         (0..R).filter(|&i| i != r).for_each(|i| {
             let lv = matrix[i][lead];
             (0..C).for_each(|ii| {
-                matrix[i][ii] = matrix[i][ii] - lv * matrix[r][ii];
+                matrix[i][ii] -= lv * matrix[r][ii];
             });
         });
         lead += 1;

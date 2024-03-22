@@ -10,7 +10,7 @@ where
     pub negative: bool,
     pub dim: usize,
     pub bound: Option<Range<Bound<T>>>,
-    data: Option<&'a Vec<P>>,
+    data: Option<&'a [P]>,
     inliers: Vec<usize>,
 }
 
@@ -58,7 +58,7 @@ where
         self.negative = negative;
     }
 
-    fn set_data(&mut self, data: &'a Vec<P>) {
+    fn set_data(&mut self, data: &'a [P]) {
         self.data = Some(data);
     }
 
@@ -112,8 +112,6 @@ where
                     Bound::Unbounded => true,
                 };
                 if !self.negative && (b_start && b_end) {
-                    Some(i)
-                } else if self.negative && !(b_start && b_end) {
                     Some(i)
                 } else {
                     None

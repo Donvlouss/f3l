@@ -11,7 +11,7 @@ where
     /// - Point on Line
     /// - Direction
     pub coefficients: ([T; 3], [T; 3], T),
-    data: Option<&'a Vec<P>>,
+    data: Option<&'a [P]>,
     _value_type: PhantomData<T>,
 }
 
@@ -23,7 +23,7 @@ where
         Self {
             coefficients: ([T::zero(); 3], [T::zero(); 3], T::zero()),
             data: None,
-            _value_type: PhantomData::default(),
+            _value_type: PhantomData,
         }
     }
 
@@ -31,7 +31,7 @@ where
         Self {
             coefficients: ([T::zero(); 3], [T::zero(); 3], T::zero()),
             data: Some(data),
-            _value_type: PhantomData::default(),
+            _value_type: PhantomData,
         }
     }
 }
@@ -75,7 +75,7 @@ where
         apply_both(&p, &p_to_circle, std::ops::Sub::sub).len()
     }
 
-    fn set_data(&mut self, data: &'a Vec<P>) {
+    fn set_data(&mut self, data: &'a [P]) {
         self.data = Some(data);
     }
 
@@ -87,7 +87,7 @@ where
         self.coefficients
     }
 
-    fn samples(&self) -> &Vec<P> {
+    fn samples(&self) -> &[P] {
         self.data.unwrap()
     }
 
@@ -126,7 +126,7 @@ where
 
         let radius = apply_both(&pc, &p1, std::ops::Sub::sub).len();
 
-        Ok((pc.into(), normal.normalized().into(), radius))
+        Ok((pc, normal.normalized(), radius))
     }
 
     fn get_distance_to_model(&self, coefficients: &Self::CoefficientsType) -> Vec<T> {

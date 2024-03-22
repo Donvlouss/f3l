@@ -107,7 +107,7 @@ mod kd_tree {
             #[test]
             fn query_nearest_knn_1d() {
                 let mut tree = KdTree::<f32, 1>::new();
-                tree.set_data(&(0..10).map(|i| [i as f32]).collect());
+                tree.set_data(&(0..10).map(|i| [i as f32]).collect::<Vec<_>>());
                 tree.build();
                 let result = tree.search_knn(&[5.1f32], 1);
                 let nearest_data = result[0].0[0];
@@ -120,7 +120,7 @@ mod kd_tree {
             #[test]
             fn query_knn_4_1d() {
                 let mut tree = KdTree::<f32, 1>::new();
-                tree.set_data(&(0..10).map(|i| [i as f32]).collect());
+                tree.set_data(&(0..10).map(|i| [i as f32]).collect::<Vec<_>>());
                 tree.build();
                 // range: 3.1 to 7.1
                 let result = tree.search_knn(&[5.1f32], 4);
@@ -135,7 +135,7 @@ mod kd_tree {
             #[test]
             fn query_radius_2_1d() {
                 let mut tree = KdTree::<f32, 1>::new();
-                tree.set_data(&(0..10).map(|i| [i as f32]).collect());
+                tree.set_data(&(0..10).map(|i| [i as f32]).collect::<Vec<_>>());
                 tree.build();
                 // range: 3.1 to 7.1
                 let result = tree.search_radius(&[5.1f32], 2f32);
@@ -161,7 +161,7 @@ mod kd_tree {
                                 .map(|x| Vec2::new(x as f32, y as f32))
                                 .collect::<Vec<_>>()
                         })
-                        .collect(),
+                        .collect::<Vec<_>>(),
                 );
                 tree.build();
                 let target = Vec2::new(5.1, 5.1);
@@ -195,7 +195,7 @@ mod kd_tree {
                                 })
                                 .collect::<Vec<_>>()
                         })
-                        .collect(),
+                        .collect::<Vec<_>>(),
                 );
                 tree.build();
 

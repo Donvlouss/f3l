@@ -3,13 +3,15 @@ use std::ops::{Bound, Range};
 use super::F3lFilter;
 use f3l_core::BasicFloat;
 
+type DirectionRange<T> = Vec<(usize, Range<Bound<T>>)>;
+
 pub struct ConditionRemoval<'a, P, T: BasicFloat, const D: usize>
 where
     P: Into<[T; D]> + Clone + Copy,
 {
     pub negative: bool,
-    pub bound: Option<&'a Vec<(usize, Range<Bound<T>>)>>,
-    data: Option<&'a Vec<P>>,
+    pub bound: Option<&'a DirectionRange<T>>,
+    data: Option<&'a [P]>,
     inliers: Vec<usize>,
 }
 
@@ -32,7 +34,7 @@ where
     P: Into<[T; D]> + Clone + Copy,
 {
     // pub fn with_data(data: &'a Vec<P>, bound: &'a Vec<(usize, Bound<T>, Bound<T>)>) -> Self {
-    pub fn with_data(data: &'a Vec<P>, bound: &'a Vec<(usize, Range<Bound<T>>)>) -> Self {
+    pub fn with_data(data: &'a Vec<P>, bound: &'a DirectionRange<T>) -> Self {
         Self {
             negative: false,
             bound: Some(bound),
@@ -41,7 +43,7 @@ where
         }
     }
 
-    pub fn set_parameter(&mut self, bound: &'a Vec<(usize, Range<Bound<T>>)>) {
+    pub fn set_parameter(&mut self, bound: &'a DirectionRange<T>) {
         self.bound = Some(bound);
     }
 }
@@ -55,7 +57,7 @@ where
         self.negative = negative;
     }
 
-    fn set_data(&mut self, data: &'a Vec<P>) {
+    fn set_data(&mut self, data: &'a [P]) {
         self.data = Some(data);
     }
 
@@ -108,11 +110,8 @@ where
                     };
                     if !self.negative && (b_start && b_end) {
                         ok &= true;
-                    } else if self.negative && !(b_start && b_end) {
-                        ok &= true;
                     } else {
                         ok = false;
-                        return;
                     }
                 });
                 if ok {

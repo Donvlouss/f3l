@@ -23,7 +23,7 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
         }
     }
 
-    pub fn set_data<P>(&mut self, data: &Vec<P>)
+    pub fn set_data<P>(&mut self, data: &[P])
     where
         P: Into<[T; D]> + Clone + Copy,
     {
@@ -157,11 +157,11 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
             return;
         }
         if let Some(root) = &self.root {
-            self.search_(result, &root, &data, by, 0.0, &mut search_queue);
+            self.search_(result, root, &data, by, 0.0, &mut search_queue);
 
             // Use Binary Heap to search the minimal node first
             while let Some(Reverse(node)) = search_queue.pop() {
-                self.search_(result, &node.raw, &data, by, node.order, &mut search_queue);
+                self.search_(result, node.raw, &data, by, node.order, &mut search_queue);
             }
         };
     }
@@ -169,11 +169,11 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
     fn search_<'a, R: TreeResult, P>(
         &self,
         result: &mut R,
-        node: &'a Box<KdLeaf>,
+        node: &'a KdLeaf,
         data: &P,
         by: SearchBy,
         min_dist: f32,
-        queue: &mut BinaryHeap<Reverse<TreeHeapElement<&'a Box<KdLeaf>, f32>>>,
+        queue: &mut BinaryHeap<Reverse<TreeHeapElement<&'a KdLeaf, f32>>>,
     ) where
         P: Into<[T; D]> + Clone + Copy,
     {
@@ -217,7 +217,7 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
             };
             if add_far {
                 queue.push(Reverse(TreeHeapElement {
-                    raw: &far,
+                    raw: far,
                     order: min_dist + (d * d).to_f32().unwrap(),
                 }));
             }
