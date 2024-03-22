@@ -74,7 +74,7 @@ pub fn random_color() -> [f32; 3] {
 
 #[cfg(feature = "app_kiss3d")]
 fn main() {
-    use f3l_core::{jacobi_eigen_square_n, matrix3x3::compute_covariance_matrix, ArrayRowMajor};
+    use f3l_core::{jacobi_eigen_square_n, compute_covariance_matrix};
     use f3l_search_tree::*;
     use rand::Rng;
     use kiss3d::nalgebra::Point3;
@@ -94,15 +94,13 @@ fn main() {
     tree.build();
 
     let search_range = 0.08f32;
-    let nb_sample = 100_usize;
+    let nb_sample = 10_usize;
     let mut rng = rand::thread_rng();
 
     let mut seeds = std::collections::BTreeSet::<usize>::new();
     while seeds.len() < nb_sample {
         let id = rng.gen_range(0..vertices.len());
-        if seeds.contains(&id)
-            || seeds.iter().any(|&v| vertices[v].distance(vertices[id]) < search_range * 2.2)
-        {
+        if seeds.contains(&id) {
             continue;
         }
         seeds.insert(id);
@@ -125,8 +123,8 @@ fn main() {
     let normals = samples.iter().zip(&seeds)
         .map(|(cluster, &seed)| {
             let cov = compute_covariance_matrix(cluster);
-            let mat = cov.to_rows_array_2d();
-            let eigen = jacobi_eigen_square_n(mat);
+            // let mat = cov.to_rows_array_2d();
+            let eigen = jacobi_eigen_square_n(cov.0);
             (
                 Point3::new(
                     vertices[seed].x,
