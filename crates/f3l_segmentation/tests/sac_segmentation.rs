@@ -52,10 +52,10 @@ mod sac_segmentation {
         #[test]
         fn sac_plane() {
             use std::path::Path;
-            if !Path::new("data/table_voxel_down.ply").exists() {
+            if !Path::new("../../data/table_voxel_down.ply").exists() {
                 return;
             }
-            let vertices = load_ply("data/table_voxel_down.ply");
+            let vertices = load_ply("../../data/table_voxel_down.ply");
             let parameter = SacAlgorithmParameter {
                 probability: 0.99, 
                 threshold: 0.02, 

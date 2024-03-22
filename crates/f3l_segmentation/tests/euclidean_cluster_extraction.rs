@@ -65,10 +65,10 @@ mod segmentation {
         #[test]
         fn test_euclidean_cluster_3d() {
             use std::path::Path;
-            if !Path::new("data/table_remove_plane.ply").exists() {
+            if !Path::new("../../data/table_remove_plane.ply").exists() {
                 return;
             }
-            let vertices = load_ply("data/table_remove_plane.ply");
+            let vertices = load_ply("../../data/table_remove_plane.ply");
             let parameter = F3lClusterParameter {
                 tolerance: 0.02f32,
                 nb_in_tolerance: 1,
