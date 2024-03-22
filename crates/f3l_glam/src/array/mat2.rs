@@ -100,3 +100,14 @@ impl super::ArrayRowMajor for glam::Mat2
         slice[3] = self.y_axis.y;
     }
 }
+
+impl super::ArrayDimensions for glam::Mat2 {
+    fn nb_cols() -> usize {
+        2
+    }
+
+    fn nb_rows() -> usize {
+        2
+    }
+}
+impl super::GenericArray for glam::Mat2 {}

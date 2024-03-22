@@ -86,3 +86,14 @@ impl super::ArrayRowMajor for glam::Vec2 {
         self.write_to_slice(slice)
     }
 }
+
+impl super::ArrayDimensions for glam::Vec2 {
+    fn nb_cols() -> usize {
+        2
+    }
+
+    fn nb_rows() -> usize {
+        1
+    }
+}
+impl super::GenericArray for glam::Vec2 {}

@@ -87,3 +87,14 @@ impl super::ArrayRowMajor for glam::Vec3A {
         self.write_to_slice(slice)
     }
 }
+
+impl super::ArrayDimensions for glam::Vec3A {
+    fn nb_cols() -> usize {
+        3
+    }
+
+    fn nb_rows() -> usize {
+        1
+    }
+}
+impl super::GenericArray for glam::Vec3A {}

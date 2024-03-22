@@ -124,3 +124,14 @@ impl super::ArrayRowMajor for glam::Mat4
         slice[8] = self.z_axis.z;
     }
 }
+
+impl super::ArrayDimensions for glam::Mat4 {
+    fn nb_cols() -> usize {
+        4
+    }
+
+    fn nb_rows() -> usize {
+        4
+    }
+}
+impl super::GenericArray for glam::Mat4 {}

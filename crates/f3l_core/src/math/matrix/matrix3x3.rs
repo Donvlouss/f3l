@@ -1,50 +1,19 @@
 use std::ops::Index;
 
-use f3l_glam::F3lMatrix;
+use f3l_glam::ArrayRowMajor;
 use nalgebra::ComplexField;
-use crate::{apply_each, Eigen, EigenSet};
+use crate::{Eigen, EigenSet};
 use crate::glam::{Mat3, Vec3};
 
 use crate::{one_polynomial::{root2, root3}, BasicFloat};
+use super::compute_covariance_matrix;
 
-
-pub fn compute_covariance_matrix<P, T: BasicFloat>(points: &[P]) -> Mat3
+pub fn compute_eigenvalues_by_points<P>(points: &[P]) -> [f32; 3]
 where
-    P: Index<usize, Output = T> + Copy
-{
-    let means = points.iter()
-        .fold([T::zero(); 3], |acc, p| {
-            [
-                acc[0] + p[0],
-                acc[1] + p[1],
-                acc[2] + p[2],
-            ]
-        });
-    let means = apply_each(&means, T::one() / T::from(points.len()).unwrap(), std::ops::Mul::mul);
-    let mut cov = [[T::zero(); 3]; 3];
-    points.iter().for_each(|p| {
-        let xp = (0..3).map(|i| p[i] - means[i]).collect::<Vec<T>>();
-        (0..3).for_each(|i| {
-            cov[0][i] += xp[0] * xp[i];
-            cov[1][i] += xp[1] * xp[i];
-            cov[2][i] += xp[2] * xp[i];
-        });
-    });
-    let mut out = Mat3::ZERO;
-    (0..3).for_each(|r|{
-        (0..3).for_each(|c| {
-            out.set_element((r, c), cov[r][c].to_f32().unwrap() / (points.len() as f32));
-        });
-    });
-    out
-}
-
-pub fn compute_eigenvalues_by_points<P, T: BasicFloat>(points: &[P]) -> [T; 3]
-where
-    P: Index<usize, Output = T> + Copy
+    P: Index<usize, Output = f32> + Copy + Into<[f32; 3]>
 {
     let cov = compute_covariance_matrix(points);
-    compute_eigenvalues(cov)
+    compute_eigenvalues(Mat3::from_rows(&cov.0))
 }
 
 pub fn compute_eigenvalues<T: BasicFloat>(cov: Mat3) -> [T; 3] {
@@ -235,28 +204,4 @@ fn test_eigenvalues() {
         round_slice_n([6.1439, 1.38445, -1.52835f32], 3),
         round_slice_n(eigenvalues, 3)
     );
-}
-
-#[test]
-fn covariance() {
-    use f3l_glam::ArrayRowMajor;
-    let points = vec![
-        Vec3::new(-0.12531, -0.28153, -1.9203),
-        Vec3::new(-0.11903, -0.28154, -1.9204),
-        Vec3::new(-0.10804, -0.282605, -1.9203501),
-        Vec3::new(-0.081356, -0.28155, -1.9205),
-        Vec3::new(-0.068798, -0.28153, -1.9203),
-        Vec3::new(-0.056241, -0.2815, -1.9201),
-        Vec3::new(-0.12217, -0.27958, -1.9207),
-        Vec3::new(-0.11275, -0.2796, -1.9208),
-        Vec3::new(-0.10542667, -0.27833664, -1.921),
-        Vec3::new(-0.076647, -0.27959, -1.9207),
-    ];
-    let target = Mat3::from_rows_slice(&[
-        0.000547356, -0.0000049326613, 0.000002223934,
-        -0.0000049326613, 0.0000016343753, -0.00000029845418,
-        0.000002223934, -0.00000029845418, 0.00000006901876,
-    ]);
-    let cov = compute_covariance_matrix(&points);
-    assert_eq!(target, cov);
 }

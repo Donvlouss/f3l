@@ -1,33 +1,33 @@
 use std::ops::Index;
 
 use f3l_core::{
-    glam::Vec3, matrix3x3::*, rayon::prelude::*, BasicFloat
+    compute_covariance_matrix, glam::Vec3, matrix3x3::*, rayon::prelude::*, BasicFloat, GenericArray
 };
 use f3l_search_tree::*;
 
-pub struct NormalEstimation<'a, P, T: BasicFloat, const D: usize>
+pub struct NormalEstimation<'a, P, T: BasicFloat>
 where
-    P:Into<[T; D]> + Clone + Copy,
-    [T; D]: Into<P>
+    P:Into<[T; 3]> + Clone + Copy,
+    [T; 3]: Into<P>
 {
     pub method: SearchBy,
     fast: bool,
     data: Option<&'a Vec<P>>,
-    tree: KdTree<T, D>,
+    tree: KdTree<T, 3>,
     normals: Vec<Option<Vec3>>,
 }
 
-impl<'a, P, T:BasicFloat, const D: usize> NormalEstimation<'a, P, T, D>
+impl<'a, P, T:BasicFloat> NormalEstimation<'a, P, T>
 where
-    P:Into<[T; D]> + Clone + Copy + Send + Sync + Index<usize, Output=T>,
-    [T; D]: Into<P>
+    P:Into<[T; 3]> + Clone + Copy + Send + Sync + Index<usize, Output=T>,
+    [T; 3]: Into<P>
 {
     pub fn new(method: SearchBy) -> Self {
         Self {
             method,
             fast: true,
             data: None,
-            tree: KdTree::<T, D>::new(),
+            tree: KdTree::<T, 3>::new(),
             normals: vec![],
         }
     }
@@ -76,6 +76,7 @@ where
                     return (i, None);
                 }
                 let cov = compute_covariance_matrix(&cloud);
+                let cov = f3l_core::glam::Mat3::cast_from(cov.0);
 
                 let eigen_set = if self.fast {
                     compute_eigen(cov)

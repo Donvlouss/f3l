@@ -1,6 +1,6 @@
 use crate::traits::BasicFloat;
 
-pub fn get_minmax<P, T:BasicFloat, const D: usize>(cloud: &Vec<P>) -> (P, P)
+pub fn get_minmax<P, T:BasicFloat, const D: usize>(cloud: &[P]) -> (P, P)
 where
     P: Into<[T; D]> + Clone + Copy,
     [T; D]: Into<P>
