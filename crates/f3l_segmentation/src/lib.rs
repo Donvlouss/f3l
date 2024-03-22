@@ -1,6 +1,7 @@
 use f3l_core::BasicFloat;
 
 mod euclidean_cluster_extraction;
+mod db_scan;
 mod sac_segmentation;
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -38,4 +39,5 @@ pub trait F3lCluster<'a, T: BasicFloat, P> {
 }
 
 pub use euclidean_cluster_extraction::EuclideanClusterExtractor;
+pub use db_scan::*;
 pub use sac_segmentation::*;
