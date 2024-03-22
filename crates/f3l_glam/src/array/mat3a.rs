@@ -108,3 +108,14 @@ impl super::ArrayRowMajor for glam::Mat3A
         slice[8] = self.z_axis.z;
     }
 }
+
+impl super::ArrayDimensions for glam::Mat3A {
+    fn nb_cols() -> usize {
+        3
+    }
+
+    fn nb_rows() -> usize {
+        3
+    }
+}
+impl super::GenericArray for glam::Mat3A {}
