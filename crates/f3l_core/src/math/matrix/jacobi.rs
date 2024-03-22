@@ -1,36 +1,40 @@
-use std::ops::{Index, IndexMut};
 use crate::{BasicFloat, Eigen};
+use std::ops::{Index, IndexMut};
 
+const MAX_ROTATION: usize = 20;
 
-const  MAX_ROTATION: usize = 20;
-
-fn jacobi_rotate<T, M, const D: usize>(m: &mut M, i:usize, j: usize, k: usize, l: usize, s: T, tau: T) -> (T, T)
+fn jacobi_rotate<T, M, const D: usize>(
+    m: &mut M,
+    i: usize,
+    j: usize,
+    k: usize,
+    l: usize,
+    s: T,
+    tau: T,
+) -> (T, T)
 where
     T: BasicFloat,
-    M: Into<[[T; D]; D]> + Index<usize, Output = [T; D]> + IndexMut<usize, Output = [T; D]>
+    M: Into<[[T; D]; D]> + Index<usize, Output = [T; D]> + IndexMut<usize, Output = [T; D]>,
 {
     // let mut m = m;
     let g = m[i][j];
     let h = m[k][l];
     m[i][j] = g - s * (h + g * tau);
     m[k][l] = h + s * (g - h * tau);
-    (
-        g, h
-    )
+    (g, h)
 }
 
 /// Ref: vtk/Math/Core/vtkMath/vtkJacobiN
 pub fn jacobi_eigen_square_n<T, M, const D: usize>(mat: M) -> [Eigen<T, D>; D]
 where
     T: BasicFloat,
-    M: Into<[[T; D]; D]> + Index<usize, Output = [T; D]> + IndexMut<usize, Output = [T; D]> + Clone
+    M: Into<[[T; D]; D]> + Index<usize, Output = [T; D]> + IndexMut<usize, Output = [T; D]> + Clone,
 {
-
     let mut a = mat;
     let mut z_space = [T::zero(); D];
     let mut b_space = [T::zero(); D];
     let mut eigenvalues = [T::zero(); D];
-    
+
     let mut eigenvectors = [[T::zero(); D]; D];
     (0..D).for_each(|i| eigenvectors[i][i] = T::one());
     (0..D).for_each(|i| {
@@ -42,8 +46,8 @@ where
     for i in 0..MAX_ROTATION {
         run += 1;
         let mut sm = T::zero();
-        (0..D-1).for_each(|ip| {
-            (ip+1..D).for_each(|iq| {
+        (0..D - 1).for_each(|ip| {
+            (ip + 1..D).for_each(|iq| {
                 sm += a[ip][iq].abs();
             });
         });
@@ -52,21 +56,22 @@ where
             break;
         }
 
-        let trash = 
-            if i < 3 {T::from(0.2f32).unwrap() * sm / T::from(D * D).unwrap()}
-            else {T::zero()};
-        
-        (0..D-1).for_each(|ip| {
-            (ip+1..D).for_each(|iq| {
+        let trash = if i < 3 {
+            T::from(0.2f32).unwrap() * sm / T::from(D * D).unwrap()
+        } else {
+            T::zero()
+        };
+
+        (0..D - 1).for_each(|ip| {
+            (ip + 1..D).for_each(|iq| {
                 let mut g = T::from(100f32).unwrap() * a[ip][iq].abs();
 
                 if i > 3
-                    && eigenvalues[ip].abs()+g == eigenvalues[ip].abs()
-                    && eigenvalues[iq].abs()+g == eigenvalues[iq].abs()
+                    && eigenvalues[ip].abs() + g == eigenvalues[ip].abs()
+                    && eigenvalues[iq].abs() + g == eigenvalues[iq].abs()
                 {
                     a[ip][iq] = T::zero();
                 } else if a[ip][iq].abs() > trash {
-
                     let h = eigenvalues[iq] - eigenvalues[ip];
                     let mut t;
                     if h.abs() + g == h.abs() {
@@ -90,16 +95,16 @@ where
                     a[ip][iq] = T::zero();
 
                     if ip != 0 {
-                        (0..=ip-1).for_each(|j| {
+                        (0..=ip - 1).for_each(|j| {
                             (g, h) = jacobi_rotate(&mut a, j, ip, j, iq, s, tau);
                         });
                     }
                     if iq != 0 {
-                        (ip+1..=iq-1).for_each(|j| {
+                        (ip + 1..=iq - 1).for_each(|j| {
                             (g, h) = jacobi_rotate(&mut a, ip, j, j, iq, s, tau);
                         });
                     }
-                    (iq+1..D).for_each(|j| {
+                    (iq + 1..D).for_each(|j| {
                         (g, h) = jacobi_rotate(&mut a, ip, j, iq, j, s, tau);
                     });
                     (0..D).for_each(|j| {
@@ -114,14 +119,14 @@ where
             eigenvalues[ip] = b_space[ip];
             z_space[ip] = T::zero();
         });
-    };
+    }
 
     assert!(run <= MAX_ROTATION);
 
-    (0..D-1).for_each(|j| {
+    (0..D - 1).for_each(|j| {
         let mut k = j;
         let mut tmp = eigenvalues[k];
-        (j+1..D).for_each(|i| {
+        (j + 1..D).for_each(|i| {
             if eigenvalues[i] >= tmp {
                 k = i;
                 tmp = eigenvalues[k];
@@ -161,7 +166,7 @@ where
         });
         out[i] = Eigen {
             eigenvalue: eigenvalues[i],
-            eigenvector: v
+            eigenvector: v,
         };
     });
     out

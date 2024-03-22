@@ -82,7 +82,7 @@ where
     ) -> Result<Self::CoefficientsType, String> {
         use f3l_core::glam::{Mat4, Vec4};
 
-        let (mut mat,  common_col) = if let Some(data) = self.data {
+        let (mut mat, common_col) = if let Some(data) = self.data {
             let [p1, p2, p3, p4]: [[T; 3]; 4] = [
                 data[samples[0]].into(),
                 data[samples[1]].into(),

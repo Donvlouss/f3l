@@ -85,9 +85,10 @@ where
         let mut visited = vec![-2_i32; data.len()];
 
         let mut clusters: Vec<Vec<usize>> = vec![];
-        (0..data.len())
-            .for_each(|i| {
-            if visited[i] >= -1 { return; }
+        (0..data.len()).for_each(|i| {
+            if visited[i] >= -1 {
+                return;
+            }
             result.clear();
             self.tree.search(data[i], by, &mut result);
 
@@ -95,9 +96,8 @@ where
                 visited[i] = -1;
                 return;
             }
-            let mut cluster = std::collections::BTreeSet::<usize>::from_par_iter(
-                result.data.clone()
-            );
+            let mut cluster =
+                std::collections::BTreeSet::<usize>::from_par_iter(result.data.clone());
             visited[i] = clusters.len() as i32;
 
             let mut ptr = 0_usize;
@@ -108,7 +108,8 @@ where
                 }
 
                 result_inner.clear();
-                self.tree.search(data[result.data[ptr]], by, &mut result_inner);
+                self.tree
+                    .search(data[result.data[ptr]], by, &mut result_inner);
                 if result_inner.data.len() < self.parameter.nb_in_tolerance {
                     visited[result.data[ptr]] = -1;
                     ptr += 1;
@@ -118,25 +119,24 @@ where
                 visited[result.data[ptr]] = clusters.len() as i32;
                 cluster.insert(result.data[ptr]);
 
-                result_inner.data.iter()
-                    .for_each(|&iii| {
-                        if visited[iii] < -1 &&  !cluster.contains(&iii) {
-                            result.data.push(iii);
-                        }
-                    });
+                result_inner.data.iter().for_each(|&iii| {
+                    if visited[iii] < -1 && !cluster.contains(&iii) {
+                        result.data.push(iii);
+                    }
+                });
                 ptr += 1;
             }
             if cluster.len() >= self.parameter.min_nb_data
-                && cluster.len() <= self.parameter.max_nb_data {
-                clusters.push(
-                    cluster.into_iter().collect()
-                );
+                && cluster.len() <= self.parameter.max_nb_data
+            {
+                clusters.push(cluster.into_iter().collect());
             }
         });
-        clusters.sort_by(|a, b| {
-            b.len().partial_cmp(&a.len()).unwrap()
-        });
-        self.clusters = clusters.into_iter().take(self.parameter.max_nb_cluster).collect();
+        clusters.sort_by(|a, b| b.len().partial_cmp(&a.len()).unwrap());
+        self.clusters = clusters
+            .into_iter()
+            .take(self.parameter.max_nb_cluster)
+            .collect();
 
         true
     }

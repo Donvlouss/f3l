@@ -1,4 +1,3 @@
-
 impl super::F3lMatrix for glam::Vec4 {
     type RowType = [f32; 1];
 
@@ -28,21 +27,25 @@ impl super::F3lMatrix for glam::Vec4 {
             1 => Some(self.y),
             2 => Some(self.z),
             3 => Some(self.w),
-            _ => None
+            _ => None,
         }
     }
-    
+
     #[inline]
     #[must_use]
     fn set_row<R: Into<Self::RowType> + Copy>(&mut self, row: usize, v: R) {
-        if row >=1 { return; }
+        if row >= 1 {
+            return;
+        }
         self[row] = v.into()[0];
     }
-    
+
     #[inline]
     #[must_use]
     fn set_element(&mut self, pos: (usize, usize), v: f32) {
-        if pos.1 >=1 { return; }
+        if pos.1 >= 1 {
+            return;
+        }
         self[pos.0] = v;
     }
 }
@@ -54,7 +57,7 @@ impl super::ArrayRowMajor for glam::Vec4 {
 
     #[inline]
     #[must_use]
-    fn from_rows<R: std::ops::Index<usize, Output=f32>>(rows: &[R]) -> Self {
+    fn from_rows<R: std::ops::Index<usize, Output = f32>>(rows: &[R]) -> Self {
         Self::new(rows[0][0], rows[0][1], rows[0][3], rows[0][3])
     }
 
@@ -79,12 +82,12 @@ impl super::ArrayRowMajor for glam::Vec4 {
     #[inline]
     #[must_use]
     fn to_rows_array_2d(&self) -> Self::Mat {
-        [[self.x], [self.y],[self.z], [self.w]]
+        [[self.x], [self.y], [self.z], [self.w]]
     }
 
     #[inline]
     #[must_use]
-    fn write_rows_to_slice(self, slice: &mut[f32]) {
+    fn write_rows_to_slice(self, slice: &mut [f32]) {
         self.write_to_slice(slice)
     }
 }

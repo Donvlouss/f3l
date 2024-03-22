@@ -40,9 +40,11 @@ pub fn load_ply(path: &str) -> Vec<Vec3> {
         })
         .collect::<Vec<Vec<f32>>>();
 
-    vertices.into_iter().map(|v| Vec3::new(v[0], v[1], v[2])).collect()
+    vertices
+        .into_iter()
+        .map(|v| Vec3::new(v[0], v[1], v[2]))
+        .collect()
 }
-
 
 #[cfg(feature = "app_kiss3d")]
 fn main() {
@@ -85,13 +87,15 @@ fn main() {
         window.draw_line(&o, &y, &yc);
         window.draw_line(&o, &z, &zc);
 
-        vertices.iter().zip(&normals)
+        vertices
+            .iter()
+            .zip(&normals)
             .enumerate()
-            .for_each(|(_,(v, n))| {
+            .for_each(|(_, (v, n))| {
                 let p = Point3::new(v[0], v[1], v[2]);
                 window.draw_point(&p, &color_v);
                 if let Some(n) = n {
-                    let dir = if n[1] < 0f32 { -1f32 } else { 1. } ;
+                    let dir = if n[1] < 0f32 { -1f32 } else { 1. };
                     let p1 = p + Vector3::new(n[0], n[1], n[2]) * normal_len * dir;
                     window.draw_line(&p, &p1, &color_n);
                 };

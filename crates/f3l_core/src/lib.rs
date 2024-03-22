@@ -1,13 +1,13 @@
-mod traits;
-mod utils;
-mod types;
 mod math;
+mod traits;
+mod types;
+mod utils;
 
-pub use traits::*;
-pub use utils::*;
-pub use types::*;
 pub use math::*;
+pub use traits::*;
+pub use types::*;
+pub use utils::*;
 
-pub use f3l_glam::*;
 pub use f3l_glam::glam;
+pub use f3l_glam::*;
 pub use rayon;

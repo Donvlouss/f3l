@@ -1,5 +1,5 @@
-use f3l_segmentation::sac_model::*;
 use f3l_segmentation::sac_algorithm::*;
+use f3l_segmentation::sac_model::*;
 
 #[cfg(test)]
 mod sac_segmentation {
@@ -14,7 +14,7 @@ mod sac_segmentation {
             match p {
                 Property::Float(f) => f,
                 Property::Double(d) => d as f32,
-                _ => 0.
+                _ => 0.,
             }
         }
 
@@ -30,7 +30,8 @@ mod sac_segmentation {
 
             let ply_wrapper = ply.unwrap();
 
-            let vs = ply_wrapper.payload["vertex"].iter()
+            let vs = ply_wrapper.payload["vertex"]
+                .iter()
                 .map(|v| {
                     [
                         parse_out(v["x"].clone()),
@@ -46,7 +47,7 @@ mod sac_segmentation {
         fn pnt_to_plane() {
             let p = [0f32, 0f32, 1.3];
             let distance = SacModelPlane::compute_point_to_model(p, &[0f32, 0., 1., 0.]);
-            assert!( ((p[2]-distance)*1000.).round() < f32::EPSILON );
+            assert!(((p[2] - distance) * 1000.).round() < f32::EPSILON);
         }
 
         #[test]
@@ -57,13 +58,13 @@ mod sac_segmentation {
             }
             let vertices = load_ply("../../data/table_voxel_down.ply");
             let parameter = SacAlgorithmParameter {
-                probability: 0.99, 
-                threshold: 0.02, 
+                probability: 0.99,
+                threshold: 0.02,
                 max_iterations: 200,
-                threads: 1
+                threads: 1,
             };
             let mut model = SacModelPlane::with_data(&vertices);
-            let mut algorithm = SacRansac{
+            let mut algorithm = SacRansac {
                 parameter,
                 inliers: vec![],
             };
@@ -79,19 +80,15 @@ mod sac_segmentation {
         #[test]
         fn sac_line_1() {
             let line = (0..10).map(|i| [i as f32; 3]).collect::<Vec<_>>();
-            let line = [line, vec![
-                [1.5, 1., 1.],
-                [2., 2.5, 2.],
-                [3., 3., 3.5]
-            ]].concat();
+            let line = [line, vec![[1.5, 1., 1.], [2., 2.5, 2.], [3., 3., 3.5]]].concat();
             let parameter = SacAlgorithmParameter {
-                probability: 0.99, 
-                threshold: 0.1, 
+                probability: 0.99,
+                threshold: 0.1,
                 max_iterations: 200,
-                threads: 1
+                threads: 1,
             };
             let mut model = SacModelLine::with_data(&line);
-            let mut algorithm = SacRansac{
+            let mut algorithm = SacRansac {
                 parameter,
                 inliers: vec![],
             };
@@ -119,15 +116,21 @@ mod sac_segmentation {
                     [i as f32, y, 0.]
                 })
                 .collect::<Vec<_>>();
-            let line = [line, (0..nb_init_inliers).map(|i| [i as f32, 0., 0.]).collect::<Vec<_>>()].concat();
+            let line = [
+                line,
+                (0..nb_init_inliers)
+                    .map(|i| [i as f32, 0., 0.])
+                    .collect::<Vec<_>>(),
+            ]
+            .concat();
             let parameter = SacAlgorithmParameter {
-                probability: 0.99, 
-                threshold: 0.1, 
+                probability: 0.99,
+                threshold: 0.1,
                 max_iterations: 2000,
-                threads: 1
+                threads: 1,
             };
             let mut model = SacModelLine::with_data(&line);
-            let mut algorithm = SacRansac{
+            let mut algorithm = SacRansac {
                 parameter,
                 inliers: vec![],
             };
@@ -141,14 +144,17 @@ mod sac_segmentation {
 
             let error_factor = 0.05f32;
             let nb_error = inliers.len() - nb_inliers;
-            println!("Real Error factor: {}, Target factor: {error_factor}", (nb_error as f32) / (nb_inliers as f32));
+            println!(
+                "Real Error factor: {}, Target factor: {error_factor}",
+                (nb_error as f32) / (nb_inliers as f32)
+            );
             assert!((nb_error as f32) < (nb_inliers as f32 * error_factor));
         }
 
         #[test]
         fn sac_line_3() {
             use rand::Rng;
-            let coefficient = ([0f32, 0., 0.], [1f32, 0., 0. ]);
+            let coefficient = ([0f32, 0., 0.], [1f32, 0., 0.]);
             let mut rng = rand::thread_rng();
             for _ in 0..1000 {
                 let y = rng.gen_range(0f32..=1.);
@@ -160,34 +166,42 @@ mod sac_segmentation {
     }
 
     mod circle3d {
-        use f3l_core::{apply_both, round_n, round_slice_n, SimpleSliceMath};
-        use f3l_core::glam::{Mat3, Mat4, Vec4, Vec3, Vec3A, Quat};
         use super::*;
+        use f3l_core::glam::{Mat3, Mat4, Quat, Vec3, Vec3A, Vec4};
+        use f3l_core::{apply_both, round_n, round_slice_n, SimpleSliceMath};
 
         #[test]
         fn test_circle_coefficients() {
             let c = [0f32, 0f32, 0f32];
             let r = 4.5f32;
             let degrees = [20f32, 120., -100.];
-            let point = degrees.into_iter()
+            let point = degrees
+                .into_iter()
                 .map(|d| {
                     let rad = d.to_radians();
-                    [
-                        c[0] + rad.sin() * r,
-                        c[1] + rad.cos() * r,
-                        c[2],
-                    ].into()
-                }).collect::<Vec<Vec3A>>();
+                    [c[0] + rad.sin() * r, c[1] + rad.cos() * r, c[2]].into()
+                })
+                .collect::<Vec<Vec3A>>();
 
-            let mat = Mat3::from_euler(f3l_core::glam::EulerRot::XYZ, 20f32.to_radians(), -40f32.to_radians(), 65f32.to_radians());
-            let mat4 = Mat4::from_rotation_translation(Quat::from_mat3(&mat), Vec3::new(10f32, -20f32, 30f32));
+            let mat = Mat3::from_euler(
+                f3l_core::glam::EulerRot::XYZ,
+                20f32.to_radians(),
+                -40f32.to_radians(),
+                65f32.to_radians(),
+            );
+            let mat4 = Mat4::from_rotation_translation(
+                Quat::from_mat3(&mat),
+                Vec3::new(10f32, -20f32, 30f32),
+            );
 
-            let point = point.iter()
-                .map(|&v| (mat4 * Vec4::from((v, 1f32))).into()).collect::<Vec<Vec3A>>();
+            let point = point
+                .iter()
+                .map(|&v| (mat4 * Vec4::from((v, 1f32))).into())
+                .collect::<Vec<Vec3A>>();
             let c = mat4.project_point3(c.into());
             let n = mat * Vec3A::Z;
             let n = n.normalize();
-            
+
             let [p1, p2, p3] = [point[0].into(), point[1].into(), point[2].into()];
 
             // Copy From SacModelCircle3d::compute_model_coefficients
@@ -198,7 +212,7 @@ mod sac_segmentation {
                 let v31 = apply_both(&p3, &p1, std::ops::Sub::sub);
                 let v23 = apply_both(&p2, &p3, std::ops::Sub::sub);
                 let v32 = apply_both(&p3, &p2, std::ops::Sub::sub);
-                
+
                 let normal = v12.cross(&v23);
                 let common_divided = 1f32 / (2. * normal.len().powi(2));
 
@@ -216,16 +230,22 @@ mod sac_segmentation {
 
                 assert_eq!(round_slice_n(c.into(), 4), round_slice_n(pc, 4));
                 assert_eq!(round_n(r, 4), round_n(radius, 4));
-                assert!(
-                    angle_normals== 0f32 || angle_normals==180f32
-                );
+                assert!(angle_normals == 0f32 || angle_normals == 180f32);
             }
         }
 
         #[test]
         fn distance_between_point_circle() {
-            let mat = Mat3::from_euler(f3l_core::glam::EulerRot::XYZ, 20f32.to_radians(), -40f32.to_radians(), 65f32.to_radians());
-            let mat4 = Mat4::from_rotation_translation(Quat::from_mat3(&mat), Vec3::new(10f32, -20f32, 30f32));
+            let mat = Mat3::from_euler(
+                f3l_core::glam::EulerRot::XYZ,
+                20f32.to_radians(),
+                -40f32.to_radians(),
+                65f32.to_radians(),
+            );
+            let mat4 = Mat4::from_rotation_translation(
+                Quat::from_mat3(&mat),
+                Vec3::new(10f32, -20f32, 30f32),
+            );
 
             let project_point = Vec3::new(3., 0., 5.);
             // target_distance: 1) to plane, 2) plane to round
@@ -248,8 +268,8 @@ mod sac_segmentation {
 
     mod sphere {
         use super::*;
-        use f3l_core::{round_n, round_slice_n};
         use f3l_core::glam::Vec3A;
+        use f3l_core::{round_n, round_slice_n};
 
         #[test]
         fn sphere_coefficients() {
@@ -257,24 +277,33 @@ mod sac_segmentation {
             let center_slice: [f32; 3] = center.into();
             let radius = 35f32;
 
-            let data = (0..10).flat_map(|i| {
-                let theta = ((i as f32) * 36.).to_radians();
-                (0..10).map(|ii| {
-                    let phi = ((ii as f32) * 36.).to_radians();
-                    center + radius * Vec3A::new(
-                        theta.sin() * phi.cos(),
-                        theta.sin() * phi.sin(),
-                        theta.cos()
-                    )
-                }).collect::<Vec<_>>()
-            }).collect::<Vec<_>>();
+            let data = (0..10)
+                .flat_map(|i| {
+                    let theta = ((i as f32) * 36.).to_radians();
+                    (0..10)
+                        .map(|ii| {
+                            let phi = ((ii as f32) * 36.).to_radians();
+                            center
+                                + radius
+                                    * Vec3A::new(
+                                        theta.sin() * phi.cos(),
+                                        theta.sin() * phi.sin(),
+                                        theta.cos(),
+                                    )
+                        })
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>();
 
             let parameter = SacAlgorithmParameter {
                 threshold: 1f32,
                 ..Default::default()
             };
             let mut model = SacModelSphere::with_data(&data);
-            let mut algorithm = SacRansac{parameter, inliers: vec![]};
+            let mut algorithm = SacRansac {
+                parameter,
+                inliers: vec![],
+            };
             let ok = algorithm.compute(&mut model);
 
             assert!(ok);
@@ -282,8 +311,6 @@ mod sac_segmentation {
 
             assert_eq!(round_n(r, 4), radius);
             assert_eq!(center_slice, round_slice_n(center, 4));
-            
         }
-
     }
 }

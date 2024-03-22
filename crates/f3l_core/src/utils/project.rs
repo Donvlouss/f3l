@@ -1,7 +1,4 @@
-use crate::{
-    BasicFloat,
-    SimpleSliceMath
-};
+use crate::{BasicFloat, SimpleSliceMath};
 
 #[inline]
 pub fn project_len<T: BasicFloat, const D: usize>(a: &[T; D], b: &[T; D]) -> T {
@@ -15,4 +12,4 @@ pub fn project_vector<T: BasicFloat, const D: usize>(a: &[T; D], b: &[T; D]) -> 
         *v *= factor;
     }
     out
-}   
+}

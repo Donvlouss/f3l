@@ -1,15 +1,12 @@
-use f3l_core::{
-    BasicFloat,
-    get_minmax
-};
 use super::F3lFilter;
+use f3l_core::{get_minmax, BasicFloat};
 use std::{collections::HashMap, fmt::Debug};
 
 #[derive(Debug, Default)]
 pub struct VoxelGridParameter<T: BasicFloat, const D: usize> {
     bound: Option<([T; D], [T; D])>,
     inverse_div: Option<[T; D]>,
-    nb_dim: Option<[usize; D]>
+    nb_dim: Option<[usize; D]>,
 }
 
 impl<T: BasicFloat, const D: usize> VoxelGridParameter<T, D> {
@@ -17,33 +14,33 @@ impl<T: BasicFloat, const D: usize> VoxelGridParameter<T, D> {
         Self {
             bound: None,
             inverse_div: None,
-            nb_dim: None
+            nb_dim: None,
         }
     }
 }
 
 pub struct VoxelGrid<'a, P, T: BasicFloat, const D: usize>
 where
-    P:Into<[T; D]> + Clone + Copy,
-    [T; D]: Into<P>
+    P: Into<[T; D]> + Clone + Copy,
+    [T; D]: Into<P>,
 {
     pub leaf: [T; D],
     pub parameter: VoxelGridParameter<T, D>,
     data: Option<&'a Vec<P>>,
-    voxel_map: HashMap<usize, Vec<usize>>
+    voxel_map: HashMap<usize, Vec<usize>>,
 }
 
-impl<'a, P, T:BasicFloat, const D: usize> VoxelGrid<'a, P, T, D>
+impl<'a, P, T: BasicFloat, const D: usize> VoxelGrid<'a, P, T, D>
 where
-    P:Into<[T; D]> + Clone + Copy,
-    [T; D]: Into<P>
+    P: Into<[T; D]> + Clone + Copy,
+    [T; D]: Into<P>,
 {
     pub fn new() -> Self {
         Self {
             leaf: [T::zero(); D],
             data: None,
             parameter: VoxelGridParameter::new(),
-            voxel_map: HashMap::new()
+            voxel_map: HashMap::new(),
         }
     }
 
@@ -52,7 +49,7 @@ where
             leaf: (*leaf).into(),
             data: Some(data),
             parameter: VoxelGridParameter::<T, D>::new(),
-            voxel_map: HashMap::new()
+            voxel_map: HashMap::new(),
         }
     }
 
@@ -83,13 +80,12 @@ where
         let mut inverse = [T::zero(); D];
         let (min, max) = self.parameter.bound.unwrap();
         let mut box_range = [T::zero(); D];
-        (0..D)
-            .for_each(|i| {
-                let dif = max[i] - min[i];
-                box_range[i] = dif / self.leaf[i];
-                inverse[i] = T::one() / self.leaf[i];
-            });
-        
+        (0..D).for_each(|i| {
+            let dif = max[i] - min[i];
+            box_range[i] = dif / self.leaf[i];
+            inverse[i] = T::one() / self.leaf[i];
+        });
+
         let mut dims = [0usize; D];
         let mut count: usize = 0;
         // check number of voxels not overflow
@@ -103,7 +99,7 @@ where
                     } else {
                         return false;
                     }
-                },
+                }
                 None => return false,
             }
         }
@@ -114,13 +110,12 @@ where
     }
 }
 
-impl<'a, P, T:BasicFloat, const D: usize> F3lFilter<'a, P> for VoxelGrid<'a, P, T, D>
+impl<'a, P, T: BasicFloat, const D: usize> F3lFilter<'a, P> for VoxelGrid<'a, P, T, D>
 where
-    P:Into<[T; D]> + Clone + Copy + Send + Sync + Debug,
-    [T; D]: Into<P>
+    P: Into<[T; D]> + Clone + Copy + Send + Sync + Debug,
+    [T; D]: Into<P>,
 {
-    fn set_negative(&mut self, _negative: bool) {
-    }
+    fn set_negative(&mut self, _negative: bool) {}
 
     fn set_data(&mut self, data: &'a Vec<P>) {
         self.data = Some(data)
@@ -132,9 +127,7 @@ where
         }
 
         let keys = self.voxel_map.keys();
-        keys.into_iter().copied()
-            .map(|k| k)
-            .collect()
+        keys.into_iter().copied().map(|k| k).collect()
     }
 
     fn filter_instance(&mut self) -> Vec<P> {
@@ -149,16 +142,15 @@ where
                 let nb = T::from(pts.len()).unwrap();
                 let factor = T::one() / nb;
                 let mut sum = [T::zero(); D];
-                pts.iter()
-                    .for_each(|p| {
-                        let p: [T; D] = data[*p].into();
-                        (0..D)
-                            .for_each(|i| {
-                                sum[i] += p[i] * factor;
-                            });
+                pts.iter().for_each(|p| {
+                    let p: [T; D] = data[*p].into();
+                    (0..D).for_each(|i| {
+                        sum[i] += p[i] * factor;
                     });
+                });
                 sum.into()
-            }).collect()
+            })
+            .collect()
     }
 
     fn apply_filter(&mut self) -> bool {
@@ -166,38 +158,39 @@ where
             return false;
         }
 
-        let VoxelGridParameter{bound: Some((min, _)), inverse_div: Some(inv_div), nb_dim: Some(nb_dim)}
-            = self.parameter
+        let VoxelGridParameter {
+            bound: Some((min, _)),
+            inverse_div: Some(inv_div),
+            nb_dim: Some(nb_dim),
+        } = self.parameter
         else {
             return false;
         };
 
         let mut inc = [1usize; D];
-        (0..D)
-            .for_each(|i| {
-                if i == 0 { return; }
-                
-                inc[i] = nb_dim[i-1] * inc[i-1];
-            });
-        
+        (0..D).for_each(|i| {
+            if i == 0 {
+                return;
+            }
+
+            inc[i] = nb_dim[i - 1] * inc[i - 1];
+        });
+
         let points = self.data.unwrap();
-        points.iter()
-            .enumerate()
-            .for_each(|(i, p)| {
-                let p: [T; D] = (*p).into();
-                let mut dim = 0usize;
-                (0..D)
-                    .for_each(|i| {
-                        let v = (p[i] - min[i]) * inv_div[i];
-                        let d = match v.to_usize() {
-                            Some(d) => d,
-                            None => return,
-                        };
-                        dim += d * inc[i];
-                    });
-                let vec = self.voxel_map.entry(dim).or_default();
-                vec.push(i);
+        points.iter().enumerate().for_each(|(i, p)| {
+            let p: [T; D] = (*p).into();
+            let mut dim = 0usize;
+            (0..D).for_each(|i| {
+                let v = (p[i] - min[i]) * inv_div[i];
+                let d = match v.to_usize() {
+                    Some(d) => d,
+                    None => return,
+                };
+                dim += d * inc[i];
             });
+            let vec = self.voxel_map.entry(dim).or_default();
+            vec.push(i);
+        });
         true
     }
 }

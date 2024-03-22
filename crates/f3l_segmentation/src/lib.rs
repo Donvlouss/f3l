@@ -1,7 +1,7 @@
 use f3l_core::BasicFloat;
 
-mod euclidean_cluster_extraction;
 mod db_scan;
+mod euclidean_cluster_extraction;
 mod sac_segmentation;
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -10,7 +10,7 @@ pub struct F3lClusterParameter<T: BasicFloat> {
     pub nb_in_tolerance: usize,
     pub min_nb_data: usize,
     pub max_nb_data: usize,
-    pub max_nb_cluster: usize
+    pub max_nb_cluster: usize,
 }
 
 impl<T: BasicFloat> F3lClusterParameter<T> {
@@ -38,6 +38,6 @@ pub trait F3lCluster<'a, T: BasicFloat, P> {
     fn max_cluster(&self) -> Vec<P>;
 }
 
-pub use euclidean_cluster_extraction::EuclideanClusterExtractor;
 pub use db_scan::*;
+pub use euclidean_cluster_extraction::EuclideanClusterExtractor;
 pub use sac_segmentation::*;

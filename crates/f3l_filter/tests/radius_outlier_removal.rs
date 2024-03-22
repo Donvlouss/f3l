@@ -1,5 +1,5 @@
-use f3l_filter::*;
 use approx::assert_relative_eq;
+use f3l_filter::*;
 use rand::Rng;
 
 mod filter {
@@ -12,10 +12,15 @@ mod filter {
                 let mut arr = [0f32; D];
                 (0..D).for_each(|i| arr[i] = rng.gen_range(0f32..1f32));
                 arr
-            }).collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>()
     }
 
-    fn brute_force<const D: usize>(data: &Vec<[f32; D]>, radius: f32, threshold: usize) -> Vec<usize> {
+    fn brute_force<const D: usize>(
+        data: &Vec<[f32; D]>,
+        radius: f32,
+        threshold: usize,
+    ) -> Vec<usize> {
         use f3l_core::rayon::prelude::*;
         data.par_iter()
             .enumerate()
@@ -24,10 +29,9 @@ mod filter {
 
                 for other in data {
                     let dist = (0..D)
-                        .map(|i| {
-                            (other[i] - p[i]).powi(2)
-                        })
-                        .sum::<f32>().sqrt();
+                        .map(|i| (other[i] - p[i]).powi(2))
+                        .sum::<f32>()
+                        .sqrt();
                     if dist <= radius {
                         count += 1;
                     }
@@ -36,11 +40,12 @@ mod filter {
                     }
                 }
                 return false;
-            }).map(|(i, _)| i)
+            })
+            .map(|(i, _)| i)
             .collect()
     }
 
-    mod dimension_1d{
+    mod dimension_1d {
         use super::*;
 
         #[test]
@@ -49,8 +54,7 @@ mod filter {
             let mut filter = RadiusOutlierRemoval::with_data(1.5f32, 2, &data);
             let out = filter.filter_instance();
             let mut count = 3f32 + 4. + 5.;
-            out.into_iter()
-                .for_each(|v| count -= v[0]);
+            out.into_iter().for_each(|v| count -= v[0]);
             assert_relative_eq!(count, 0f32);
         }
     }
@@ -81,18 +85,16 @@ mod filter {
                 return;
             }
 
-            brute_force_result.iter()
-                .zip(&out)
-                .for_each(|(p1, p2)| {
-                    assert_eq!(p1, p2);
-                });
+            brute_force_result.iter().zip(&out).for_each(|(p1, p2)| {
+                assert_eq!(p1, p2);
+            });
         }
 
         fn parse_out(p: Property) -> f32 {
             match p {
                 Property::Float(f) => f,
                 Property::Double(d) => d as f32,
-                _ => 0.
+                _ => 0.,
             }
         }
 
@@ -108,7 +110,8 @@ mod filter {
 
             let ply_wrapper = ply.unwrap();
 
-            let vs = ply_wrapper.payload["vertex"].iter()
+            let vs = ply_wrapper.payload["vertex"]
+                .iter()
                 .map(|v| {
                     [
                         parse_out(v["x"].clone()),

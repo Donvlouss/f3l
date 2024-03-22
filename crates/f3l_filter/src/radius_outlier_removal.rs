@@ -1,40 +1,36 @@
-use f3l_core::BasicFloat;
-use f3l_search_tree::{
-    KdTree,
-    SearchBy,
-    TreeRadiusResult,
-    TreeResult
-};
 use f3l_core::rayon::prelude::*;
+use f3l_core::BasicFloat;
+use f3l_search_tree::{KdTree, SearchBy, TreeRadiusResult, TreeResult};
 
 use crate::F3lFilter;
 
 #[derive(Debug)]
 pub struct RadiusOutlierRemoval<'a, P, T: BasicFloat, const D: usize>
 where
-    P:Into<[T; D]> + Clone + Copy,
-    [T; D]: Into<P>
+    P: Into<[T; D]> + Clone + Copy,
+    [T; D]: Into<P>,
 {
     pub negative: bool,
     pub radius: T,
     pub threshold: usize,
     data: Option<&'a Vec<P>>,
     tree: KdTree<T, D>,
-    inlier: Vec<bool>
+    inlier: Vec<bool>,
 }
 
-impl<'a, P, T:BasicFloat, const D: usize> RadiusOutlierRemoval<'a, P, T, D>
+impl<'a, P, T: BasicFloat, const D: usize> RadiusOutlierRemoval<'a, P, T, D>
 where
-    P:Into<[T; D]> + Clone + Copy + Send + Sync,
-    [T; D]: Into<P>
+    P: Into<[T; D]> + Clone + Copy + Send + Sync,
+    [T; D]: Into<P>,
 {
     pub fn new(radius: T, threshold: usize) -> Self {
         Self {
             negative: false,
-            radius, threshold,
+            radius,
+            threshold,
             data: None,
             tree: KdTree::<T, D>::new(),
-            inlier: vec![]
+            inlier: vec![],
         }
     }
 
@@ -48,13 +44,12 @@ where
     fn ok(&self, is_inlier: bool) -> bool {
         (!is_inlier && self.negative) || (is_inlier && !self.negative)
     }
-
 }
 
-impl<'a, P, T:BasicFloat, const D: usize> F3lFilter<'a, P> for RadiusOutlierRemoval<'a, P, T, D>
+impl<'a, P, T: BasicFloat, const D: usize> F3lFilter<'a, P> for RadiusOutlierRemoval<'a, P, T, D>
 where
-    P:Into<[T; D]> + Clone + Copy + Send + Sync,
-    [T; D]: Into<P>
+    P: Into<[T; D]> + Clone + Copy + Send + Sync,
+    [T; D]: Into<P>,
 {
     fn set_negative(&mut self, negative: bool) {
         self.negative = negative;
@@ -67,8 +62,9 @@ where
 
     fn filter(&mut self) -> Vec<usize> {
         self.apply_filter();
-        
-        self.inlier.iter()
+
+        self.inlier
+            .iter()
             .enumerate()
             .filter(|&(_, f)| self.ok(*f))
             .map(|(i, _)| i)
@@ -77,9 +73,10 @@ where
 
     fn filter_instance(&mut self) -> Vec<P> {
         self.apply_filter();
-        
+
         let data = self.data.unwrap();
-        self.inlier.iter()
+        self.inlier
+            .iter()
             .enumerate()
             .filter(|&(_, f)| self.ok(*f))
             .map(|(i, _)| data[i])
@@ -92,10 +89,14 @@ where
         }
         self.tree.build();
         let capacity = self.tree.data.len() / 10;
-        let capacity = if capacity > 10 {capacity} else { 10 };
-        
+        let capacity = if capacity > 10 { capacity } else { 10 };
+
         let r = (self.radius.to_f32().unwrap()).powi(2);
-        let by = if self.radius==T::zero() {SearchBy::Radius(1.0)} else {SearchBy::Radius(r)};
+        let by = if self.radius == T::zero() {
+            SearchBy::Radius(1.0)
+        } else {
+            SearchBy::Radius(r)
+        };
         let data = self.data.unwrap();
 
         let th = self.threshold;
@@ -105,15 +106,16 @@ where
             .par_iter()
             .enumerate()
             .map(|(i, p)| {
-                let mut result = TreeRadiusResult::with_capacity(r, capacity)
-                    .set_to_maximum_size(th);
+                let mut result =
+                    TreeRadiusResult::with_capacity(r, capacity).set_to_maximum_size(th);
                 self.tree.search(*p, by, &mut result);
                 (i, result.data.len() >= th)
             })
             .collect::<Vec<_>>();
-        inlier.iter()
-            .filter(|(_,f)| *f)
-            .for_each(|(i,_)| self.inlier[*i] = true);
+        inlier
+            .iter()
+            .filter(|(_, f)| *f)
+            .for_each(|(i, _)| self.inlier[*i] = true);
 
         true
     }

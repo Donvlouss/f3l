@@ -1,14 +1,11 @@
-use std::ops::{
-    Bound,
-    Range,
-};
+use std::ops::{Bound, Range};
 
-use f3l_core::BasicFloat;
 use super::F3lFilter;
+use f3l_core::BasicFloat;
 
 pub struct ConditionRemoval<'a, P, T: BasicFloat, const D: usize>
 where
-    P:Into<[T; D]> + Clone + Copy,
+    P: Into<[T; D]> + Clone + Copy,
 {
     pub negative: bool,
     pub bound: Option<&'a Vec<(usize, Range<Bound<T>>)>>,
@@ -18,21 +15,21 @@ where
 
 impl<'a, P, T: BasicFloat, const D: usize> Default for ConditionRemoval<'a, P, T, D>
 where
-    P:Into<[T; D]> + Clone + Copy
+    P: Into<[T; D]> + Clone + Copy,
 {
     fn default() -> Self {
         Self {
             negative: false,
             bound: Default::default(),
             data: Default::default(),
-            inliers: Default::default()
+            inliers: Default::default(),
         }
     }
 }
 
 impl<'a, P, T: BasicFloat, const D: usize> ConditionRemoval<'a, P, T, D>
 where
-    P:Into<[T; D]> + Clone + Copy,
+    P: Into<[T; D]> + Clone + Copy,
 {
     // pub fn with_data(data: &'a Vec<P>, bound: &'a Vec<(usize, Bound<T>, Bound<T>)>) -> Self {
     pub fn with_data(data: &'a Vec<P>, bound: &'a Vec<(usize, Range<Bound<T>>)>) -> Self {
@@ -40,7 +37,7 @@ where
             negative: false,
             bound: Some(bound),
             data: Some(data),
-            inliers: Default::default()
+            inliers: Default::default(),
         }
     }
 
@@ -49,11 +46,10 @@ where
     }
 }
 
-
 impl<'a, P, T: BasicFloat, const D: usize> F3lFilter<'a, P> for ConditionRemoval<'a, P, T, D>
 where
-    P:Into<[T; D]> + Clone + Copy + Send + Sync,
-    [T; D]: Into<P>
+    P: Into<[T; D]> + Clone + Copy + Send + Sync,
+    [T; D]: Into<P>,
 {
     fn set_negative(&mut self, negative: bool) {
         self.negative = negative;
@@ -75,9 +71,7 @@ where
             return vec![];
         }
         let data = self.data.unwrap();
-        self.inliers.iter()
-            .map(|i| data[*i])
-            .collect()
+        self.inliers.iter().map(|i| data[*i]).collect()
     }
 
     fn apply_filter(&mut self) -> bool {
@@ -92,7 +86,7 @@ where
         } else {
             return false;
         };
-        
+
         use f3l_core::rayon::prelude::*;
         self.inliers = data
             .par_iter()
@@ -100,28 +94,27 @@ where
             .filter_map(|(i, &p)| {
                 let p: [T; D] = p.into();
                 let mut ok = true;
-                bounds.iter()
-                    .for_each(|(dim, bound)| {
-                        let p = p[*dim];
-                        let b_start =  match bound.start {
-                            Bound::Included(v) => p >= v,
-                            Bound::Excluded(v) => p >  v,
-                            Bound::Unbounded => true,
-                        };
-                        let b_end = match bound.end {
-                            Bound::Included(v) => p <= v,
-                            Bound::Excluded(v) => p <  v,
-                            Bound::Unbounded => true,
-                        };
-                        if !self.negative && (b_start && b_end) {
-                            ok &= true;
-                        } else if self.negative && !(b_start && b_end) {
-                            ok &= true;
-                        } else {
-                            ok = false;
-                            return;
-                        }
-                    });
+                bounds.iter().for_each(|(dim, bound)| {
+                    let p = p[*dim];
+                    let b_start = match bound.start {
+                        Bound::Included(v) => p >= v,
+                        Bound::Excluded(v) => p > v,
+                        Bound::Unbounded => true,
+                    };
+                    let b_end = match bound.end {
+                        Bound::Included(v) => p <= v,
+                        Bound::Excluded(v) => p < v,
+                        Bound::Unbounded => true,
+                    };
+                    if !self.negative && (b_start && b_end) {
+                        ok &= true;
+                    } else if self.negative && !(b_start && b_end) {
+                        ok &= true;
+                    } else {
+                        ok = false;
+                        return;
+                    }
+                });
                 if ok {
                     Some(i)
                 } else {

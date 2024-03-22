@@ -1,18 +1,15 @@
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
-pub enum SearchBy
-{
+pub enum SearchBy {
     Count(usize),
-    Radius(f32)
+    Radius(f32),
 }
 
-pub trait TreeSearch<P>
-{
+pub trait TreeSearch<P> {
     fn search_knn(&self, point: &P, k: usize) -> Vec<(P, f32)>;
     fn search_radius(&self, point: &P, radius: f32) -> Vec<P>;
 }
 
-pub trait TreeResult
-{
+pub trait TreeResult {
     type T;
     type Output;
     fn new(arg: Self::T) -> Self;
@@ -26,16 +23,14 @@ pub trait TreeResult
 }
 
 #[derive(Debug, Clone)]
-pub struct TreeKnnResult
-{
+pub struct TreeKnnResult {
     pub data: Vec<(usize, f32)>,
     pub size: usize,
     pub count: usize,
-    pub farthest: f32
+    pub farthest: f32,
 }
 
-impl TreeResult for TreeKnnResult
-{
+impl TreeResult for TreeKnnResult {
     type T = usize;
     type Output = (usize, f32);
 
@@ -44,7 +39,7 @@ impl TreeResult for TreeKnnResult
             data: Vec::with_capacity(arg),
             size: arg,
             count: 0,
-            farthest: f32::MAX
+            farthest: f32::MAX,
         }
     }
 
@@ -53,7 +48,7 @@ impl TreeResult for TreeKnnResult
             data: Vec::with_capacity(arg),
             size: capacity,
             count: 0,
-            farthest: f32::MAX
+            farthest: f32::MAX,
         }
     }
 
@@ -63,11 +58,9 @@ impl TreeResult for TreeKnnResult
         queue
     }
 
-    fn add(&mut self, data: usize, distance: f32)
-    {
+    fn add(&mut self, data: usize, distance: f32) {
         let mut need_sort = false;
-        if self.count < self.size
-        {
+        if self.count < self.size {
             need_sort = true;
             self.data.push((data, distance));
             self.count += 1;
@@ -88,8 +81,7 @@ impl TreeResult for TreeKnnResult
         }
     }
 
-    fn is_full(&self) -> bool
-    {
+    fn is_full(&self) -> bool {
         self.count >= self.size
     }
 
@@ -101,12 +93,10 @@ impl TreeResult for TreeKnnResult
         self.data.clear();
         self.count = 0;
     }
-
 }
 
 #[derive(Debug, Clone)]
-pub struct TreeRadiusResult
-{
+pub struct TreeRadiusResult {
     pub data: Vec<usize>,
     pub count: usize,
     pub radius: f32,
@@ -115,12 +105,17 @@ pub struct TreeRadiusResult
 
 impl TreeRadiusResult {
     pub fn set_to_maximum_size(self, maximum_size: usize) -> Self {
-        let TreeRadiusResult { data, count, radius, ..} = self;
+        let TreeRadiusResult {
+            data,
+            count,
+            radius,
+            ..
+        } = self;
         Self {
             data,
             count,
             radius,
-            size: Some(maximum_size)
+            size: Some(maximum_size),
         }
     }
 
@@ -133,8 +128,7 @@ impl TreeRadiusResult {
     }
 }
 
-impl TreeResult for TreeRadiusResult
-{
+impl TreeResult for TreeRadiusResult {
     type T = f32;
     type Output = usize;
 
@@ -143,7 +137,7 @@ impl TreeResult for TreeRadiusResult
             data: Vec::new(),
             count: 0,
             radius: arg,
-            size: None
+            size: None,
         }
     }
 

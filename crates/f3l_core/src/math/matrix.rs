@@ -1,8 +1,8 @@
-mod rref;
 mod covariance;
-pub mod matrix3x3;
 mod jacobi;
+pub mod matrix3x3;
+mod rref;
 
-pub use rref::*;
 pub use covariance::*;
 pub use jacobi::*;
+pub use rref::*;

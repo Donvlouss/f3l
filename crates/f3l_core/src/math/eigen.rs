@@ -1,18 +1,21 @@
-use std::{cmp::Ordering, ops::{Deref, DerefMut}};
+use std::{
+    cmp::Ordering,
+    ops::{Deref, DerefMut},
+};
 
 use crate::{BasicFloat, SimpleSliceMath};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Eigen<T: BasicFloat, const D: usize> {
     pub eigenvalue: T,
-    pub eigenvector: [T; D]
+    pub eigenvector: [T; D],
 }
 
 impl<T: BasicFloat, const D: usize> Default for Eigen<T, D> {
     fn default() -> Self {
         Self {
             eigenvalue: T::zero(),
-            eigenvector: [T::zero(); D]
+            eigenvector: [T::zero(); D],
         }
     }
 }
@@ -27,7 +30,7 @@ impl<T: BasicFloat, const D: usize, const N: usize> From<[[T; D]; N]> for EigenS
             let eigen = value[n];
             me[n] = Eigen {
                 eigenvalue: eigen.len(),
-                eigenvector: eigen
+                eigenvector: eigen,
             }
         });
         me
@@ -61,13 +64,12 @@ impl<T: BasicFloat, const D: usize, const N: usize> EigenSet<T, D, N> {
 
     pub fn eigenvalues(&self) -> [T; N] {
         let mut out = [T::zero(); N];
-        (0..N)
-            .for_each(|i| {
-                out[i] = self[i].eigenvalue;
-            });
+        (0..N).for_each(|i| {
+            out[i] = self[i].eigenvalue;
+        });
         out
     }
-    
+
     pub fn eigenvectors_2d_row_major(&self) -> [[T; D]; N] {
         let mut out = [[T::zero(); D]; N];
         (0..N).for_each(|r| {
@@ -100,7 +102,7 @@ impl<T: BasicFloat, const D: usize, const N: usize> EigenSet<T, D, N> {
         self.iter()
             .enumerate()
             .max_by(|(_, a), (_, b)| Self::compare(a, b).unwrap())
-            .map(|(idx,_)| idx)
+            .map(|(idx, _)| idx)
             .unwrap()
     }
 
@@ -115,7 +117,7 @@ impl<T: BasicFloat, const D: usize, const N: usize> EigenSet<T, D, N> {
         self.iter()
             .enumerate()
             .min_by(|(_, a), (_, b)| Self::compare(a, b).unwrap())
-            .map(|(idx,_)| idx)
+            .map(|(idx, _)| idx)
             .unwrap()
     }
 

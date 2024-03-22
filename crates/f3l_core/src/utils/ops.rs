@@ -30,18 +30,24 @@ pub fn round_slice_n<T: Float, const D: usize>(me: [T; D], n: usize) -> [T; D] {
 }
 
 #[inline]
-pub fn apply_both<T: Num + Copy, const D: usize, F: FnMut(T, T) -> T>(me: &[T; D], other: &[T], mut ops: F) -> [T; D] {
+pub fn apply_both<T: Num + Copy, const D: usize, F: FnMut(T, T) -> T>(
+    me: &[T; D],
+    other: &[T],
+    mut ops: F,
+) -> [T; D] {
     let mut out = [T::zero(); D];
-    (0..D)
-        .for_each(|i| out[i] = ops(me[i], other[i]));
+    (0..D).for_each(|i| out[i] = ops(me[i], other[i]));
     out
 }
 
 #[inline]
-pub fn apply_each<T: Num + Copy, const D: usize, F: FnMut(T, T) -> T>(me: &[T; D], other: T, mut ops: F) -> [T; D] {
+pub fn apply_each<T: Num + Copy, const D: usize, F: FnMut(T, T) -> T>(
+    me: &[T; D],
+    other: T,
+    mut ops: F,
+) -> [T; D] {
     let mut out = [T::zero(); D];
-    (0..D)
-        .for_each(|i| out[i] = ops(me[i], other));
+    (0..D).for_each(|i| out[i] = ops(me[i], other));
     out
 }
 

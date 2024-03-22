@@ -15,7 +15,7 @@ fn main() {
 pub fn load_ply(path: &str) -> Vec<[f32; 3]> {
     use ply_rs as ply;
     use ply_rs::ply::Property;
-    
+
     let mut f = std::fs::File::open(path).unwrap();
     // create a parser
     let p = ply::parser::Parser::<ply::ply::DefaultElement>::new();
@@ -67,9 +67,8 @@ fn main() {
     let out = filter.filter_instance();
 
     while window.render() {
-        out.iter()
-            .for_each(|v| {
-                window.draw_point(&Point3::new(v[0], v[1], v[2]), &Point3::new(0.0, 1.0, 0.0));
-            });
+        out.iter().for_each(|v| {
+            window.draw_point(&Point3::new(v[0], v[1], v[2]), &Point3::new(0.0, 1.0, 0.0));
+        });
     }
 }

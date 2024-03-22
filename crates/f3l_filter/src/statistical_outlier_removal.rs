@@ -1,28 +1,24 @@
-use f3l_core::BasicFloat;
-use f3l_search_tree::{
-    KdTree,
-    TreeSearch
-};
-use f3l_core::rayon::prelude::*;
 use crate::F3lFilter;
-
+use f3l_core::rayon::prelude::*;
+use f3l_core::BasicFloat;
+use f3l_search_tree::{KdTree, TreeSearch};
 
 pub struct StatisticalOutlierRemoval<'a, P, T: BasicFloat, const D: usize>
 where
-    P:Into<[T; D]> + Clone + Copy,
+    P: Into<[T; D]> + Clone + Copy,
 {
     pub negative: bool,
     pub multiply: T,
     pub k_neighbors: usize,
     data: Option<&'a Vec<P>>,
     tree: KdTree<T, D>,
-    inlier: Vec<bool>
+    inlier: Vec<bool>,
 }
 
-impl<'a, P, T:BasicFloat, const D: usize> StatisticalOutlierRemoval<'a, P, T, D>
+impl<'a, P, T: BasicFloat, const D: usize> StatisticalOutlierRemoval<'a, P, T, D>
 where
-    P:Into<[T; D]> + Clone + Copy + Send + Sync,
-    [T; D]: Into<P>
+    P: Into<[T; D]> + Clone + Copy + Send + Sync,
+    [T; D]: Into<P>,
 {
     pub fn new(multiply: T, k_neighbors: usize) -> Self {
         Self {
@@ -31,7 +27,7 @@ where
             k_neighbors,
             data: None,
             tree: KdTree::<T, D>::new(),
-            inlier: vec![]
+            inlier: vec![],
         }
     }
 
@@ -45,13 +41,13 @@ where
     fn ok(&self, is_inlier: bool) -> bool {
         (!is_inlier && self.negative) || (is_inlier && !self.negative)
     }
-
 }
 
-impl<'a, P, T:BasicFloat, const D: usize> F3lFilter<'a, P> for StatisticalOutlierRemoval<'a, P, T, D>
+impl<'a, P, T: BasicFloat, const D: usize> F3lFilter<'a, P>
+    for StatisticalOutlierRemoval<'a, P, T, D>
 where
-    P:Into<[T; D]> + Clone + Copy + Send + Sync,
-    [T; D]: Into<P>
+    P: Into<[T; D]> + Clone + Copy + Send + Sync,
+    [T; D]: Into<P>,
 {
     fn set_negative(&mut self, negative: bool) {
         self.negative = negative;
@@ -64,8 +60,9 @@ where
 
     fn filter(&mut self) -> Vec<usize> {
         self.apply_filter();
-        
-        self.inlier.iter()
+
+        self.inlier
+            .iter()
             .enumerate()
             .filter(|&(_, f)| self.ok(*f))
             .map(|(i, _)| i)
@@ -74,9 +71,10 @@ where
 
     fn filter_instance(&mut self) -> Vec<P> {
         self.apply_filter();
-        
+
         let data = self.data.unwrap();
-        self.inlier.iter()
+        self.inlier
+            .iter()
             .enumerate()
             .filter(|&(_, f)| self.ok(*f))
             .map(|(i, _)| data[i])
@@ -112,21 +110,17 @@ where
                     *lock += 1usize;
                 }
 
-                let sum = out.iter()
-                    .map(|(_, o)| (*o) * (*o)).sum::<f32>();
+                let sum = out.iter().map(|(_, o)| (*o) * (*o)).sum::<f32>();
                 (i, T::from(sum).unwrap())
             })
             .collect::<Vec<_>>();
         let nb_valid = *(nb_valid.lock().unwrap());
         let nb_valid_t = T::from(nb_valid).unwrap();
 
-        
-        let (sum, sq_sum) = distances.iter()
-            .fold((T::zero(), T::zero()),|(sum, sq_sum), &(_, d)| {
-                (
-                    sum + d,
-                    sq_sum + d *d 
-                )
+        let (sum, sq_sum) = distances
+            .iter()
+            .fold((T::zero(), T::zero()), |(sum, sq_sum), &(_, d)| {
+                (sum + d, sq_sum + d * d)
             });
         let mean = sum / nb_valid_t;
         let variance = (sq_sum - sum * sum / nb_valid_t) / (nb_valid_t - T::one());
@@ -135,12 +129,11 @@ where
         let threshold = mean + self.multiply * std_dev;
 
         self.inlier = vec![false; data.len()];
-        distances.iter()
-            .for_each(|&(i, d)| {
-                if d <= threshold {
-                    self.inlier[i] = true;
-                }
-            });
+        distances.iter().for_each(|&(i, d)| {
+            if d <= threshold {
+                self.inlier[i] = true;
+            }
+        });
 
         true
     }

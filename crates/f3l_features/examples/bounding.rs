@@ -40,9 +40,11 @@ pub fn load_ply(path: &str) -> Vec<Vec3A> {
         })
         .collect::<Vec<Vec<f32>>>();
 
-    vertices.into_iter().map(|v| Vec3A::new(v[0], v[1], v[2])).collect()
+    vertices
+        .into_iter()
+        .map(|v| Vec3A::new(v[0], v[1], v[2]))
+        .collect()
 }
-
 
 #[cfg(feature = "app_kiss3d")]
 fn main() {
@@ -58,18 +60,18 @@ fn main() {
     let vertices = load_ply("../../data/table_voxel_down.ply");
 
     let obb = OBB::compute(&vertices);
-    println!("OBB:\n{:?}",obb);
-    let p0 = obb.center 
+    println!("OBB:\n{:?}", obb);
+    let p0 = obb.center
         - obb.primary * obb.length[0]
         - obb.secondary * obb.length[1]
         - obb.tertiary * obb.length[2];
-    let p1 = p0 + obb.primary   * obb.length[0] * 2.;
+    let p1 = p0 + obb.primary * obb.length[0] * 2.;
     let p2 = p0 + obb.secondary * obb.length[1] * 2.;
-    let p3 = p0 + obb.tertiary  * obb.length[2] * 2.;
-    let p4 = p2 + obb.primary   * obb.length[0] * 2.;
-    let p5 = p1 + obb.tertiary  * obb.length[2] * 2.;
-    let p6 = p2 + obb.tertiary  * obb.length[2] * 2.;
-    let p7 = p4 + obb.tertiary  * obb.length[2] * 2.;
+    let p3 = p0 + obb.tertiary * obb.length[2] * 2.;
+    let p4 = p2 + obb.primary * obb.length[0] * 2.;
+    let p5 = p1 + obb.tertiary * obb.length[2] * 2.;
+    let p6 = p2 + obb.tertiary * obb.length[2] * 2.;
+    let p7 = p4 + obb.tertiary * obb.length[2] * 2.;
 
     let aabb_bdx = aabb(&vertices);
     println!("Center: {}", (aabb_bdx.0 + aabb_bdx.1) / 2f32);
@@ -78,10 +80,7 @@ fn main() {
     let l0 = diff.x.abs();
     let l1 = diff.y.abs();
     let l2 = diff.z.abs();
-    let pp0 = pp00  
-        - Vec3A::X * l0 / 2f32
-        - Vec3A::Y * l1 / 2f32
-        - Vec3A::Z * l2 / 2f32;
+    let pp0 = pp00 - Vec3A::X * l0 / 2f32 - Vec3A::Y * l1 / 2f32 - Vec3A::Z * l2 / 2f32;
     let pp1 = pp0 + Vec3A::X * l0;
     let pp2 = pp0 + Vec3A::Y * l1;
     let pp3 = pp0 + Vec3A::Z * l2;
@@ -89,7 +88,6 @@ fn main() {
     let pp5 = pp1 + Vec3A::Z * l2;
     let pp6 = pp2 + Vec3A::Z * l2;
     let pp7 = pp4 + Vec3A::Z * l2;
-
 
     let o = Point3::<f32>::origin();
     let x = Point3::<f32>::new(1., 0., 0.);
@@ -105,18 +103,31 @@ fn main() {
     let pts = [p0, p1, p2, p3, p4, p5, p6, p7];
     // pts.iter().for_each(|v| println!("{v}"));
     let pts1 = [pp0, pp1, pp2, pp3, pp4, pp5, pp6, pp7];
-    let view_cloud = vertices.into_iter().map(|p| 
-        Point3::new(p.x, p.y, p.z)).collect::<Vec<Point3<f32>>>();
-    let view_pts = pts.iter()
-        .map(|&p| Point3::new(p.x, p.y, p.z)).collect::<Vec<Point3<f32>>>();
-    let view_pts1 = pts1.iter()
-        .map(|&p| Point3::new(p.x, p.y, p.z)).collect::<Vec<Point3<f32>>>();
+    let view_cloud = vertices
+        .into_iter()
+        .map(|p| Point3::new(p.x, p.y, p.z))
+        .collect::<Vec<Point3<f32>>>();
+    let view_pts = pts
+        .iter()
+        .map(|&p| Point3::new(p.x, p.y, p.z))
+        .collect::<Vec<Point3<f32>>>();
+    let view_pts1 = pts1
+        .iter()
+        .map(|&p| Point3::new(p.x, p.y, p.z))
+        .collect::<Vec<Point3<f32>>>();
     let pairs = [
-        (0_usize, 1_usize), (0, 2), (0, 3),
-        (7, 4), (7, 5), (7, 6),
-        (1, 4), (1, 5),
-        (2, 4), (2, 6),
-        (3, 5), (3, 6)
+        (0_usize, 1_usize),
+        (0, 2),
+        (0, 3),
+        (7, 4),
+        (7, 5),
+        (7, 6),
+        (1, 4),
+        (1, 5),
+        (2, 4),
+        (2, 6),
+        (3, 5),
+        (3, 6),
     ];
 
     while window.render() {
@@ -124,18 +135,11 @@ fn main() {
         window.draw_line(&o, &y, &yc);
         window.draw_line(&o, &z, &zc);
 
-        view_cloud.iter()
-            .for_each(|p| {
-                window.draw_point(p, &pnt)
-            });
+        view_cloud.iter().for_each(|p| window.draw_point(p, &pnt));
 
-        pairs.iter()
-            .for_each(|&(a, b)| {
-                window.draw_line(
-                    &view_pts[a], &view_pts[b], &line);
-                window.draw_line(
-                    &view_pts1[a], &view_pts1[b], &line1);
-            });
+        pairs.iter().for_each(|&(a, b)| {
+            window.draw_line(&view_pts[a], &view_pts[b], &line);
+            window.draw_line(&view_pts1[a], &view_pts1[b], &line1);
+        });
     }
-
 }

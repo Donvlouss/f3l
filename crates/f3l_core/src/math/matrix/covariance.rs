@@ -1,20 +1,17 @@
+use crate::{apply_each, BasicFloat};
 use std::ops::Index;
-use crate::{
-    apply_each,
-    BasicFloat
-};
 
-
-pub fn compute_covariance_matrix<P, T: BasicFloat, const D: usize>(points: &[P]) -> ([[T; D]; D], [T; D])
+pub fn compute_covariance_matrix<P, T: BasicFloat, const D: usize>(
+    points: &[P],
+) -> ([[T; D]; D], [T; D])
 where
-    P: Index<usize, Output = T> + Copy + Into<[T; D]>
+    P: Index<usize, Output = T> + Copy + Into<[T; D]>,
 {
-    let means = points.iter()
-        .fold([T::zero(); D], |acc, p| {
-            let mut acc = acc;
-            (0..D).for_each(|i| acc[i]+=p[i]);
-            acc
-        });
+    let means = points.iter().fold([T::zero(); D], |acc, p| {
+        let mut acc = acc;
+        (0..D).for_each(|i| acc[i] += p[i]);
+        acc
+    });
     let factor = T::one() / T::from(points.len()).unwrap();
     let means = apply_each(&means, factor, std::ops::Mul::mul);
     let mut cov = [[T::zero(); D]; D];
@@ -26,15 +23,13 @@ where
             });
         });
     });
-    (0..D).for_each(|r|{
+    (0..D).for_each(|r| {
         (0..D).for_each(|c| {
             cov[r][c] *= factor;
         });
     });
     (cov, means)
 }
-
-
 
 #[test]
 fn covariance_3d() {
@@ -73,12 +68,9 @@ fn covariance_2d() {
         [9.7, 6.3],
         [10.0, 4.9],
         [11.0, 3.6],
-        [12.5, 6.4] 
+        [12.5, 6.4],
     ];
     let cov = compute_covariance_matrix(&points);
-    let target = [
-        [9.083601, 3.3650002],
-        [3.3650002, 2.0160003_f32]
-    ];
+    let target = [[9.083601, 3.3650002], [3.3650002, 2.0160003_f32]];
     assert_eq!(target, cov.0);
 }

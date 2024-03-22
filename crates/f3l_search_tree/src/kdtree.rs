@@ -3,26 +3,15 @@ mod kd_leaf;
 pub use kd_features::KdFeature;
 pub use kd_leaf::KdLeaf;
 
-use std::{
-    cmp::Reverse,
-    collections::BinaryHeap
-};
+use crate::{SearchBy, TreeHeapElement, TreeKnnResult, TreeRadiusResult, TreeResult, TreeSearch};
 use f3l_core::BasicFloat;
-use crate::{
-    SearchBy,
-    TreeHeapElement,
-    TreeKnnResult,
-    TreeRadiusResult,
-    TreeResult,
-    TreeSearch
-};
+use std::{cmp::Reverse, collections::BinaryHeap};
 
 #[derive(Debug, Clone, Default)]
-pub struct KdTree<T: BasicFloat, const D: usize>
-{
+pub struct KdTree<T: BasicFloat, const D: usize> {
     pub root: Option<Box<KdLeaf>>,
     pub dim: usize,
-    pub data: Vec<[T; D]>, 
+    pub data: Vec<[T; D]>,
 }
 
 impl<T: BasicFloat, const D: usize> KdTree<T, D> {
@@ -30,32 +19,25 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
         Self {
             root: None,
             dim: D,
-            data: vec![]
+            data: vec![],
         }
     }
 
     pub fn set_data<P>(&mut self, data: &Vec<P>)
     where
-        P:Into<[T; D]> + Clone + Copy
+        P: Into<[T; D]> + Clone + Copy,
     {
-        self.data = data.iter()
-            .map(|p| {
-                (*p).into()
-            })
-            .collect::<Vec<[T;D]>>();
+        self.data = data.iter().map(|p| (*p).into()).collect::<Vec<[T; D]>>();
     }
 
-    pub fn build(&mut self)
-    {
+    pub fn build(&mut self) {
         if self.data.is_empty() {
             return;
         }
-        self.root = Some(
-            self.build_recursive(&mut (0..self.data.len()).collect::<Vec<usize>>()));
+        self.root = Some(self.build_recursive(&mut (0..self.data.len()).collect::<Vec<usize>>()));
     }
 
-    fn build_recursive(&self, indices: &mut [usize]) -> Box<KdLeaf>
-    {   
+    fn build_recursive(&self, indices: &mut [usize]) -> Box<KdLeaf> {
         // let mut node = Box::new(KdLeaf::default());
         let mut node = Box::<KdLeaf>::default();
         if indices.len() == 1 {
@@ -80,28 +62,24 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
         node
     }
 
-    fn mean_split(&self, indices: &mut [usize]) -> (KdFeature, usize)
-    {
+    fn mean_split(&self, indices: &mut [usize]) -> (KdFeature, usize) {
         // Compute mean value per dimension
         let factor = T::from(1.0f32 / indices.len() as f32).unwrap();
         let mut mean = vec![T::zero(); self.dim];
-        indices.iter()
-            .for_each(|&i| {
-                (0..self.dim).for_each(|j| {
-                    mean[j] += self.data[i][j] * factor;
-                })    
-            });
+        indices.iter().for_each(|&i| {
+            (0..self.dim).for_each(|j| {
+                mean[j] += self.data[i][j] * factor;
+            })
+        });
 
         // Compute variance per dimension
         let mut var = vec![T::zero(); self.dim];
-        indices.iter()
-            .for_each(|&i| {
-                (0..self.dim).for_each(|j| {
-                    let dist = self.data[i][j] - mean[j];
-                    var[j] += dist * dist;
-                })
-            }
-        );
+        indices.iter().for_each(|&i| {
+            (0..self.dim).for_each(|j| {
+                let dist = self.data[i][j] - mean[j];
+                var[j] += dist * dist;
+            })
+        });
         // Choose the max variance dimension
         let mut split_dim = 0;
         (1..self.dim).for_each(|i| {
@@ -113,9 +91,9 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
         let split_val = mean[split_dim];
         let (lim1, lim2) = self.plane_split(indices, split_dim, split_val);
 
-        let mut index:usize;
+        let mut index: usize;
         let mid = indices.len() / 2;
-        if lim1  > mid {
+        if lim1 > mid {
             index = lim1;
         } else if lim2 < mid {
             index = lim2;
@@ -128,14 +106,13 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
 
         (
             KdFeature::Split((split_dim, split_val.to_f32().unwrap())),
-            index
+            index,
         )
     }
 
-    fn plane_split(&self, indices: &mut [usize], split_dim: usize, split_val: T) -> (usize, usize)
-    {
-        let mut left = 0;   
-        let mut right = indices.len()-1;
+    fn plane_split(&self, indices: &mut [usize], split_dim: usize, split_val: T) -> (usize, usize) {
+        let mut left = 0;
+        let mut right = indices.len() - 1;
 
         loop {
             while left <= right && self.data[indices[left]][split_dim] < split_val {
@@ -144,13 +121,15 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
             while left < right && self.data[indices[right]][split_dim] >= split_val {
                 right -= 1;
             }
-            if left >= right { break; }
+            if left >= right {
+                break;
+            }
             indices.swap(left, right);
             left += 1;
             right -= 1;
         }
         let lim1 = left;
-        right = indices.len()-1;
+        right = indices.len() - 1;
         loop {
             while left <= right && self.data[indices[left]][split_dim] <= split_val {
                 left += 1;
@@ -158,19 +137,22 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
             while left <= right && self.data[indices[right]][split_dim] > split_val {
                 right -= 1;
             }
-            if left >= right { break; }
+            if left >= right {
+                break;
+            }
             indices.swap(left, right);
             left += 1;
             right -= 1;
         }
         (lim1, left)
-    }   
+    }
 
     pub fn search<R: TreeResult, P>(&self, data: P, by: SearchBy, result: &mut R)
     where
-        P:Into<[T; D]> + Clone + Copy,
+        P: Into<[T; D]> + Clone + Copy,
     {
-        let mut search_queue = BinaryHeap::with_capacity(std::cmp::max(10, (self.data.len() as f32).sqrt() as usize));
+        let mut search_queue =
+            BinaryHeap::with_capacity(std::cmp::max(10, (self.data.len() as f32).sqrt() as usize));
         if self.root.is_none() {
             return;
         }
@@ -180,21 +162,20 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
             // Use Binary Heap to search the minimal node first
             while let Some(Reverse(node)) = search_queue.pop() {
                 self.search_(result, &node.raw, &data, by, node.order, &mut search_queue);
-            }   
+            }
         };
     }
 
-    fn search_<'a, R: TreeResult, P> 
-    (
+    fn search_<'a, R: TreeResult, P>(
         &self,
         result: &mut R,
         node: &'a Box<KdLeaf>,
         data: &P,
         by: SearchBy,
         min_dist: f32,
-        queue: &mut BinaryHeap<Reverse<TreeHeapElement<&'a Box<KdLeaf>, f32>>>)
-    where
-        P: Into<[T; D]> + Clone + Copy
+        queue: &mut BinaryHeap<Reverse<TreeHeapElement<&'a Box<KdLeaf>, f32>>>,
+    ) where
+        P: Into<[T; D]> + Clone + Copy,
     {
         if result.worst() < min_dist {
             return;
@@ -205,12 +186,12 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
         let far;
 
         let d: T;
-        match node.feature  {
+        match node.feature {
             KdFeature::Leaf(leaf) => {
                 let dist = distance(&self.data[leaf], &p);
                 result.add(leaf, dist.to_f32().unwrap());
                 return;
-            },
+            }
             KdFeature::Split((sp_dim, sp_val)) => {
                 d = p[sp_dim] - T::from(sp_val).unwrap();
                 if d < T::zero() {
@@ -220,7 +201,7 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
                     near = &node.right;
                     far = &node.left;
                 }
-            },
+            }
         };
 
         if let Some(far) = far {
@@ -229,15 +210,16 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
                     if !result.is_full() {
                         true
                     } else {
-                        d*d < T::from(result.worst() + f32::EPSILON).unwrap()
+                        d * d < T::from(result.worst() + f32::EPSILON).unwrap()
                     }
-                },
-                SearchBy::Radius(r) => {
-                    d*d <= T::from(r).unwrap()
-                },
+                }
+                SearchBy::Radius(r) => d * d <= T::from(r).unwrap(),
             };
             if add_far {
-                queue.push(Reverse(TreeHeapElement { raw: &far, order: min_dist+(d*d).to_f32().unwrap() }));
+                queue.push(Reverse(TreeHeapElement {
+                    raw: &far,
+                    order: min_dist + (d * d).to_f32().unwrap(),
+                }));
             }
         }
 
@@ -245,40 +227,42 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
             self.search_(result, near, data, by, min_dist, queue);
         }
     }
-
 }
 
 #[inline]
 fn distance<T: BasicFloat, const D: usize>(a: &[T; D], b: &[T; D]) -> T {
-    a
-        .iter()
+    a.iter()
         .zip(b)
         .fold(T::zero(), |acc, (a, b)| acc + (*a - *b).powi(2))
 }
-impl<P, T: BasicFloat, const D: usize>  TreeSearch<P> for KdTree<T, D> 
+impl<P, T: BasicFloat, const D: usize> TreeSearch<P> for KdTree<T, D>
 where
-    P:Into<[T; D]> + Send + Sync + Clone + Copy,
+    P: Into<[T; D]> + Send + Sync + Clone + Copy,
     [T; D]: Into<P>,
 {
     fn search_knn(&self, point: &P, k: usize) -> Vec<(P, f32)> {
-        let by = if k ==0 {SearchBy::Count(1)} else {SearchBy::Count(k)};
+        let by = if k == 0 {
+            SearchBy::Count(1)
+        } else {
+            SearchBy::Count(k)
+        };
         let mut result = TreeKnnResult::new(k);
         self.search(*point, by, &mut result);
-        result.result().iter()
-            .map(|&(i, d)| {
-                (self.data[i].into(), d.sqrt())
-            })
+        result
+            .result()
+            .iter()
+            .map(|&(i, d)| (self.data[i].into(), d.sqrt()))
             .collect::<Vec<(P, f32)>>()
     }
 
     fn search_radius(&self, point: &P, radius: f32) -> Vec<P> {
-        let by = if radius==0.0 {SearchBy::Count(1)} else {SearchBy::Radius(radius * radius)};
+        let by = if radius == 0.0 {
+            SearchBy::Count(1)
+        } else {
+            SearchBy::Radius(radius * radius)
+        };
         let mut result = TreeRadiusResult::new(radius * radius);
         self.search(*point, by, &mut result);
-        result.data.iter()
-            .map(|&i| {
-                self.data[i].into()
-            })
-            .collect()
+        result.data.iter().map(|&i| self.data[i].into()).collect()
     }
 }

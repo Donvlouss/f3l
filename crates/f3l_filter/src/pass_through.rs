@@ -1,14 +1,11 @@
-use std::ops::{
-    Bound,
-    Range
-};
+use std::ops::{Bound, Range};
 
-use f3l_core::BasicFloat;
 use super::F3lFilter;
+use f3l_core::BasicFloat;
 
 pub struct PassThrough<'a, P, T: BasicFloat, const D: usize>
 where
-    P:Into<[T; D]> + Clone + Copy,
+    P: Into<[T; D]> + Clone + Copy,
 {
     pub negative: bool,
     pub dim: usize,
@@ -19,7 +16,7 @@ where
 
 impl<'a, P, T: BasicFloat, const D: usize> Default for PassThrough<'a, P, T, D>
 where
-    P:Into<[T; D]> + Clone + Copy
+    P: Into<[T; D]> + Clone + Copy,
 {
     fn default() -> Self {
         Self {
@@ -27,14 +24,14 @@ where
             dim: Default::default(),
             bound: Default::default(),
             data: Default::default(),
-            inliers: Default::default()
+            inliers: Default::default(),
         }
     }
 }
 
 impl<'a, P, T: BasicFloat, const D: usize> PassThrough<'a, P, T, D>
 where
-    P:Into<[T; D]> + Clone + Copy,
+    P: Into<[T; D]> + Clone + Copy,
 {
     pub fn with_data(data: &'a Vec<P>, bound: Range<Bound<T>>, dim: usize) -> Self {
         Self {
@@ -42,7 +39,7 @@ where
             dim,
             bound: Some(bound),
             data: Some(data),
-            inliers: Default::default()
+            inliers: Default::default(),
         }
     }
 
@@ -54,8 +51,8 @@ where
 
 impl<'a, P, T: BasicFloat, const D: usize> F3lFilter<'a, P> for PassThrough<'a, P, T, D>
 where
-    P:Into<[T; D]> + Clone + Copy + Send + Sync,
-    [T; D]: Into<P>
+    P: Into<[T; D]> + Clone + Copy + Send + Sync,
+    [T; D]: Into<P>,
 {
     fn set_negative(&mut self, negative: bool) {
         self.negative = negative;
@@ -77,9 +74,7 @@ where
             return vec![];
         }
         let data = self.data.unwrap();
-        self.inliers.iter()
-            .map(|i| data[*i])
-            .collect()
+        self.inliers.iter().map(|i| data[*i]).collect()
     }
 
     fn apply_filter(&mut self) -> bool {
@@ -98,7 +93,7 @@ where
         } else {
             return false;
         };
-        
+
         use f3l_core::rayon::prelude::*;
         self.inliers = data
             .par_iter()
@@ -106,7 +101,7 @@ where
             .filter_map(|(i, &p)| {
                 let p: [T; D] = p.into();
                 let p = p[self.dim];
-                let b_start =  match start {
+                let b_start = match start {
                     Bound::Included(v) => p >= v,
                     Bound::Excluded(v) => p > v,
                     Bound::Unbounded => true,

@@ -1,11 +1,6 @@
-use std::ops::{
-    Index,
-    IndexMut
-};
+use std::ops::{Index, IndexMut};
 
-use num_traits::{
-    Float, Num, NumAssign, NumOps
-};
+use num_traits::{Float, Num, NumAssign, NumOps};
 
 pub trait BasicFloat: Float + NumOps + NumAssign + Send + Sync + Copy + Clone {}
 impl BasicFloat for f32 {}
@@ -17,8 +12,7 @@ where
 {
     #[inline]
     fn dot(&self, other: &Self) -> T {
-        (0..D)
-            .fold(T::zero(), |acc, i| acc + self[i] * other[i])
+        (0..D).fold(T::zero(), |acc, i| acc + self[i] * other[i])
     }
     fn cross(&self, other: &Self) -> Self;
     #[inline]
@@ -37,25 +31,22 @@ where
     }
     #[inline]
     fn len_squared(&self) -> T {
-        (0..D)
-            .fold(T::zero(), |acc, i| acc + self[i].powi(2))
+        (0..D).fold(T::zero(), |acc, i| acc + self[i].powi(2))
     }
     #[inline]
     fn normalize(&mut self) {
         let d = T::one() / self.len();
-        (0..D)
-            .for_each(|i| {
-                self[i]  = self[i] * d;
-            })
+        (0..D).for_each(|i| {
+            self[i] = self[i] * d;
+        })
     }
     #[inline]
     fn normalized(&self) -> Self {
         let mut out = *self;
         let d = T::one() / self.len();
-        (0..D)
-            .for_each(|i| {
-                out[i]  = self[i] * d;
-            });
+        (0..D).for_each(|i| {
+            out[i] = self[i] * d;
+        });
         out
     }
     #[inline]
@@ -64,8 +55,7 @@ where
     }
     #[inline]
     fn distance_square_between(&self, other: &Self) -> T {
-        (0..D)
-            .fold(T::zero(), |acc, i| acc + (self[i]-other[i]).powi(2))
+        (0..D).fold(T::zero(), |acc, i| acc + (self[i] - other[i]).powi(2))
     }
 }
 
@@ -79,7 +69,7 @@ pub trait F3lSlice<T> {
     fn tail(&self, n: usize) -> &[T];
 }
 
-impl <T: BasicFloat, const D: usize> SimpleSliceMath<T, D> for [T; D]
+impl<T: BasicFloat, const D: usize> SimpleSliceMath<T, D> for [T; D]
 where
     Self: Index<usize, Output = T> + IndexMut<usize, Output = T> + Copy,
 {
@@ -90,13 +80,13 @@ where
                 out[0] = self[1] * other[2] - self[2] * other[1];
                 out[1] = self[2] * other[0] - self[0] * other[2];
                 out[2] = self[0] * other[1] - self[1] * other[0];
-            },
+            }
             4 => {
                 out[0] = self[1] * other[2] - self[2] * other[1];
                 out[1] = self[2] * other[0] - self[0] * other[2];
                 out[2] = self[0] * other[1] - self[1] * other[0];
                 out[3] = T::one();
-            },
+            }
             _ => {}
         };
         out
@@ -126,16 +116,16 @@ impl<T: Num + Copy> F3lSlice<T> for [T; 2] {
     fn head(&self, n: usize) -> &[T] {
         let n = match n {
             0 => 0,
-            1 ..= 2 => n-1,
+            1..=2 => n - 1,
             _ => 1,
         };
-        &self[..(n-1)]
+        &self[..(n - 1)]
     }
 
     fn tail(&self, n: usize) -> &[T] {
         let n = match n {
             0 => 0,
-            1 ..= 2 => n-1,
+            1..=2 => n - 1,
             _ => 1,
         };
         &self[n..]
@@ -158,16 +148,16 @@ impl<T: Num + Copy> F3lSlice<T> for [T; 3] {
     fn head(&self, n: usize) -> &[T] {
         let n = match n {
             0 => 0,
-            1 ..= 3 => n-1,
+            1..=3 => n - 1,
             _ => 2,
         };
-        &self[..(n-1)]
+        &self[..(n - 1)]
     }
 
     fn tail(&self, n: usize) -> &[T] {
         let n = match n {
             0 => 0,
-            1 ..= 3 => n-1,
+            1..=3 => n - 1,
             _ => 2,
         };
         &self[n..]
@@ -190,16 +180,16 @@ impl<T: Num + Copy> F3lSlice<T> for [T; 4] {
     fn head(&self, n: usize) -> &[T] {
         let n = match n {
             0 => 0,
-            1 ..= 4 => n-1,
+            1..=4 => n - 1,
             _ => 3,
         };
-        &self[..(n-1)]
+        &self[..(n - 1)]
     }
 
     fn tail(&self, n: usize) -> &[T] {
         let n = match n {
             0 => 0,
-            1 ..= 4 => n-1,
+            1..=4 => n - 1,
             _ => 3,
         };
         &self[n..]

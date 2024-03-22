@@ -1,6 +1,5 @@
 #[derive(Clone, Debug, Copy, PartialEq, PartialOrd)]
-pub enum KdFeature
-{
+pub enum KdFeature {
     Split((usize, f32)),
     Leaf(usize),
 }

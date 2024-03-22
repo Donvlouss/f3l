@@ -11,7 +11,6 @@ use std::ops::Index;
 
 use num_traits::NumCast;
 
-
 pub trait F3lMatrix {
     type RowType: Copy;
 
@@ -30,17 +29,16 @@ pub trait F3lMatrix {
     fn set_element(&mut self, pos: (usize, usize), v: f32);
 }
 
-pub trait ArrayRowMajor
-{
+pub trait ArrayRowMajor {
     type Row: Copy;
     type Mat: Copy;
 
-    fn from_rows<R: Index<usize, Output=f32>>(rows: &[R]) -> Self;
+    fn from_rows<R: Index<usize, Output = f32>>(rows: &[R]) -> Self;
     fn from_rows_slice(m: &[f32]) -> Self;
     fn to_rows_array(&self) -> Self::Row;
     fn from_cols_array_2d(m: &Self::Mat) -> Self;
     fn to_rows_array_2d(&self) -> Self::Mat;
-    fn write_rows_to_slice(self, slice: &mut[f32]);
+    fn write_rows_to_slice(self, slice: &mut [f32]);
 }
 
 pub trait ArrayDimensions {
@@ -48,11 +46,10 @@ pub trait ArrayDimensions {
     fn nb_rows() -> usize;
 }
 
-pub trait GenericArray: ArrayDimensions + Sized
-{
+pub trait GenericArray: ArrayDimensions + Sized {
     fn cast_from<T: NumCast, const C: usize, const R: usize>(from: [[T; C]; R]) -> Self
     where
-        Self: ArrayRowMajor<Mat = [[f32; R]; C]>
+        Self: ArrayRowMajor<Mat = [[f32; R]; C]>,
     {
         // type ArrayRowMajor::Mat = [[f32; R]; C];
         let mut cast = [[0f32; R]; C];

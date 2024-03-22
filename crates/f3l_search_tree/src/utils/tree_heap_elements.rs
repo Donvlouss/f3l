@@ -1,9 +1,8 @@
 use f3l_core::BasicFloat;
 
-pub struct TreeHeapElement<D, O: BasicFloat>
-{
+pub struct TreeHeapElement<D, O: BasicFloat> {
     pub raw: D,
-    pub order: O
+    pub order: O,
 }
 
 impl<D, O: BasicFloat> Eq for TreeHeapElement<D, O> {}

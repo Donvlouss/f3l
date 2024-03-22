@@ -1,7 +1,7 @@
-mod root;
-mod matrix;
 mod eigen;
+mod matrix;
+mod root;
 
-pub use root::*;
-pub use matrix::*;
 pub use eigen::*;
+pub use matrix::*;
+pub use root::*;

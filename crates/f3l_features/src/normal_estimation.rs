@@ -1,14 +1,15 @@
 use std::ops::Index;
 
 use f3l_core::{
-    compute_covariance_matrix, glam::Vec3, matrix3x3::*, rayon::prelude::*, BasicFloat, GenericArray
+    compute_covariance_matrix, glam::Vec3, matrix3x3::*, rayon::prelude::*, BasicFloat,
+    GenericArray,
 };
 use f3l_search_tree::*;
 
 pub struct NormalEstimation<'a, P, T: BasicFloat>
 where
-    P:Into<[T; 3]> + Clone + Copy,
-    [T; 3]: Into<P>
+    P: Into<[T; 3]> + Clone + Copy,
+    [T; 3]: Into<P>,
 {
     pub method: SearchBy,
     fast: bool,
@@ -17,10 +18,10 @@ where
     normals: Vec<Option<Vec3>>,
 }
 
-impl<'a, P, T:BasicFloat> NormalEstimation<'a, P, T>
+impl<'a, P, T: BasicFloat> NormalEstimation<'a, P, T>
 where
-    P:Into<[T; 3]> + Clone + Copy + Send + Sync + Index<usize, Output=T>,
-    [T; 3]: Into<P>
+    P: Into<[T; 3]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
+    [T; 3]: Into<P>,
 {
     pub fn new(method: SearchBy) -> Self {
         Self {
@@ -61,14 +62,17 @@ where
         }
         self.tree.build();
         let data = self.data.unwrap();
-        
+
         let normals = (0..data.len())
             .into_par_iter()
             .map(|i| {
                 let cloud = match self.method {
-                    SearchBy::Count(k) => 
-                        self.tree.search_knn(&data[i], k)
-                            .iter().map(|&(p, _)| p).collect(),
+                    SearchBy::Count(k) => self
+                        .tree
+                        .search_knn(&data[i], k)
+                        .iter()
+                        .map(|&(p, _)| p)
+                        .collect(),
                     SearchBy::Radius(r) => self.tree.search_radius(&data[i], r),
                 };
 
@@ -86,13 +90,12 @@ where
                 let eigenvector: Option<Vec3> = Some(eigen_set.minimal().eigenvector.into());
 
                 (i, eigenvector)
-            }).collect::<Vec<_>>();
+            })
+            .collect::<Vec<_>>();
         self.normals = vec![None; data.len()];
-        normals.into_iter()
-            .for_each(|(i, n)| {
-                self.normals[i]=n;
-            });
+        normals.into_iter().for_each(|(i, n)| {
+            self.normals[i] = n;
+        });
         true
     }
-
 }

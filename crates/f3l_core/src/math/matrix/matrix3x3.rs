@@ -1,16 +1,19 @@
 use std::ops::Index;
 
+use crate::glam::{Mat3, Vec3};
+use crate::{Eigen, EigenSet};
 use f3l_glam::ArrayRowMajor;
 use nalgebra::ComplexField;
-use crate::{Eigen, EigenSet};
-use crate::glam::{Mat3, Vec3};
 
-use crate::{one_polynomial::{root2, root3}, BasicFloat};
 use super::compute_covariance_matrix;
+use crate::{
+    one_polynomial::{root2, root3},
+    BasicFloat,
+};
 
 pub fn compute_eigenvalues_by_points<P>(points: &[P]) -> [f32; 3]
 where
-    P: Index<usize, Output = f32> + Copy + Into<[f32; 3]>
+    P: Index<usize, Output = f32> + Copy + Into<[f32; 3]>,
 {
     let cov = compute_covariance_matrix(points);
     compute_eigenvalues(Mat3::from_rows(&cov.0))
@@ -18,22 +21,11 @@ where
 
 pub fn compute_eigenvalues<T: BasicFloat>(cov: Mat3) -> [T; 3] {
     assert!(cov.to_cols_array().iter().all(|&v| v.is_finite()));
-    let [
-        m00, m10, m20,
-        m01, m11, m21,
-        m02, m12, m22
-    ] = cov.to_cols_array();
+    let [m00, m10, m20, m01, m11, m21, m02, m12, m22] = cov.to_cols_array();
 
     let lambda_2 = -m00 - m11 - m22;
-    let lambda_1 = m00 * m11
-        + m00 * m22
-        + m11 * m22
-        - m12 * m21
-        - m01 * m10
-        - m02 * m20;
-    let lambda_0 = m12 * m21 * m00
-        + m01 * m10 * m22
-        + m02 * m20 * m11
+    let lambda_1 = m00 * m11 + m00 * m22 + m11 * m22 - m12 * m21 - m01 * m10 - m02 * m20;
+    let lambda_0 = m12 * m21 * m00 + m01 * m10 * m22 + m02 * m20 * m11
         - m00 * m11 * m22
         - m01 * m12 * m20
         - m02 * m10 * m21;
@@ -72,47 +64,55 @@ pub fn compute_eigenvector(cov: Mat3, eigenvalue: f32) -> Vec3 {
         mat.row(1).cross(mat.row(2)),
     ];
     let id = [
-            cross_product[0].length().abs(),
-            cross_product[1].length().abs(),
-            cross_product[2].length().abs(),
-        ]
-        .into_iter()
-        .enumerate()
-        .max_by(|&(_,a), (_,b)| {
-            let v = a.partial_cmp(b);
-            match v {
-                Some(v) => v,
-                None => panic!(""),
-            }
-        })
-        .map(|(i,_)| i)
-        .unwrap();
+        cross_product[0].length().abs(),
+        cross_product[1].length().abs(),
+        cross_product[2].length().abs(),
+    ]
+    .into_iter()
+    .enumerate()
+    .max_by(|&(_, a), (_, b)| {
+        let v = a.partial_cmp(b);
+        match v {
+            Some(v) => v,
+            None => panic!(""),
+        }
+    })
+    .map(|(i, _)| i)
+    .unwrap();
     1. / cross_product[id].length() * cross_product[id]
 }
 
-pub fn compute_eigenvectors<T: BasicFloat, V: Into<[f32; 3]>>(cov: Mat3, eigenvalues: V) -> [Vec3; 3] {
+pub fn compute_eigenvectors<T: BasicFloat, V: Into<[f32; 3]>>(
+    cov: Mat3,
+    eigenvalues: V,
+) -> [Vec3; 3] {
     let mut out = [Vec3::ZERO; 3];
     let vs: [f32; 3] = eigenvalues.into();
-    (0..3)
-        .for_each(|i| {
-            let lambda = vs[i as usize];
-            out[i] = compute_eigenvector(cov, lambda);
-        });
+    (0..3).for_each(|i| {
+        let lambda = vs[i as usize];
+        out[i] = compute_eigenvector(cov, lambda);
+    });
     out
 }
 
 pub fn compute_eigen(cov: Mat3) -> EigenSet<f32, 3, 3> {
     let mut out = [Eigen::default(); 3];
-    let max_v = cov.to_cols_array().iter().max_by(|&&a, &b| a.partial_cmp(b).unwrap()).unwrap().to_owned();
-    let mat = cov.mul_scalar(1. /max_v);
-    compute_eigenvalues::<f32>(mat).into_iter()
+    let max_v = cov
+        .to_cols_array()
+        .iter()
+        .max_by(|&&a, &b| a.partial_cmp(b).unwrap())
+        .unwrap()
+        .to_owned();
+    let mat = cov.mul_scalar(1. / max_v);
+    compute_eigenvalues::<f32>(mat)
+        .into_iter()
         .enumerate()
         .for_each(|(i, v)| {
             // let b = mat - Mat3::IDENTITY.mul_scalar(v * max_v);
             out[i] = Eigen {
                 eigenvalue: v * max_v,
                 // eigenvector: b.row(0).cross(b.row(1)).normalize()
-                eigenvector: compute_eigenvector(mat, v).into()
+                eigenvector: compute_eigenvector(mat, v).into(),
             };
         });
     EigenSet(out)
@@ -120,9 +120,7 @@ pub fn compute_eigen(cov: Mat3) -> EigenSet<f32, 3, 3> {
 
 fn unit_orthogonal(v: Vec3) -> Vec3 {
     let mut out = Vec3::ZERO;
-    if !(v.x <= v.z * f32::EPSILON)
-        || !(v.y <= v.z * f32::EPSILON)
-    {
+    if !(v.x <= v.z * f32::EPSILON) || !(v.y <= v.z * f32::EPSILON) {
         let factor = 1f32 / v.truncate().length();
         out.x = -v.y.conjugate() * factor;
         out.y = v.x.conjugate() * factor;
@@ -135,8 +133,13 @@ fn unit_orthogonal(v: Vec3) -> Vec3 {
 }
 
 pub fn compute_eigen_rigorous(cov: Mat3) -> EigenSet<f32, 3, 3> {
-    let max_v = cov.to_cols_array().iter().max_by(|&&a, &b| a.partial_cmp(b).unwrap()).unwrap().to_owned();
-    let mat = cov.mul_scalar(1. /max_v);
+    let max_v = cov
+        .to_cols_array()
+        .iter()
+        .max_by(|&&a, &b| a.partial_cmp(b).unwrap())
+        .unwrap()
+        .to_owned();
+    let mat = cov.mul_scalar(1. / max_v);
 
     let mut eigenvalues = compute_eigenvalues::<f32>(mat);
     // set to increase
@@ -159,29 +162,39 @@ pub fn compute_eigen_rigorous(cov: Mat3) -> EigenSet<f32, 3, 3> {
         eigenvectors.x_axis = eigenvectors.y_axis.cross(eigenvectors.z_axis);
     } else {
         let mut vector_lens = [0f32; 3];
-        eigenvalues.iter()
+        eigenvalues.iter().enumerate().for_each(|(i, &v)| {
+            let vec = compute_eigenvector(mat, v);
+            *eigenvectors.col_mut(i) = vec;
+            vector_lens[i] = vec.length();
+        });
+        let min_id = eigenvalues
+            .iter()
             .enumerate()
-            .for_each(|(i, &v)| {
-                let vec = compute_eigenvector(mat, v);
-                *eigenvectors.col_mut(i) = vec;
-                vector_lens[i] = vec.length();
-            });
-        let min_id = eigenvalues.iter().enumerate()
             .min_by(|&(_, a), (_, b)| a.partial_cmp(b).unwrap())
-            .map(|(i, _)| i).unwrap();
-        let max_id = eigenvalues.iter().enumerate()
+            .map(|(i, _)| i)
+            .unwrap();
+        let max_id = eigenvalues
+            .iter()
+            .enumerate()
             .max_by(|&(_, a), (_, b)| a.partial_cmp(b).unwrap())
-            .map(|(i, _)| i).unwrap();
+            .map(|(i, _)| i)
+            .unwrap();
         let mid_id = 3 - max_id - min_id;
 
-        *eigenvectors.col_mut(min_id) = eigenvectors.col((min_id+1)%3).cross(eigenvectors.col((min_id+2)%3)).normalize();
-        *eigenvectors.col_mut(mid_id) = eigenvectors.col((mid_id+1)%3).cross(eigenvectors.col((mid_id+2)%3)).normalize();
+        *eigenvectors.col_mut(min_id) = eigenvectors
+            .col((min_id + 1) % 3)
+            .cross(eigenvectors.col((min_id + 2) % 3))
+            .normalize();
+        *eigenvectors.col_mut(mid_id) = eigenvectors
+            .col((mid_id + 1) % 3)
+            .cross(eigenvectors.col((mid_id + 2) % 3))
+            .normalize();
     }
     let mut out = [Eigen::default(); 3];
     (0..3).for_each(|i| {
         out[i] = Eigen {
             eigenvalue: eigenvalues[i] * max_v,
-            eigenvector: eigenvectors.col(i).into()
+            eigenvector: eigenvectors.col(i).into(),
         };
     });
     EigenSet(out)
@@ -189,17 +202,17 @@ pub fn compute_eigen_rigorous(cov: Mat3) -> EigenSet<f32, 3, 3> {
 
 #[test]
 fn test_eigenvalues() {
-    use f3l_glam::glam::Vec3;
     use crate::round_slice_n;
+    use f3l_glam::glam::Vec3;
 
     let cov = Mat3::from_cols(
         Vec3::new(1., 2., 3.),
-        Vec3::new(2., 2., 1.,),
-        Vec3::new(3., 1., 3.)
+        Vec3::new(2., 2., 1.),
+        Vec3::new(3., 1., 3.),
     );
 
     let eigenvalues = compute_eigenvalues::<f32>(cov);
-    
+
     assert_eq!(
         round_slice_n([6.1439, 1.38445, -1.52835f32], 3),
         round_slice_n(eigenvalues, 3)

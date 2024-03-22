@@ -17,9 +17,7 @@ mod segmentation {
                 max_nb_cluster: 10,
             };
 
-            let mut extractor = EuclideanClusterExtractor::with_data(
-                parameter, &data
-            );
+            let mut extractor = EuclideanClusterExtractor::with_data(parameter, &data);
             let cluster = extractor.extract();
             assert_eq!(cluster.len(), 3);
         }
@@ -34,7 +32,7 @@ mod segmentation {
             match p {
                 Property::Float(f) => f,
                 Property::Double(d) => d as f32,
-                _ => 0.
+                _ => 0.,
             }
         }
 
@@ -50,7 +48,8 @@ mod segmentation {
 
             let ply_wrapper = ply.unwrap();
 
-            let vs = ply_wrapper.payload["vertex"].iter()
+            let vs = ply_wrapper.payload["vertex"]
+                .iter()
                 .map(|v| {
                     [
                         parse_out(v["x"].clone()),
@@ -81,5 +80,4 @@ mod segmentation {
             assert_eq!(clusters.len(), 5);
         }
     }
-
 }

@@ -3,10 +3,7 @@ use kiss3d::light::Light;
 #[cfg(feature = "app_kiss3d")]
 use kiss3d::window::Window;
 
-use f3l_segmentation::{
-    sac_algorithm::*,
-    sac_model::*,
-};
+use f3l_segmentation::{sac_algorithm::*, sac_model::*};
 
 #[cfg(not(feature = "app_kiss3d"))]
 fn main() {
@@ -16,7 +13,7 @@ fn main() {
 pub fn load_ply(path: &str) -> Vec<[f32; 3]> {
     use ply_rs as ply;
     use ply_rs::ply::Property;
-    
+
     let mut f = std::fs::File::open(path).unwrap();
     // create a parser
     let p = ply::parser::Parser::<ply::ply::DefaultElement>::new();
@@ -58,20 +55,20 @@ fn main() {
     let vertices = load_ply("../../data/table_voxel_down.ply");
 
     let parameter = SacAlgorithmParameter {
-        probability: 0.99, 
-        threshold: 0.02, 
+        probability: 0.99,
+        threshold: 0.02,
         max_iterations: 2000,
         threads: 1,
     };
     let mut model = SacModelPlane::with_data(&vertices);
-    let mut algorithm = SacRansac{
+    let mut algorithm = SacRansac {
         parameter,
         inliers: vec![],
     };
 
     use std::time::Instant;
     let start = Instant::now();
-    
+
     let result = algorithm.compute(&mut model);
 
     let end = start.elapsed().as_millis();
@@ -92,24 +89,22 @@ fn main() {
         .map(|id| {
             let p = vertices[*id];
             Point3::<f32>::new(p[0], p[1], p[2])
-        }).collect::<Vec<_>>();
+        })
+        .collect::<Vec<_>>();
     let total = vertices
         .iter()
-        .map(|p| {
-            Point3::<f32>::new(p[0], p[1], p[2])
-        }).collect::<Vec<_>>();
+        .map(|p| Point3::<f32>::new(p[0], p[1], p[2]))
+        .collect::<Vec<_>>();
 
     let green = Point3::<f32>::new(0., 1., 0.);
     let white = Point3::<f32>::new(1., 1., 1.);
 
     while window.render() {
-        total.iter()
-            .for_each(|p| {
-                window.draw_point(p, &white);
-            });
-        inlier.iter()
-            .for_each(|p| {
-                window.draw_point(p, &green);
-            });
+        total.iter().for_each(|p| {
+            window.draw_point(p, &white);
+        });
+        inlier.iter().for_each(|p| {
+            window.draw_point(p, &green);
+        });
     }
 }

@@ -1,8 +1,7 @@
-use f3l_glam::{F3lMatrix, glam};
+use f3l_glam::{glam, F3lMatrix};
 
-pub mod one_polynomial;
 pub mod n_polynomial;
-
+pub mod one_polynomial;
 
 pub trait MatrixLinAlg: F3lMatrix
 where
@@ -10,7 +9,9 @@ where
 {
     /// solve: ax = b
     fn solve(&self, b: Self::RowType) -> Self::RowType
-    where <Self as F3lMatrix>::RowType: F3lMatrix {
+    where
+        <Self as F3lMatrix>::RowType: F3lMatrix,
+    {
         n_polynomial::gaussian_elimination(self, &b)
     }
 }
@@ -23,8 +24,8 @@ impl MatrixLinAlg for glam::Mat4 {}
 #[cfg(test)]
 mod matrix_lin_alg_impl {
     use super::*;
-    use glam::{Mat3, Vec3};
     use crate::round_slice_n;
+    use glam::{Mat3, Vec3};
 
     #[test]
     fn has_solution() {
@@ -37,9 +38,6 @@ mod matrix_lin_alg_impl {
 
         let x: [f32; 3] = a.solve(b).into();
 
-        assert_eq!(
-            round_slice_n([2f32, 4f32, -3f32], 4),
-            round_slice_n(x, 4)
-        );
+        assert_eq!(round_slice_n([2f32, 4f32, -3f32], 4), round_slice_n(x, 4));
     }
 }
