@@ -1,14 +1,5 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub use f3l_core::*;
+pub use f3l_features::*;
+pub use f3l_filter::*;
+pub use f3l_search_tree::*;
+pub use f3l_segmentation::*;
