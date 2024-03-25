@@ -126,6 +126,8 @@ where
                     };
                     if !self.negative && (b_start && b_end) {
                         ok &= true;
+                    } else if self.negative && !(b_start && b_end) {
+                        ok &= true;
                     } else {
                         ok = false;
                     }
