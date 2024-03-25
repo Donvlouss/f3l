@@ -1,8 +1,8 @@
 use f3l_core::{BasicFloat, SimpleSliceMath};
-use std::marker::PhantomData;
 
 use super::SacModel;
 
+/// Compute 3d line
 #[derive(Debug, Clone, Default)]
 pub struct SacModelLine<'a, P, T: BasicFloat>
 where
@@ -12,7 +12,6 @@ where
     /// - Direction
     pub coefficients: ([T; 3], [T; 3]),
     data: Option<&'a [P]>,
-    _value_type: PhantomData<T>,
 }
 
 impl<'a, P, T: BasicFloat> SacModelLine<'a, P, T>
@@ -23,7 +22,6 @@ where
         Self {
             coefficients: ([T::zero(); 3], [T::zero(); 3]),
             data: None,
-            _value_type: PhantomData,
         }
     }
 
@@ -31,7 +29,6 @@ where
         Self {
             coefficients: ([T::zero(); 3], [T::zero(); 3]),
             data: Some(data),
-            _value_type: PhantomData,
         }
     }
 }
@@ -44,8 +41,11 @@ where
 
     type CoefficientsType = ([T; 3], [T; 3]);
 
+    /// Any 2 points (not the same).
     const NB_SAMPLE: usize = 2;
 
+    /// - Point on Line
+    /// - Direction
     const NB_COEFFICIENTS: usize = 6;
 
     /// Compute point to target line.<br>

@@ -25,6 +25,11 @@ where
 }
 
 /// Ref: vtk/Math/Core/vtkMath/vtkJacobiN
+/// 
+/// Input mat is `RowMajor`, `ColMajor` of `Symmetric Matrix` is ok.
+/// 
+/// # Panic
+/// when iteration smaller than MAX_ROTATION (20).
 pub fn jacobi_eigen_square_n<T, M, const D: usize>(mat: M) -> [Eigen<T, D>; D]
 where
     T: BasicFloat,

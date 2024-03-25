@@ -1,5 +1,6 @@
 use f3l_core::BasicFloat;
 
+/// A HeapElement of Tree searching
 pub struct TreeHeapElement<D, O: BasicFloat> {
     pub raw: D,
     pub order: O,

@@ -1,7 +1,10 @@
 use super::SacModel;
 use f3l_core::{apply_both, BasicFloat, SimpleSliceMath};
-use std::marker::PhantomData;
 
+/// Compute a 3d plane model.
+/// Any 3 points(not overlay or parallel) span a plane.
+/// 
+/// Coefficients: `coefficients_0` x + `coefficients_1` y + `coefficients_2` z + `coefficients_3` = 0
 #[derive(Debug, Clone, Default)]
 pub struct SacModelPlane<'a, P, T: BasicFloat>
 where
@@ -9,7 +12,6 @@ where
 {
     pub coefficients: [T; 4],
     data: Option<&'a [P]>,
-    _value_type: PhantomData<T>,
 }
 
 impl<'a, P, T: BasicFloat> SacModelPlane<'a, P, T>
@@ -20,7 +22,6 @@ where
         Self {
             coefficients: [T::zero(); 4],
             data: None,
-            _value_type: PhantomData,
         }
     }
 
@@ -28,7 +29,6 @@ where
         Self {
             coefficients: [T::zero(); 4],
             data: Some(data),
-            _value_type: PhantomData,
         }
     }
 }
@@ -41,8 +41,10 @@ where
 
     type CoefficientsType = [T; 4];
 
+    /// Any 3 points(not overlay or parallel) span a plane.
     const NB_SAMPLE: usize = 3;
 
+    /// `coefficients_0` x + `coefficients_1` y + `coefficients_2` z + `coefficients_3` = 0
     const NB_COEFFICIENTS: usize = 4;
 
     fn compute_point_to_model(p: P, coefficients: &Self::CoefficientsType) -> T {

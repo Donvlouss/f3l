@@ -4,6 +4,16 @@ use f3l_search_tree::{KdTree, SearchBy, TreeRadiusResult, TreeResult};
 
 use crate::F3lFilter;
 
+/// Filter Numbers of point in radius.
+/// 
+/// # Examples
+/// ```
+/// let vertices = load_ply("../../data/table_scene_lms400.ply");
+/// let mut filter = RadiusOutlierRemoval::with_data(0.03f32, 20, &vertices);
+/// // set true to get outlier instead of inliers
+/// //filter.set_negative(true);
+/// let out = filter.filter_instance();
+/// ```
 #[derive(Debug)]
 pub struct RadiusOutlierRemoval<'a, P, T: BasicFloat, const D: usize>
 where

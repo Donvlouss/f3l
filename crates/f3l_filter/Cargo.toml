@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["app_kiss3d"]
+default = []
 app_kiss3d = [
     "kiss3d",
     "nalgebra"
@@ -18,7 +18,7 @@ f3l_core = { path = "../f3l_core"}
 f3l_search_tree = { path = "../f3l_search_tree" }
 
 kiss3d = { version = "0.35.0", optional = true }
-nalgebra   = { version = "0.30", features = ["rand"], optional = true}
+nalgebra   = { version = "0.32", features = ["rand", "glam025"], optional = true}
 
 [dev-dependencies]
 approx = "0.5"
@@ -44,4 +44,9 @@ required-features = ["app_kiss3d"]
 [[example]]
 name = "condition_removal"
 path = "examples/condition_removal.rs"
+required-features = ["app_kiss3d"]
+
+[[example]]
+name = "statistical_outlier_removal"
+path = "examples/statistical_outlier_removal.rs"
 required-features = ["app_kiss3d"]

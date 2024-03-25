@@ -1,6 +1,7 @@
 use crate::{apply_each, BasicFloat};
 use std::ops::Index;
 
+/// `PCA` Compute covariance for points
 pub fn compute_covariance_matrix<P, T: BasicFloat, const D: usize>(
     points: &[P],
 ) -> ([[T; D]; D], [T; D])

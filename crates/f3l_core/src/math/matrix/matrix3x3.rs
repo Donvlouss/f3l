@@ -3,7 +3,6 @@ use std::ops::Index;
 use crate::glam::{Mat3, Vec3};
 use crate::{Eigen, EigenSet};
 use f3l_glam::ArrayRowMajor;
-use nalgebra::ComplexField;
 
 use super::compute_covariance_matrix;
 use crate::{
@@ -19,6 +18,9 @@ where
     compute_eigenvalues(Mat3::from_rows(&cov.0))
 }
 
+/// Compute Eigenvalues of `Covariance Matrix`
+/// 
+/// Input: Symmetric Matrix (3 x 3 Only)
 pub fn compute_eigenvalues<T: BasicFloat>(cov: Mat3) -> [T; 3] {
     assert!(cov.to_cols_array().iter().all(|&v| v.is_finite()));
     let [m00, m10, m20, m01, m11, m21, m02, m12, m22] = cov.to_cols_array();
@@ -52,9 +54,12 @@ pub fn compute_eigenvalues<T: BasicFloat>(cov: Mat3) -> [T; 3] {
 /// Compute 3 x 3 eigenvectors<br>
 /// M = (A - lambda * I)<br>
 /// take any 2 rows, become:<br>
-/// |   i   j   k  |<br>
-/// | m00 m01 m02  |<br>
-/// | m10 m11 m12  |<br>
+/// 
+/// |   i|   j|  k |
+/// |----|----|----|
+/// | m00| m01| m02|
+/// | m10| m11| m12|
+/// 
 /// get eigenvector from product 2 rows
 pub fn compute_eigenvector(cov: Mat3, eigenvalue: f32) -> Vec3 {
     let mat = cov - eigenvalue * Mat3::IDENTITY;
@@ -95,6 +100,7 @@ pub fn compute_eigenvectors<T: BasicFloat, V: Into<[f32; 3]>>(
     out
 }
 
+/// Compute `eigenvalue` and `eigenvectors`
 pub fn compute_eigen(cov: Mat3) -> EigenSet<f32, 3, 3> {
     let mut out = [Eigen::default(); 3];
     let max_v = cov
@@ -108,10 +114,8 @@ pub fn compute_eigen(cov: Mat3) -> EigenSet<f32, 3, 3> {
         .into_iter()
         .enumerate()
         .for_each(|(i, v)| {
-            // let b = mat - Mat3::IDENTITY.mul_scalar(v * max_v);
             out[i] = Eigen {
                 eigenvalue: v * max_v,
-                // eigenvector: b.row(0).cross(b.row(1)).normalize()
                 eigenvector: compute_eigenvector(mat, v).into(),
             };
         });
@@ -122,16 +126,17 @@ fn unit_orthogonal(v: Vec3) -> Vec3 {
     let mut out = Vec3::ZERO;
     if !(v.x <= v.z * f32::EPSILON) || !(v.y <= v.z * f32::EPSILON) {
         let factor = 1f32 / v.truncate().length();
-        out.x = -v.y.conjugate() * factor;
-        out.y = v.x.conjugate() * factor;
+        out.x = -v.y * factor;
+        out.y = v.x * factor;
     } else {
         let factor = 1f32 / f3l_glam::glam::Vec2::new(v.y, v.z).length();
-        out.y = -v.z.conjugate() * factor;
-        out.z = v.y.conjugate() * factor;
+        out.y = -v.z * factor;
+        out.z = v.y * factor;
     }
     out
 }
 
+/// Compute `eigenvalue` and `eigenvectors` with `rigorous` method
 pub fn compute_eigen_rigorous(cov: Mat3) -> EigenSet<f32, 3, 3> {
     let max_v = cov
         .to_cols_array()

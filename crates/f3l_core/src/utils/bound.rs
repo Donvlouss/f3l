@@ -1,5 +1,6 @@
 use crate::traits::BasicFloat;
 
+/// Compute min and max by column for arrays.
 pub fn get_minmax<P, T: BasicFloat, const D: usize>(cloud: &[P]) -> (P, P)
 where
     P: Into<[T; D]> + Clone + Copy,

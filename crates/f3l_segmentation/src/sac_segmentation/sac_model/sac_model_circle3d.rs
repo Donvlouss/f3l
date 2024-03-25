@@ -3,13 +3,15 @@ use std::marker::PhantomData;
 
 use super::SacModel;
 
+/// Compute a 3d circle, not sphere.
 #[derive(Debug, Clone, Default)]
 pub struct SacModelCircle3d<'a, P, T: BasicFloat>
 where
     P: Into<[T; 3]> + Clone + Copy,
 {
-    /// - Point on Line
-    /// - Direction
+    /// - Center of Circle
+    /// - Normal of Circle plane
+    /// - Radius
     pub coefficients: ([T; 3], [T; 3], T),
     data: Option<&'a [P]>,
     _value_type: PhantomData<T>,
@@ -44,8 +46,9 @@ where
 
     type CoefficientsType = ([T; 3], [T; 3], T);
 
+    /// 3 points be a circle3d.
     const NB_SAMPLE: usize = 3;
-
+    /// center XYZ, normal XYZ, radius.
     const NB_COEFFICIENTS: usize = 7;
 
     /// 1. compute length of p project to normal

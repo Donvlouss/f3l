@@ -5,6 +5,9 @@ use f3l_core::BasicFloat;
 use super::{SacAlgorithm, SacAlgorithmGetter, SacAlgorithmParameter};
 use crate::sac_model::SacModel;
 
+/// Ransac
+/// 
+/// See [`SacAlgorithmParameter`]
 #[derive(Debug, Default, Clone)]
 pub struct SacRansac {
     pub parameter: SacAlgorithmParameter,
@@ -23,6 +26,9 @@ where
     R: SacModel<'a, P, T> + Send + Sync,
     <R as SacModel<'a, P, T>>::CoefficientsType: Send + Sync,
 {
+    /// Compute Ransac
+    /// 
+    /// End with reach `max_iteration` or probability more than numbers of iteration.
     fn compute(&mut self, model: &mut R) -> bool {
         let SacAlgorithmParameter {
             probability,
@@ -45,6 +51,7 @@ where
         let coefficient = model.get_coefficient();
         let coefficient = Arc::new(Mutex::new(coefficient));
 
+        // Do closure in each thread.
         let closure = || {
             loop {
                 {
@@ -54,7 +61,6 @@ where
                     }
                     let lock = skipped.lock().unwrap();
                     if *lock > max_skip {
-                        // return;
                         break;
                     }
                 }
@@ -96,6 +102,7 @@ where
             }
         };
 
+        // Use rayon parallel when threads > 1
         if threads > 1 {
             let pool = f3l_core::rayon::ThreadPoolBuilder::new()
                 .num_threads(threads)

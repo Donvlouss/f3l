@@ -1,32 +1,53 @@
+
+/// Search Method
+/// * Count : KNN
+/// * Radius: Radius Search
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub enum SearchBy {
     Count(usize),
     Radius(f32),
 }
 
+/// Search `KNN` and `Radius`
 pub trait TreeSearch<P> {
+    fn search_knn_ids(&self, point: &P, k: usize) -> Vec<usize>;
+    fn search_radius_ids(&self, point: &P, radius: f32) -> Vec<usize>;
+
     fn search_knn(&self, point: &P, k: usize) -> Vec<(P, f32)>;
     fn search_radius(&self, point: &P, radius: f32) -> Vec<P>;
 }
 
+/// Result of `KNN` and `Radius`
 pub trait TreeResult {
     type T;
     type Output;
+    /// New with `k` neighbors of `KNN` or `radius` of `Radius Search`
     fn new(arg: Self::T) -> Self;
+    /// Args and initialize the data capacity.
     fn with_capacity(arg: Self::T, capacity: usize) -> Self;
+    /// Get Result
     fn result(&self) -> Vec<Self::Output>;
 
+    /// Add to result data
     fn add(&mut self, data: usize, distance: f32);
+    /// Check data is full
     fn is_full(&self) -> bool;
+    /// Get farthest point of data
     fn worst(&self) -> f32;
+    /// Clear data
     fn clear(&mut self);
 }
 
+/// KNN result
 #[derive(Debug, Clone)]
 pub struct TreeKnnResult {
+    /// KNN ids and distances.
     pub data: Vec<(usize, f32)>,
+    /// Target of `K`.
     pub size: usize,
+    /// Length of data.
     pub count: usize,
+    /// Used in searching.
     pub farthest: f32,
 }
 
@@ -95,11 +116,16 @@ impl TreeResult for TreeKnnResult {
     }
 }
 
+/// Radius Search result
 #[derive(Debug, Clone)]
 pub struct TreeRadiusResult {
+    /// Neighbors in radius.
     pub data: Vec<usize>,
+    /// Length of data
     pub count: usize,
+    /// Target radius
     pub radius: f32,
+    /// `Optional`: full check when `count` more than `size`
     pub size: Option<usize>,
 }
 

@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["app_kiss3d"]
+default = []
 app_kiss3d = [
     "kiss3d",
     "nalgebra"
@@ -26,4 +26,14 @@ ply-rs = "0.1.3"
 [[example]]
 name = "euclidean_cluster_extraction"
 path = "examples/euclidean_cluster_extraction.rs"
+required-features = ["app_kiss3d"]
+
+[[example]]
+name = "db_scan"
+path = "examples/db_scan.rs"
+required-features = ["app_kiss3d"]
+
+[[example]]
+name = "sac_plane"
+path = "examples/sac_plane.rs"
 required-features = ["app_kiss3d"]

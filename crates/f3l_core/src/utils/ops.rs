@@ -1,10 +1,12 @@
 use num_traits::{Float, Num, Pow};
 
+/// !(v.is_infinite() || v.is_nan())
 #[inline]
 pub fn is_float_ok<T: Float>(v: T) -> bool {
     !(v.is_infinite() || v.is_nan())
 }
 
+/// check is_float_ok per element
 #[inline]
 pub fn is_slice_ok<T: Float, const D: usize>(target: [T; D]) -> bool {
     for &t in target.iter() {
@@ -15,11 +17,13 @@ pub fn is_slice_ok<T: Float, const D: usize>(target: [T; D]) -> bool {
     true
 }
 
+/// round n digits for value
 #[inline]
 pub fn round_n<T: Float>(me: T, n: usize) -> T {
     (me * T::from(10.pow(n)).unwrap()).round() / T::from(10.pow(n)).unwrap()
 }
 
+/// round n digits for value of array
 #[inline]
 pub fn round_slice_n<T: Float, const D: usize>(me: [T; D], n: usize) -> [T; D] {
     let mut out = me;
@@ -29,6 +33,9 @@ pub fn round_slice_n<T: Float, const D: usize>(me: [T; D], n: usize) -> [T; D] {
     out
 }
 
+/// Ops for array and array
+/// 
+/// F: `std::ops::Add::add`, `std::ops::Mul::mul` ...
 #[inline]
 pub fn apply_both<T: Num + Copy, const D: usize, F: FnMut(T, T) -> T>(
     me: &[T; D],
@@ -40,6 +47,9 @@ pub fn apply_both<T: Num + Copy, const D: usize, F: FnMut(T, T) -> T>(
     out
 }
 
+/// Ops for array and value
+/// 
+/// F: `std::ops::Add::add`, `std::ops::Mul::mul` ...
 #[inline]
 pub fn apply_each<T: Num + Copy, const D: usize, F: FnMut(T, T) -> T>(
     me: &[T; D],

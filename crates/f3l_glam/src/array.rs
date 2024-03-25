@@ -11,6 +11,7 @@ use std::ops::Index;
 
 use num_traits::NumCast;
 
+/// A trait of matrix for glam type
 pub trait F3lMatrix {
     type RowType: Copy;
 
@@ -18,6 +19,7 @@ pub trait F3lMatrix {
     fn cols(&self) -> usize;
     fn rows(&self) -> usize;
     fn row(&self, r: usize) -> Self::RowType;
+    /// get value with bound check
     fn get(&self, r: usize, c: usize) -> Option<f32>;
     fn at(&self, r: usize, c: usize) -> f32 {
         self.get(r, c).unwrap()
@@ -29,6 +31,7 @@ pub trait F3lMatrix {
     fn set_element(&mut self, pos: (usize, usize), v: f32);
 }
 
+/// A trait of from/to for glam types
 pub trait ArrayRowMajor {
     type Row: Copy;
     type Mat: Copy;
@@ -41,17 +44,18 @@ pub trait ArrayRowMajor {
     fn write_rows_to_slice(self, slice: &mut [f32]);
 }
 
+/// A dimension getter
 pub trait ArrayDimensions {
     fn nb_cols() -> usize;
     fn nb_rows() -> usize;
 }
 
+/// Cast generic matrix type to glam types
 pub trait GenericArray: ArrayDimensions + Sized {
     fn cast_from<T: NumCast, const C: usize, const R: usize>(from: [[T; C]; R]) -> Self
     where
         Self: ArrayRowMajor<Mat = [[f32; R]; C]>,
     {
-        // type ArrayRowMajor::Mat = [[f32; R]; C];
         let mut cast = [[0f32; R]; C];
         (0..Self::nb_rows()).for_each(|r| {
             let row_set_0 = R <= r;
@@ -63,7 +67,6 @@ pub trait GenericArray: ArrayDimensions + Sized {
                 cast[c][r] = from[c][r].to_f32().unwrap();
             });
         });
-        // Self::from_cols_array_2d(&cast)
         Self::from_cols_array_2d(&cast)
     }
 }

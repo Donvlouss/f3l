@@ -3,6 +3,17 @@ use f3l_core::rayon::prelude::*;
 use f3l_core::BasicFloat;
 use f3l_search_tree::{KdTree, TreeSearch};
 
+/// Compute k-neighbors of all points, then compute mean and variance
+/// filter out mean +- multiply * std
+/// 
+/// # Examples
+/// ```
+/// let vertices = load_ply("../../data/table_scene_lms400.ply");
+/// // To filter k-neighbor=50 and mean +- 1 * std
+/// let mut filter = StatisticalOutlierRemoval::with_data(1., 50, &vertices);
+/// filter.set_negative(true);
+/// let out = filter.filter_instance();
+/// ```
 pub struct StatisticalOutlierRemoval<'a, P, T: BasicFloat, const D: usize>
 where
     P: Into<[T; D]> + Clone + Copy,
