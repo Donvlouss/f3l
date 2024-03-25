@@ -15,20 +15,20 @@ where
 }
 
 /// Compute Oriented Bounding Box
-/// 
+///
 /// 1. Compute covariance of data.
 /// 2. Compute eigenvalues and eigenvectors of covariance.
 /// 3. Make each direction orthogonal by cross product.
 /// 4. Multiply inverse of eigenvector to align data to orthogonal.
 /// 5. Compute AABB of aligned data as `Length`
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```
 /// let vertices = load_ply("../../data/table_voxel_down.ply");
 /// let obb = OBB::compute(&vertices);
 /// ```
-/// 
+///
 #[derive(Debug, Clone, Copy)]
 pub struct OBB<T: BasicFloat, const D: usize, P>
 where

@@ -8,22 +8,22 @@ use f3l_core::BasicFloat;
 use std::{cmp::Reverse, collections::BinaryHeap};
 
 /// KD-Tree Implement
-/// 
+///
 /// Use for any dimension of data.
 /// Allow type which implement `Into<[T; D]>`
 /// See more in `tests`.
-/// 
+///
 /// `let mut tree = KdTree::<f32, 1>::new();`
 /// Input:
 /// * element type (like f32 or f64.. )
 /// * Dimension: usize
-/// 
+///
 /// # Examples
 /// ```
 /// use approx::assert_relative_eq;
 /// use f3l_core::glam::{Vec2, Vec3};
-/// use f3l_search_tree::*; 
-/// 
+/// use f3l_search_tree::*;
+///
 /// let mut tree = KdTree::<f32, 1>::new();
 /// tree.set_data(&(0..10).map(|i| [i as f32]).collect::<Vec<_>>());
 /// tree.build();
@@ -291,7 +291,7 @@ where
         self.search(*point, by, &mut result);
         result.data.iter().map(|&i| self.data[i].into()).collect()
     }
-    
+
     fn search_knn_ids(&self, point: &P, k: usize) -> Vec<usize> {
         let by = if k == 0 {
             SearchBy::Count(1)
@@ -300,10 +300,9 @@ where
         };
         let mut result = TreeKnnResult::new(k);
         self.search(*point, by, &mut result);
-        result.data.iter()
-            .map(|&(i, _)| i).collect()
+        result.data.iter().map(|&(i, _)| i).collect()
     }
-    
+
     fn search_radius_ids(&self, point: &P, radius: f32) -> Vec<usize> {
         let by = if radius == 0.0 {
             SearchBy::Count(1)

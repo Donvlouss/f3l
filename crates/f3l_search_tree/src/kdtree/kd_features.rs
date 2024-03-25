@@ -1,4 +1,3 @@
-
 /// KD Tree node type, all data store in `leaf` node
 #[derive(Clone, Debug, Copy, PartialEq, PartialOrd)]
 pub enum KdFeature {

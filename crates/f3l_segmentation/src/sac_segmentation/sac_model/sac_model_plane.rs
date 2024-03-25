@@ -3,7 +3,7 @@ use f3l_core::{apply_both, BasicFloat, SimpleSliceMath};
 
 /// Compute a 3d plane model.
 /// Any 3 points(not overlay or parallel) span a plane.
-/// 
+///
 /// Coefficients: `coefficients_0` x + `coefficients_1` y + `coefficients_2` z + `coefficients_3` = 0
 #[derive(Debug, Clone, Default)]
 pub struct SacModelPlane<'a, P, T: BasicFloat>

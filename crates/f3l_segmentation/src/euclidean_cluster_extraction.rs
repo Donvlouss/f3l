@@ -5,7 +5,7 @@ use crate::{F3lCluster, F3lClusterParameter};
 
 /// Euclidean Cluster Extractor
 /// use [`KdTree`] to search neighbors of radius.
-/// 
+///
 /// # Examples
 /// ```
 /// let vertices = load_ply("../../data/table_remove_plane.ply");

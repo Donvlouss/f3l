@@ -4,11 +4,11 @@ use super::F3lFilter;
 use f3l_core::BasicFloat;
 
 /// Target `Dimension` to filter with `Upper-Bound` and `Lower-Bound`
-/// 
+///
 /// # Examples
 /// ```
 /// let vertices = load_ply("../../data/table_scene_lms400.ply");
-/// 
+///
 /// let mut filter = PassThrough::with_data(
 ///     &vertices,
 ///     Range {
@@ -18,10 +18,10 @@ use f3l_core::BasicFloat;
 ///     0,
 /// );
 /// let start = Instant::now();
-/// 
+///
 /// let out = filter.filter_instance();
 /// ```
-/// 
+///
 pub struct PassThrough<'a, P, T: BasicFloat, const D: usize>
 where
     P: Into<[T; D]> + Clone + Copy,

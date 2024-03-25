@@ -21,9 +21,8 @@ impl<T: BasicFloat, const D: usize> Default for Eigen<T, D> {
     }
 }
 
-
 /// N dim of Eigen
-/// 
+///
 /// See [`Eigen`]
 #[derive(Debug, Clone, Copy)]
 pub struct EigenSet<T: BasicFloat, const D: usize, const N: usize>(pub [Eigen<T, D>; N]);

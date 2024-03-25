@@ -41,7 +41,7 @@ pub trait SacAlgorithmGetter {
     fn get_inliers(&self) -> &Vec<usize>;
 }
 
-/// A trait to support algorithm computing. 
+/// A trait to support algorithm computing.
 pub trait SacAlgorithm<'a, P: Copy, T, R>: SacAlgorithmGetter
 where
     T: BasicFloat,

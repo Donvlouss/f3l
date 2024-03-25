@@ -19,7 +19,7 @@ where
 }
 
 /// Compute Eigenvalues of `Covariance Matrix`
-/// 
+///
 /// Input: Symmetric Matrix (3 x 3 Only)
 pub fn compute_eigenvalues<T: BasicFloat>(cov: Mat3) -> [T; 3] {
     assert!(cov.to_cols_array().iter().all(|&v| v.is_finite()));
@@ -54,12 +54,12 @@ pub fn compute_eigenvalues<T: BasicFloat>(cov: Mat3) -> [T; 3] {
 /// Compute 3 x 3 eigenvectors<br>
 /// M = (A - lambda * I)<br>
 /// take any 2 rows, become:<br>
-/// 
+///
 /// |   i|   j|  k |
 /// |----|----|----|
 /// | m00| m01| m02|
 /// | m10| m11| m12|
-/// 
+///
 /// get eigenvector from product 2 rows
 pub fn compute_eigenvector(cov: Mat3, eigenvalue: f32) -> Vec3 {
     let mat = cov - eigenvalue * Mat3::IDENTITY;

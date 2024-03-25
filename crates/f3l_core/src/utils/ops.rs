@@ -34,7 +34,7 @@ pub fn round_slice_n<T: Float, const D: usize>(me: [T; D], n: usize) -> [T; D] {
 }
 
 /// Ops for array and array
-/// 
+///
 /// F: `std::ops::Add::add`, `std::ops::Mul::mul` ...
 #[inline]
 pub fn apply_both<T: Num + Copy, const D: usize, F: FnMut(T, T) -> T>(
@@ -48,7 +48,7 @@ pub fn apply_both<T: Num + Copy, const D: usize, F: FnMut(T, T) -> T>(
 }
 
 /// Ops for array and value
-/// 
+///
 /// F: `std::ops::Add::add`, `std::ops::Mul::mul` ...
 #[inline]
 pub fn apply_each<T: Num + Copy, const D: usize, F: FnMut(T, T) -> T>(

@@ -1,4 +1,3 @@
-
 /// Search Method
 /// * Count : KNN
 /// * Radius: Radius Search

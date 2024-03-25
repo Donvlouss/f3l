@@ -5,7 +5,7 @@ use f3l_search_tree::{KdTree, TreeSearch};
 
 /// Compute k-neighbors of all points, then compute mean and variance
 /// filter out mean +- multiply * std
-/// 
+///
 /// # Examples
 /// ```
 /// let vertices = load_ply("../../data/table_scene_lms400.ply");

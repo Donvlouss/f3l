@@ -5,7 +5,7 @@ use f3l_search_tree::{KdTree, SearchBy, TreeRadiusResult, TreeResult};
 use crate::F3lFilter;
 
 /// Filter Numbers of point in radius.
-/// 
+///
 /// # Examples
 /// ```
 /// let vertices = load_ply("../../data/table_scene_lms400.ply");

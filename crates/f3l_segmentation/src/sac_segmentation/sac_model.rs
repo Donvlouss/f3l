@@ -20,7 +20,7 @@ pub enum SacModelType {
 }
 
 /// Represent any model.
-/// 
+///
 /// Implement this to Customize model.
 /// Currently support [`SacModelPlane`], [`SacModelSphere`],
 /// [`SacModelLine`], [`SacModelCircle3d`]
@@ -89,7 +89,7 @@ pub trait SacModel<'a, P: Copy, T: BasicFloat> {
     /// Get array of indices of samples.
     fn get_random_samples(&self) -> Self::SampleIdxType;
     /// Return `CoefficientsType` of samples.
-    /// 
+    ///
     /// # Err
     /// * Numbers of data smaller than `NB_SAMPLE`.
     /// * Samples could not be computed.
