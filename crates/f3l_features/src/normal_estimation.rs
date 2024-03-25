@@ -6,12 +6,39 @@ use f3l_core::{
 };
 use f3l_search_tree::*;
 
+/// Compute normals of each point.
+/// Use [`KdTree`] to search neighbors.
+///
+/// 1. For each point search neighbors.
+/// 2. Compute eigenvector of neighbors.
+/// 3. The smallest eigenvalue one is which normal.
+///
+/// # Examples
+/// ```
+/// let vertices = load_ply("../../data/table_voxel_down.ply");
+/// let normal_len = 0.02f32;
+///
+/// // Use Radius Search
+/// // let mut estimator = NormalEstimation::with_data(SearchBy::Radius(0.08f32), &vertices);
+/// // Use KNN Search
+/// let mut estimator = NormalEstimation::with_data(SearchBy::Count(10), &vertices);
+/// if !estimator.compute() {
+///     println!("Compute Normal Failed. Exit...");
+///     return;
+/// }
+/// let normals = estimator.normals();
+/// ```
+///
 pub struct NormalEstimation<'a, P, T: BasicFloat>
 where
     P: Into<[T; 3]> + Clone + Copy,
     [T; 3]: Into<P>,
 {
+    /// Use Radius or KNN to search neighbors.
     pub method: SearchBy,
+    /// Use more rigorous methods or not. Default: true.
+    /// - true  : use fast method.
+    /// - false : rigorous method.
     fast: bool,
     data: Option<&'a Vec<P>>,
     tree: KdTree<T, 3>,

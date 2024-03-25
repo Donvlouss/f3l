@@ -13,7 +13,7 @@ pub fn root2<T: Float>(factor: [T; 2]) -> [T; 2] {
     out
 }
 
-/// Ref: [wiki](https://en.wikipedia.org/wiki/Cubic_equation)<br>
+/// Ref: [wiki_en](https://en.wikipedia.org/wiki/Cubic_equation)<br>
 /// x^3 + `factor_0` * x^2 + `factor_1` * x^ + `factor_2` = 0
 pub fn root3<T: Float>(factor: [T; 3]) -> [T; 3] {
     let [b, c, d] = factor;

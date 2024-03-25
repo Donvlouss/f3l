@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 
 use super::SacModel;
 
+/// Compute a sphere
 #[derive(Debug, Clone, Default)]
 pub struct SacModelSphere<'a, P, T: BasicFloat>
 where
@@ -44,8 +45,9 @@ where
 
     type CoefficientsType = ([T; 3], T);
 
+    /// 4 points be a tetrahedron.
     const NB_SAMPLE: usize = 4;
-
+    /// center XYZ, radius
     const NB_COEFFICIENTS: usize = 4;
 
     fn compute_point_to_model(p: P, coefficients: &Self::CoefficientsType) -> T {

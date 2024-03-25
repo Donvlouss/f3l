@@ -5,6 +5,9 @@ use f3l_core::BasicFloat;
 use super::{SacAlgorithm, SacAlgorithmGetter, SacAlgorithmParameter};
 use crate::sac_model::SacModel;
 
+/// Ransac
+///
+/// See [`SacAlgorithmParameter`]
 #[derive(Debug, Default, Clone)]
 pub struct SacRansac {
     pub parameter: SacAlgorithmParameter,
@@ -23,6 +26,9 @@ where
     R: SacModel<'a, P, T> + Send + Sync,
     <R as SacModel<'a, P, T>>::CoefficientsType: Send + Sync,
 {
+    /// Compute Ransac
+    ///
+    /// End with reach `max_iteration` or probability more than numbers of iteration.
     fn compute(&mut self, model: &mut R) -> bool {
         let SacAlgorithmParameter {
             probability,
@@ -45,57 +51,56 @@ where
         let coefficient = model.get_coefficient();
         let coefficient = Arc::new(Mutex::new(coefficient));
 
-        let closure = || {
-            loop {
-                {
-                    let lock = iterations.lock().unwrap();
-                    if *lock > max_iterations {
-                        break;
-                    }
-                    let lock = skipped.lock().unwrap();
-                    if *lock > max_skip {
-                        // return;
-                        break;
-                    }
-                }
-                let samples = model.get_random_samples();
-
-                let result = model.compute_model_coefficients(&samples);
-                if result.is_err() {
-                    let mut lock = skipped.lock().unwrap();
-                    *lock += 1;
+        // Do closure in each thread.
+        let closure = || loop {
+            {
+                let lock = iterations.lock().unwrap();
+                if *lock > max_iterations {
                     break;
                 }
-                let result = result.unwrap();
-                let nb_inlier =
-                    model.count_indices_within_tolerance(&result, T::from(threshold).unwrap());
-
-                let mut k: f32 = 0f32;
-                {
-                    let mut lock = nb_best_inliers.lock().unwrap();
-                    if nb_inlier > *lock {
-                        *lock = nb_inlier;
-
-                        let mut lock = coefficient.lock().unwrap();
-                        *lock = result;
-                        let w = nb_inlier as f32 * one_over_indices;
-                        let mut p_outlier = 1. - w.powi(nb_sample as i32);
-                        p_outlier = p_outlier.max(f32::EPSILON);
-                        p_outlier = p_outlier.min(1. - f32::EPSILON);
-                        k = log_probability / p_outlier.ln();
-                    }
+                let lock = skipped.lock().unwrap();
+                if *lock > max_skip {
+                    break;
                 }
-                {
-                    let mut lock = iterations.lock().unwrap();
-                    *lock += 1;
+            }
+            let samples = model.get_random_samples();
 
-                    if k > 1. && *lock as f32 > k {
-                        break;
-                    }
+            let result = model.compute_model_coefficients(&samples);
+            if result.is_err() {
+                let mut lock = skipped.lock().unwrap();
+                *lock += 1;
+                break;
+            }
+            let result = result.unwrap();
+            let nb_inlier =
+                model.count_indices_within_tolerance(&result, T::from(threshold).unwrap());
+
+            let mut k: f32 = 0f32;
+            {
+                let mut lock = nb_best_inliers.lock().unwrap();
+                if nb_inlier > *lock {
+                    *lock = nb_inlier;
+
+                    let mut lock = coefficient.lock().unwrap();
+                    *lock = result;
+                    let w = nb_inlier as f32 * one_over_indices;
+                    let mut p_outlier = 1. - w.powi(nb_sample as i32);
+                    p_outlier = p_outlier.max(f32::EPSILON);
+                    p_outlier = p_outlier.min(1. - f32::EPSILON);
+                    k = log_probability / p_outlier.ln();
+                }
+            }
+            {
+                let mut lock = iterations.lock().unwrap();
+                *lock += 1;
+
+                if k > 1. && *lock as f32 > k {
+                    break;
                 }
             }
         };
 
+        // Use rayon parallel when threads > 1
         if threads > 1 {
             let pool = f3l_core::rayon::ThreadPoolBuilder::new()
                 .num_threads(threads)

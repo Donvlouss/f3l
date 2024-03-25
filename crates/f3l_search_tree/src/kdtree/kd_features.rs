@@ -1,6 +1,9 @@
+/// KD Tree node type, all data store in `leaf` node
 #[derive(Clone, Debug, Copy, PartialEq, PartialOrd)]
 pub enum KdFeature {
+    /// Tree node
     Split((usize, f32)),
+    /// Leaf node
     Leaf(usize),
 }
 

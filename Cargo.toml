@@ -5,13 +5,38 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+doctest = false
+
+[features]
+default = ["all"]
+all = [
+    "f3l_core",
+    "f3l_features",
+    "f3l_filter",
+    "f3l_glam",
+    "f3l_search_tree",
+    "f3l_segmentation",
+]
+core = ["f3l_core", "f3l_glam", "f3l_search_tree"]
+filter = ["f3l_filter", "f3l_core", "f3l_glam", "f3l_search_tree"]
+segmentation = ["f3l_segmentation", "f3l_core", "f3l_glam", "f3l_search_tree"]
+features = ["f3l_features", "f3l_core", "f3l_glam", "f3l_search_tree"]
+
 [workspace]
 members = [ 
     "crates/f3l_core",
     "crates/f3l_features", 
-    "crates/f3l_filter", "crates/f3l_glam",
+    "crates/f3l_filter",
+    "crates/f3l_glam",
     "crates/f3l_search_tree",
     "crates/f3l_segmentation"
 ]
 
 [dependencies]
+f3l_core ={ path = "crates/f3l_core", optional = true }
+f3l_features ={ path = "crates/f3l_features", optional = true }
+f3l_filter ={ path = "crates/f3l_filter", optional = true }
+f3l_glam ={ path = "crates/f3l_glam", optional = true }
+f3l_search_tree ={ path = "crates/f3l_search_tree", optional = true }
+f3l_segmentation ={ path = "crates/f3l_segmentation", optional = true }

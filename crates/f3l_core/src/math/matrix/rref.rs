@@ -1,5 +1,6 @@
 use crate::BasicFloat;
 
+/// Compute `Row echelon form` for any  matrix.
 pub fn rref<T: BasicFloat, const R: usize, const C: usize, M: Into<[[T; C]; R]>>(matrix: M) -> M
 where
     [[T; C]; R]: Into<M>,

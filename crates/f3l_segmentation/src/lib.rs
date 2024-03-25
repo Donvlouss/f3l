@@ -4,12 +4,18 @@ mod db_scan;
 mod euclidean_cluster_extraction;
 mod sac_segmentation;
 
+/// Cluster Extractor parameter
 #[derive(Debug, Clone, Copy, Default)]
 pub struct F3lClusterParameter<T: BasicFloat> {
+    /// `K`-NN or `Radius` search
     pub tolerance: T,
+    /// K-`NN` or `points` in Radius search
     pub nb_in_tolerance: usize,
+    /// Add to clusters when numbers of cluster more than this
     pub min_nb_data: usize,
+    /// Add to clusters when numbers of cluster smaller than this
     pub max_nb_data: usize,
+    /// Set maximum numbers of clusters
     pub max_nb_cluster: usize,
 }
 
@@ -25,16 +31,22 @@ impl<T: BasicFloat> F3lClusterParameter<T> {
     }
 }
 
+/// A trait fo cluster methods.
 pub trait F3lCluster<'a, T: BasicFloat, P> {
+    /// Set [`F3lClusterParameter`]
     fn set_parameter(&mut self, parameter: F3lClusterParameter<T>);
+    /// Get [`F3lClusterParameter`]
     fn parameter(&self) -> F3lClusterParameter<T>;
 
     fn set_data(&mut self, data: &'a [P]);
     fn clusters(&self) -> usize;
-    /// vector of points of cluster nb
+    /// vector of points of clusters
     fn extract(&mut self) -> Vec<Vec<usize>>;
+    /// Use `extract` directly, not call this.
     fn apply_extract(&mut self) -> bool;
+    /// Get data from Target cluster
     fn at(&self, id: usize) -> Result<Vec<P>, String>;
+    /// Get maximum data one of clusters
     fn max_cluster(&self) -> Vec<P>;
 }
 

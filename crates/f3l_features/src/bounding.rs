@@ -4,6 +4,7 @@ use f3l_core::{
     jacobi_eigen_square_n, BasicFloat, EigenSet, F3lCast,
 };
 
+/// Compute AABB. A wrapper of [`get_minmax`].
 #[inline]
 pub fn aabb<P, T: BasicFloat, const D: usize>(cloud: &[P]) -> (P, P)
 where
@@ -13,19 +14,36 @@ where
     get_minmax(cloud)
 }
 
+/// Compute Oriented Bounding Box
+///
+/// 1. Compute covariance of data.
+/// 2. Compute eigenvalues and eigenvectors of covariance.
+/// 3. Make each direction orthogonal by cross product.
+/// 4. Multiply inverse of eigenvector to align data to orthogonal.
+/// 5. Compute AABB of aligned data as `Length`
+///
+/// # Examples
+///
+/// ```
+/// let vertices = load_ply("../../data/table_voxel_down.ply");
+/// let obb = OBB::compute(&vertices);
+/// ```
+///
 #[derive(Debug, Clone, Copy)]
-/// Primary: Largest eigenvector of eigenvalue
-/// Secondary: second one
-/// Tertiary: third one
 pub struct OBB<T: BasicFloat, const D: usize, P>
 where
     P: Into<[T; D]> + Clone + Copy + Send + Sync + std::ops::Index<usize, Output = T>,
     [T; D]: Into<P>,
 {
+    /// Center of OBB
     pub center: P,
+    /// Largest eigenvector of eigenvalue
     pub primary: P,
+    /// second one
     pub secondary: P,
+    /// Smallest one
     pub tertiary: P,
+    /// Length of 3 directions.
     pub length: P,
 }
 

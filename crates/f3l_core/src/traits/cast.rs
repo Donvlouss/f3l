@@ -1,6 +1,8 @@
 use std::ops::Index;
 
 use num_traits::NumCast;
+
+/// Cast generic array to float array
 pub trait F3lCast<T: NumCast>: Index<usize, Output = T> {
     #[inline]
     fn cast_f32<const D: usize>(&self) -> [f32; D] {

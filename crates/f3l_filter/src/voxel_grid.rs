@@ -2,6 +2,7 @@ use super::F3lFilter;
 use f3l_core::{get_minmax, BasicFloat};
 use std::{collections::HashMap, fmt::Debug};
 
+/// Build a `Dimension-wise` grid, compute mean of points per grid.
 #[derive(Debug, Default)]
 pub struct VoxelGridParameter<T: BasicFloat, const D: usize> {
     bound: Option<([T; D], [T; D])>,
@@ -131,6 +132,7 @@ where
         self.data = Some(data)
     }
 
+    /// Get not empty `ids` of `Voxel Grid` not `point id`
     fn filter(&mut self) -> Vec<usize> {
         if !self.apply_filter() {
             return vec![];
@@ -140,6 +142,7 @@ where
         keys.into_iter().copied().collect()
     }
 
+    /// Get `mean point` of not empty grids
     fn filter_instance(&mut self) -> Vec<P> {
         if !self.apply_filter() {
             return vec![];

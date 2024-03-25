@@ -5,6 +5,22 @@ use f3l_core::BasicFloat;
 
 type DirectionRange<T> = Vec<(usize, Range<Bound<T>>)>;
 
+/// A `Dimension-wise` to filter with `Upper-Bound` and `Lower-Bound`
+///
+/// # Examples
+/// ```
+/// let vertices = load_ply("../../data/table_scene_lms400.ply");
+///
+/// let range = vec![
+///     (0, Bound::Included(-0.3)..Bound::Included(0.5)),
+///     (1, Bound::Included(0.)..Bound::Included(0.8)),
+///     (2, Bound::Included(-1.4)..Bound::Included(-1.3)),
+/// ];
+/// let mut filter = ConditionRemoval::with_data(&vertices, &range);
+///
+/// let out = filter.filter_instance();
+/// ```
+///
 pub struct ConditionRemoval<'a, P, T: BasicFloat, const D: usize>
 where
     P: Into<[T; D]> + Clone + Copy,
@@ -109,6 +125,8 @@ where
                         Bound::Unbounded => true,
                     };
                     if !self.negative && (b_start && b_end) {
+                        ok &= true;
+                    } else if self.negative && !(b_start && b_end) {
                         ok &= true;
                     } else {
                         ok = false;

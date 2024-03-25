@@ -7,6 +7,33 @@ use crate::{SearchBy, TreeHeapElement, TreeKnnResult, TreeRadiusResult, TreeResu
 use f3l_core::BasicFloat;
 use std::{cmp::Reverse, collections::BinaryHeap};
 
+/// KD-Tree Implement
+///
+/// Use for any dimension of data.
+/// Allow type which implement `Into<[T; D]>`
+/// See more in `tests`.
+///
+/// `let mut tree = KdTree::<f32, 1>::new();`
+/// Input:
+/// * element type (like f32 or f64.. )
+/// * Dimension: usize
+///
+/// # Examples
+/// ```
+/// use approx::assert_relative_eq;
+/// use f3l_core::glam::{Vec2, Vec3};
+/// use f3l_search_tree::*;
+///
+/// let mut tree = KdTree::<f32, 1>::new();
+/// tree.set_data(&(0..10).map(|i| [i as f32]).collect::<Vec<_>>());
+/// tree.build();
+/// let result = tree.search_knn(&[5.1f32], 1);
+/// let nearest_data = result[0].0[0];
+/// let nearest_distance = result[0].1;
+///
+/// assert_relative_eq!(nearest_data, 5f32);
+/// assert_relative_eq!(nearest_distance, 0.1f32);
+/// ```
 #[derive(Debug, Clone, Default)]
 pub struct KdTree<T: BasicFloat, const D: usize> {
     pub root: Option<Box<KdLeaf>>,
@@ -38,7 +65,6 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
     }
 
     fn build_recursive(&self, indices: &mut [usize]) -> Box<KdLeaf> {
-        // let mut node = Box::new(KdLeaf::default());
         let mut node = Box::<KdLeaf>::default();
         if indices.len() == 1 {
             node.feature = KdFeature::Leaf(indices[0]);
@@ -264,5 +290,27 @@ where
         let mut result = TreeRadiusResult::new(radius * radius);
         self.search(*point, by, &mut result);
         result.data.iter().map(|&i| self.data[i].into()).collect()
+    }
+
+    fn search_knn_ids(&self, point: &P, k: usize) -> Vec<usize> {
+        let by = if k == 0 {
+            SearchBy::Count(1)
+        } else {
+            SearchBy::Count(k)
+        };
+        let mut result = TreeKnnResult::new(k);
+        self.search(*point, by, &mut result);
+        result.data.iter().map(|&(i, _)| i).collect()
+    }
+
+    fn search_radius_ids(&self, point: &P, radius: f32) -> Vec<usize> {
+        let by = if radius == 0.0 {
+            SearchBy::Count(1)
+        } else {
+            SearchBy::Radius(radius * radius)
+        };
+        let mut result = TreeRadiusResult::new(radius * radius);
+        self.search(*point, by, &mut result);
+        result.data
     }
 }

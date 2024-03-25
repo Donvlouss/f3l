@@ -46,6 +46,7 @@ pub fn load_ply(path: &str) -> Vec<[f32; 3]> {
 
 #[cfg(feature = "app_kiss3d")]
 fn main() {
+    use std::ops::{Bound, Range};
     println!("Using Kiss3d app");
 
     let mut window = Window::new("Kiss3d: points");
@@ -63,16 +64,7 @@ fn main() {
         },
         0,
     );
-    use std::{
-        ops::{Bound, Range},
-        time::Instant,
-    };
-    let start = Instant::now();
-
     let out = filter.filter_instance();
-
-    let end = start.elapsed().as_millis();
-    println!("Elapsed: {}", end);
 
     while window.render() {
         out.iter().for_each(|v| {

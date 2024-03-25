@@ -1,16 +1,10 @@
-pub mod mat2;
-pub mod mat3;
-pub mod mat3a;
-pub mod mat4;
-pub mod vec2;
-pub mod vec3;
-pub mod vec3a;
-pub mod vec4;
+# F3l Glam
+An improve crate to get and set for glam types.<br>
+Because glam is `column-based`, it provides some traits to quickly obtain `row information`.
 
-use std::ops::Index;
-
-use num_traits::NumCast;
-
+## F3lMatrix
+Use to get row vector from matrix.
+```rust
 /// A trait of matrix for glam type
 pub trait F3lMatrix {
     type RowType: Copy;
@@ -30,7 +24,10 @@ pub trait F3lMatrix {
     /// pos: (row, col)
     fn set_element(&mut self, pos: (usize, usize), v: f32);
 }
-
+```
+## ArrayRowMajor
+To get row data and from / into row matrix.
+```rust
 /// A trait of from/to for glam types
 pub trait ArrayRowMajor {
     type Row: Copy;
@@ -49,24 +46,17 @@ pub trait ArrayDimensions {
     fn nb_cols() -> usize;
     fn nb_rows() -> usize;
 }
+```
 
-/// Cast generic matrix type to glam types
-pub trait GenericArray: ArrayDimensions + Sized {
-    fn cast_from<T: NumCast, const C: usize, const R: usize>(from: [[T; C]; R]) -> Self
-    where
-        Self: ArrayRowMajor<Mat = [[f32; R]; C]>,
-    {
-        let mut cast = [[0f32; R]; C];
-        (0..Self::nb_rows()).for_each(|r| {
-            let row_set_0 = R <= r;
-            (0..Self::nb_cols()).for_each(|c| {
-                let col_set_0 = C <= c;
-                if row_set_0 || col_set_0 {
-                    cast[c][r] = 0f32;
-                }
-                cast[c][r] = from[c][r].to_f32().unwrap();
-            });
-        });
-        Self::from_cols_array_2d(&cast)
-    }
-}
+## More Implementation
+See each file.
+```rust
+pub mod mat2;
+pub mod mat3;
+pub mod mat3a;
+pub mod mat4;
+pub mod vec2;
+pub mod vec3;
+pub mod vec3a;
+pub mod vec4;
+```

@@ -4,9 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+doctest = false
 
 [features]
-default = ["app_kiss3d"]
+default = []
 app_kiss3d = [
     "kiss3d",
     "nalgebra",

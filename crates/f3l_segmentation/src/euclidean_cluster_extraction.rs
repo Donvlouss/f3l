@@ -3,6 +3,25 @@ use f3l_search_tree::{KdTree, SearchBy, TreeRadiusResult, TreeResult};
 
 use crate::{F3lCluster, F3lClusterParameter};
 
+/// Euclidean Cluster Extractor
+/// use [`KdTree`] to search neighbors of radius.
+///
+/// # Examples
+/// ```
+/// let vertices = load_ply("../../data/table_remove_plane.ply");
+/// let parameter = F3lClusterParameter {
+///     tolerance: 0.02f32,
+///     nb_in_tolerance: 1,
+///     min_nb_data: 100,
+///     max_nb_data: 25000,
+///     max_nb_cluster: 5,
+/// };
+/// let mut extractor = EuclideanClusterExtractor::with_data(parameter, &vertices);
+/// let clusters = extractor.extract();
+/// let clusters = (0..clusters.len())
+///     .map(|i| extractor.at(i).unwrap())
+///     .collect::<Vec<_>>();
+/// ```
 pub struct EuclideanClusterExtractor<'a, T, P, const D: usize>
 where
     T: BasicFloat,

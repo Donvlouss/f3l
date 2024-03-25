@@ -3,6 +3,8 @@ use f3l_glam::{glam, F3lMatrix};
 pub mod n_polynomial;
 pub mod one_polynomial;
 
+/// # Experimental
+/// Solve `A` `X` = `B`
 pub trait MatrixLinAlg: F3lMatrix
 where
     Self: Copy,

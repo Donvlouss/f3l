@@ -3,6 +3,25 @@ use std::ops::{Bound, Range};
 use super::F3lFilter;
 use f3l_core::BasicFloat;
 
+/// Target `Dimension` to filter with `Upper-Bound` and `Lower-Bound`
+///
+/// # Examples
+/// ```
+/// let vertices = load_ply("../../data/table_scene_lms400.ply");
+///
+/// let mut filter = PassThrough::with_data(
+///     &vertices,
+///     Range {
+///         start: Bound::Included(0.),
+///         end: Bound::Included(0.5),
+///     },
+///     0,
+/// );
+/// let start = Instant::now();
+///
+/// let out = filter.filter_instance();
+/// ```
+///
 pub struct PassThrough<'a, P, T: BasicFloat, const D: usize>
 where
     P: Into<[T; D]> + Clone + Copy,
@@ -112,6 +131,8 @@ where
                     Bound::Unbounded => true,
                 };
                 if !self.negative && (b_start && b_end) {
+                    Some(i)
+                } else if self.negative && !(b_start && b_end) {
                     Some(i)
                 } else {
                     None
