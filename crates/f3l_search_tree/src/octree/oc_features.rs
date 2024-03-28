@@ -1,6 +1,11 @@
 pub enum OcFeature {
     /// 8 children
-    Split(Option<[usize; 8]>),
+    Split([usize; 8]),
     /// point ids
     Leaf
+}
+
+pub enum OcDistance<T> {
+    Outside(T),
+    Inside,
 }

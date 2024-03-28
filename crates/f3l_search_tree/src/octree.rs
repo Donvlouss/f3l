@@ -1,11 +1,13 @@
 mod oc_features;
 mod oc_leaf;
 
-use std::ops::Index;
+use std::{cmp::Reverse, collections::BinaryHeap, ops::Index};
 
 use f3l_core::{get_minmax, BasicFloat};
 pub use oc_features::*;
 pub use oc_leaf::*;
+
+use crate::{SearchBy, TreeHeapElement, TreeKnnResult, TreeRadiusResult, TreeResult, TreeSearch};
 
 pub struct OcTree<'a, T: BasicFloat, P>
 where
@@ -18,6 +20,7 @@ where
     pub nodes: Vec<OcLeaf<T>>,
 }
 
+// Build
 impl<'a, T: BasicFloat, P> OcTree<'a, T, P>
 where
     P: Into<[T; 3]> + Index<usize, Output = T> + Clone + Copy + 'a,
@@ -94,14 +97,6 @@ where
             OcFeature::Split(nodes) => {
                 // Unwrap the option, cause this node must be a `Split` type.
                 let id = self.nodes[i_node].locate_at(self.data.unwrap()[i_point]).unwrap();
-                let nodes = if let Some(nodes) = nodes {
-                    nodes
-                } else {
-                    let ids = self.create_8_nodes(i_node, (self.nodes[i_node].lower, self.nodes[i_node].upper));
-                    let node = &mut self.nodes[i_node];
-                    node.feature = OcFeature::Split(Some(ids));
-                    ids
-                };
                 self.insert(i_point, depth+1, nodes[id]);
 
             },
@@ -113,7 +108,7 @@ where
                     let node = &mut self.nodes[i_node];
                     
                     // Max number of node is reached. Transfer this node from `Leaf` to `Split`
-                    node.feature = OcFeature::Split(Some(ids));
+                    node.feature = OcFeature::Split(ids);
                     let points = node.points.clone();
                     node.points = vec![];
 
@@ -199,6 +194,162 @@ where
         });
 
         out
+    }
+}
+
+// Search
+impl<'a, T: BasicFloat, P> OcTree<'a, T, P>
+where
+    P: Into<[T; 3]> + Index<usize, Output = T> + Clone + Copy + 'a,
+    [T; 3]: Into<P>
+{
+    pub fn search<R: TreeResult>(&self, point: P, by: SearchBy, result: &mut R)
+    {
+        let data = if let Some(data) = self.data {
+            data
+        } else {
+            return
+        };
+        let mut search_queue =
+            BinaryHeap::with_capacity(std::cmp::max(10, (data.len() as f32).sqrt() as usize));
+
+        self.search_(result, 0, &point, by, 0.0, &mut search_queue);
+        while let Some(Reverse(node)) = search_queue.pop() {
+            self.search_(result, node.raw, &point, by, node.order, &mut search_queue);
+        }
+    }
+
+    fn search_<'b, R: TreeResult>(
+        &self,
+        result: &mut R,
+        node: usize,
+        data: &P,
+        by: SearchBy,
+        min_dist: f32,
+        queue: &mut BinaryHeap<Reverse<TreeHeapElement<usize, f32>>>,
+    )
+    {
+        if result.worst() < min_dist {
+            return;
+        }
+        let clusters;
+        let node = &self.nodes[node];
+        match node.feature {
+            OcFeature::Split(children) => {
+                let mut ids = (0..8).collect::<Vec<usize>>();
+                // If is inside, move target to front.
+                if node.is_inside(*data) {
+                    let id = node.locate_at(*data).unwrap();
+                    ids.swap(0, id);
+                }
+                clusters = ids.into_iter().map(|i| {
+                    children[i]
+                }).collect::<Vec<usize>>();
+
+            },
+            OcFeature::Leaf => {
+                node.points.iter().for_each(|&i| {
+                    let p = self.data.unwrap()[i];
+                    let distance = Self::distance_square(*data, p);
+                    result.add(i, distance);
+                });
+                return;
+            },
+        }
+        let first = clusters[0];
+        clusters.into_iter().skip(1).for_each(|i| {
+            let distance_type = self.nodes[i].distance(*data);
+            let add_other = match by {
+                SearchBy::Count(_) => {
+                    if !result.is_full() {
+                        true
+                    } else {
+                        match distance_type {
+                            OcDistance::Outside(d) => (d * d).to_f32().unwrap() < result.worst(),
+                            _ => true
+                        }
+                    }
+                },
+                SearchBy::Radius(r) => {
+                    match distance_type {
+                        OcDistance::Outside(d) => d.to_f32().unwrap() < r,
+                        _ => true
+                    }
+                },
+            };
+            if add_other {
+                let d = match distance_type {
+                    OcDistance::Outside(d) => d *d ,
+                    OcDistance::Inside => T::zero(),
+                };
+                queue.push(Reverse(TreeHeapElement {
+                    raw: i,
+                    order: d.to_f32().unwrap(),
+                }));
+            }
+        });
+
+        self.search_(result, first, data, by, min_dist, queue);
+    }
+
+    fn distance_square(a: P, b: P) -> f32 {
+        (0..3).fold(0f32, |acc, i| {
+            acc + ((b[i] - a[i]).powi(2)).to_f32().unwrap()
+        })
+    }
+}
+
+impl<'a, T: BasicFloat, P> TreeSearch<P> for OcTree<'a, T, P>
+where
+    P: Into<[T; 3]> + Index<usize, Output = T> + Clone + Copy + 'a,
+    [T; 3]: Into<P>
+{
+    fn search_knn_ids(&self, point: &P, k: usize) -> Vec<usize> {
+        let by = if k == 0 {
+            SearchBy::Count(1)
+        } else {
+            SearchBy::Count(k)
+        };
+        let mut result = TreeKnnResult::new(k);
+        self.search(*point, by, &mut result);
+        result.data.iter().map(|&(i, _)| i).collect()
+    }
+
+    fn search_radius_ids(&self, point: &P, radius: f32) -> Vec<usize> {
+        let by = if radius == 0.0 {
+            SearchBy::Count(1)
+        } else {
+            SearchBy::Radius(radius * radius)
+        };
+        let mut result = TreeRadiusResult::new(radius * radius);
+        self.search(*point, by, &mut result);
+        result.data
+    }
+
+    fn search_knn(&self, point: &P, k: usize) -> Vec<(P, f32)> {
+        let by = if k == 0 {
+            SearchBy::Count(1)
+        } else {
+            SearchBy::Count(k)
+        };
+        let mut result = TreeKnnResult::new(k);
+        self.search(*point, by, &mut result);
+        result
+            .result()
+            .iter()
+            .map(|&(i, d)| (self.data.unwrap()[i], d.sqrt()))
+            .collect::<Vec<(P, f32)>>()
+    }
+
+    fn search_radius(&self, point: &P, radius: f32) -> Vec<P> {
+        let by = if radius == 0.0 {
+            SearchBy::Count(1)
+        } else {
+            SearchBy::Radius(radius * radius)
+        };
+        let mut result = TreeRadiusResult::new(radius * radius);
+        self.search(*point, by, &mut result);
+        result.data.iter().map(|&i| self.data.unwrap()[i]).collect()
     }
 }
 

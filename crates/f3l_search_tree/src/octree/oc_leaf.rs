@@ -1,6 +1,6 @@
 use f3l_core::BasicFloat;
 
-use crate::OcFeature;
+use crate::{OcDistance, OcFeature};
 
 pub struct OcLeaf<T: BasicFloat> {
     /// Root Leaf id
@@ -19,6 +19,7 @@ pub struct OcLeaf<T: BasicFloat> {
 
 impl<T: BasicFloat> OcLeaf<T> {
     /// Return point is inside this node or not.
+    #[inline]
     pub fn is_inside<P>(&self, p: P) -> bool
     where
         P: Into<[T; 3]> + std::ops::Index<usize, Output = T> + Clone + Copy
@@ -26,12 +27,13 @@ impl<T: BasicFloat> OcLeaf<T> {
         p[0] >= self.lower[0]
         && p[1] >= self.lower[1]
         && p[2] >= self.lower[2]
-        && p[0] <= self.lower[0]
-        && p[1] <= self.lower[1]
-        && p[2] <= self.lower[2]
+        && p[0] <= self.upper[0]
+        && p[1] <= self.upper[1]
+        && p[2] <= self.upper[2]
     }
 
-    /// Return `None` if this node is leaf, else `Some(index)` of child
+    /// Return `None` if this node is leaf or outside, else `Some(index)` of child
+    #[inline]
     pub fn locate_at<P>(&self, p: P) -> Option<usize>
     where
         P: Into<[T; 3]> + std::ops::Index<usize, Output = T> + Clone + Copy
@@ -49,6 +51,47 @@ impl<T: BasicFloat> OcLeaf<T> {
                 acc + if p[i] < mid[i] { 0 } else { 1 } * 2_usize.pow(i as u32)
             });
         Some(id)
+    }
+
+    pub fn distance<P>(&self, p: P) -> OcDistance<T>
+    where
+        P: Into<[T; 3]> + std::ops::Index<usize, Output = T> + Clone + Copy
+    {
+        if self.is_inside(p) { return OcDistance::Inside; }
+
+        // let dx = (p[0] - self.lower[0]).abs().min((p[0] - self.upper[0]).abs());
+        // let dy = (p[1] - self.lower[1]).abs().min((p[1] - self.upper[1]).abs());
+        // let dz = (p[2] - self.lower[2]).abs().min((p[2] - self.upper[2]).abs());
+        
+        // OcDistance::Outside(
+        //     dx * dx + dy * dy + dz * dz
+        // )
+
+        let mid = [
+            (self.upper[0] + self.lower[0]) / T::from(2f32).unwrap(),
+            (self.upper[1] + self.lower[1]) / T::from(2f32).unwrap(),
+            (self.upper[2] + self.lower[2]) / T::from(2f32).unwrap(),
+        ];
+        let size = [
+            mid[0] - self.lower[0],
+            mid[1] - self.lower[1],
+            mid[2] - self.lower[2],
+        ];
+        
+        let dis = (0..3).fold(T::zero() , |acc, i| {
+            acc + (((p[i] - mid[i]).abs() - size[i]).max(T::zero())).powi(2)
+        });
+        OcDistance::Outside(dis)
+    }
+
+    pub fn overlap<P>(&self, p: P, radius: T) -> bool
+    where
+        P: Into<[T; 3]> + std::ops::Index<usize, Output = T> + Clone + Copy
+    {
+        match self.distance(p) {
+            OcDistance::Outside(d) => d < radius,
+            _ => true
+        }
     }
 }
 

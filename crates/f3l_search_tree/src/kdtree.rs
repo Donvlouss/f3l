@@ -50,6 +50,17 @@ impl<T: BasicFloat, const D: usize> KdTree<T, D> {
         }
     }
 
+    pub fn with_data<P>(data: &[P]) -> Self
+    where
+        P: Into<[T; D]> + Clone + Copy,
+    {
+        Self {
+            root: None,
+            dim: D,
+            data: data.iter().map(|&v| v.into()).collect()
+        }
+    }
+
     pub fn set_data<P>(&mut self, data: &[P])
     where
         P: Into<[T; D]> + Clone + Copy,

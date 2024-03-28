@@ -87,7 +87,7 @@ fn main() {
 
     let vertices = load_ply("../../data/table_voxel_down.ply");
 
-    let mut tree = OcTree::with_data(&vertices, 100, 3);
+    let mut tree = OcTree::with_data(&vertices, 100, 2);
     
     use std::time::Instant;
     let start = Instant::now();
@@ -99,15 +99,23 @@ fn main() {
 
     let mut colors: Vec<Point3::<f32>> = vec![];
     let mut points_cubes = vec![];
-    let bdx = tree.nodes.iter().map(|node| {
-        let OcLeaf{ lower, upper, points, .. }
+    let bdx = tree.nodes.iter().filter_map(|node| {
+        let OcLeaf{ lower, upper, feature, points, .. }
             = node;
+        match feature {
+            OcFeature::Split(_) => {return None;},
+            OcFeature::Leaf => {
+                if points.is_empty() {
+                    return None;
+                }
+            },
+        };
         points_cubes.push(points.iter().map(|&i| Point3::new(vertices[i].x, vertices[i].y, vertices[i].z)
             ).collect::<Vec<Point3<f32>>>());
         colors.push(random_color().into());
         let p0 = *lower;
         let p1 = *upper;
-        [
+        Some([
             Point3::new(p0[0], p0[1], p0[2]),
             Point3::new(p1[0], p0[1], p0[2]),
             Point3::new(p0[0], p1[1], p0[2]),
@@ -117,7 +125,7 @@ fn main() {
             Point3::new(p1[0], p0[1], p1[2]),
             Point3::new(p0[0], p1[1], p1[2]),
             Point3::new(p1[0], p1[1], p1[2]),
-        ]
+        ])
     }).collect::<Vec<_>>();
     let pairs = [
         (0_usize, 1_usize),
