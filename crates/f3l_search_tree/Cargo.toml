@@ -8,7 +8,7 @@ edition = "2021"
 doctest = false
 
 [features]
-default = []
+default = ["app_kiss3d"]
 app_kiss3d = [
     "kiss3d",
     "nalgebra",
