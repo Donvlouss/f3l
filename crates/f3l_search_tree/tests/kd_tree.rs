@@ -138,12 +138,10 @@ mod kd_tree {
                 let data = (0..10).map(|i| [i as f32]).collect::<Vec<_>>();
                 let mut tree = KdTree::with_data(&data);
                 tree.build();
-                let mut result = TreeKfnResult::new(1);
-                let by = SearchBy::Count(1);
-                tree.search_farthest([5.1], by, &mut result);
-                let farthest = result.data[0];
-                let farthest_data = data[farthest.0][0];
-                let farthest_distance = farthest.1.sqrt();
+                let result = tree.search_kfn(&[5.1f32], 1);
+
+                let farthest_data = result[0].0[0];
+                let farthest_distance = result[0].1;
 
                 assert_relative_eq!(farthest_data, 0f32);
                 assert_relative_eq!(farthest_distance, 5.1f32);
@@ -220,13 +218,9 @@ mod kd_tree {
                 tree.build();
                 let target = Vec2::new(4.4, 4.4);
 
-                let mut result = TreeKfnResult::new(1);
-                let by = SearchBy::Count(1);
-                tree.search_farthest(target, by, &mut result);
-
-                let farthest = result.data[0];
-                let farthest_data = data[farthest.0];
-                let farthest_distance = farthest.1.sqrt();
+                let result = tree.search_kfn(&target, 1);
+                let farthest_data = result[0].0;
+                let farthest_distance = result[0].1;
 
                 assert_relative_eq!(farthest_data.distance(Vec2::new(9f32, 9f32)), 0f32);
                 assert_relative_eq!(

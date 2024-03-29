@@ -5,5 +5,5 @@ mod octree;
 
 pub use kdtree::*;
 pub use tree::*;
-pub use utils::TreeHeapElement;
+pub use utils::*;
 pub use octree::*;
