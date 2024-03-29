@@ -115,6 +115,85 @@ impl TreeResult for TreeKnnResult {
     }
 }
 
+
+/// KFN result
+#[derive(Debug, Clone)]
+pub struct TreeKfnResult {
+    /// KNN ids and distances.
+    pub data: Vec<(usize, f32)>,
+    /// Target of `K`.
+    pub size: usize,
+    /// Length of data.
+    pub count: usize,
+    /// Used in searching.
+    pub nearest: f32,
+}
+
+impl TreeResult for TreeKfnResult {
+    type T = usize;
+    type Output = (usize, f32);
+
+    fn new(arg: Self::T) -> Self {
+        Self {
+            data: Vec::with_capacity(arg),
+            size: arg,
+            count: 0,
+            nearest: 0f32,
+        }
+    }
+
+    fn with_capacity(arg: Self::T, capacity: usize) -> Self {
+        Self {
+            data: Vec::with_capacity(arg),
+            size: capacity,
+            count: 0,
+            nearest: 0f32,
+        }
+    }
+
+    fn result(&self) -> Vec<Self::Output> {
+        let mut queue = self.data.clone();
+        queue.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+        queue
+    }
+
+    fn add(&mut self, data: usize, distance: f32) {
+        let mut need_sort = false;
+        if self.count < self.size {
+            need_sort = true;
+            self.data.push((data, distance));
+            self.count += 1;
+        } else {
+            if distance < self.nearest {
+                return;
+            }
+            let idx = self.data.partition_point(|x| x.1 > distance);
+            self.data.insert(idx, (data, distance));
+            self.data.pop();
+        }
+        if self.count == self.size {
+            // Only sort when data is full
+            if need_sort {
+                self.data.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+            }
+            self.nearest = self.data.last().unwrap().1;
+        }
+    }
+
+    fn is_full(&self) -> bool {
+        self.count >= self.size
+    }
+
+    fn worst(&self) -> f32 {
+        self.nearest
+    }
+
+    fn clear(&mut self) {
+        self.data.clear();
+        self.count = 0;
+    }
+}
+
 /// Radius Search result
 #[derive(Debug, Clone)]
 pub struct TreeRadiusResult {

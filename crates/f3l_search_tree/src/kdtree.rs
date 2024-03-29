@@ -3,7 +3,7 @@ mod kd_leaf;
 pub use kd_features::KdFeature;
 pub use kd_leaf::KdLeaf;
 
-use crate::{SearchBy, TreeHeapElement, TreeKnnResult, TreeRadiusResult, TreeResult, TreeSearch};
+use crate::{SearchBy, TreeHeapElement, TreeKfnResult, TreeKnnResult, TreeRadiusResult, TreeResult, TreeSearch};
 use f3l_core::BasicFloat;
 use std::{cmp::Reverse, collections::BinaryHeap, ops::Index};
 
@@ -322,4 +322,96 @@ where
         self.search(*point, by, &mut result);
         result.data
     }
+}
+
+
+impl<'a, T: BasicFloat, const D: usize, P> KdTree<'a, T, D, P>
+where
+    P: Into<[T; D]> + Index<usize, Output = T> + Clone + Copy + Send + Sync,
+    [T; D]: Into<P>
+{
+    pub fn search_farthest(&self, data: P, by: SearchBy, result: &mut TreeKfnResult) {
+        let mut search_queue =
+            BinaryHeap::with_capacity(std::cmp::max(10, (self.data.unwrap().len() as f32).sqrt() as usize));
+        if self.root.is_none() {
+            return;
+        }
+        if let Some(root) = &self.root {
+            self.search_farthest_(result, root, &data, by, f32::MAX, &mut search_queue);
+
+            // Use Binary Heap to search the minimal node first
+            while let Some(node) = search_queue.pop() {
+                self.search_farthest_(result, node.raw, &data, by, node.order, &mut search_queue);
+            }
+        };
+    }
+
+    fn search_farthest_(
+        &self,
+        result: &mut TreeKfnResult,
+        node: &'a KdLeaf,
+        data: &P,
+        by: SearchBy,
+        min_dist: f32,
+        queue: &mut BinaryHeap<TreeHeapElement<&'a KdLeaf, f32>>,
+    ) {
+        if result.worst() > min_dist {
+            return;
+        }
+        let p: [T; D] = (*data).into();
+
+        let near;
+        let far;
+
+        let d: T;
+        match node.feature {
+            KdFeature::Leaf(leaf) => {
+                let dist = distance(&self.data.unwrap()[leaf].into(), &p);
+                result.add(leaf, dist.to_f32().unwrap());
+                return;
+            }
+            KdFeature::Split((sp_dim, sp_val)) => {
+                d = p[sp_dim] - T::from(sp_val).unwrap();
+                if d < T::zero() {
+                    near = &node.left;
+                    far = &node.right;
+                } else {
+                    near = &node.right;
+                    far = &node.left;
+                }
+            }
+        };
+
+        if let Some(near) = near {
+            let add_near = match by {
+                SearchBy::Count(_) => {
+                    if !result.is_full() {
+                        true
+                    } else {
+                        d * d > T::from(result.worst() + f32::EPSILON).unwrap()
+                    }
+                }
+                SearchBy::Radius(r) => d * d >= T::from(r).unwrap(),
+            };
+            if add_near {
+                queue.push(TreeHeapElement {
+                    raw: near,
+                    order: min_dist + (d * d).to_f32().unwrap(),
+                });
+            }
+        }
+
+        if let Some(far) = far {
+            self.search_farthest_(result, far, data, by, min_dist, queue);
+        }
+    }
+}
+
+impl<'a, T: BasicFloat, const D: usize, P> KdTree<'a, T, D, P>
+where
+    P: Into<[T; D]> + Index<usize, Output = T> + Clone + Copy + Send + Sync,
+    [T; D]: Into<P>
+{
+
+    
 }

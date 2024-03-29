@@ -134,6 +134,22 @@ mod kd_tree {
             }
 
             #[test]
+            fn query_farthest_knn_1d() {
+                let data = (0..10).map(|i| [i as f32]).collect::<Vec<_>>();
+                let mut tree = KdTree::with_data(&data);
+                tree.build();
+                let mut result = TreeKfnResult::new(1);
+                let by = SearchBy::Count(1);
+                tree.search_farthest([5.1], by, &mut result);
+                let farthest = result.data[0];
+                let farthest_data = data[farthest.0][0];
+                let farthest_distance = farthest.1.sqrt();
+
+                assert_relative_eq!(farthest_data, 0f32);
+                assert_relative_eq!(farthest_distance, 5.1f32);
+            }
+
+            #[test]
             fn query_knn_4_1d() {
                 let data = (0..10).map(|i| [i as f32]).collect::<Vec<_>>();
                 let mut tree = KdTree::with_data(&data);
@@ -188,6 +204,34 @@ mod kd_tree {
                 assert_relative_eq!(
                     (nearest_distance * 1000000f32).round(),
                     ((0.1f32.powi(2) * 2.).sqrt() * 1000000f32).round()
+                );
+            }
+
+            #[test]
+            fn query_farthest_kfn_glam_2d() {
+                let data = (0..10)
+                .flat_map(|y| {
+                    (0..10)
+                        .map(|x| Vec2::new(x as f32, y as f32))
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>();
+                let mut tree = KdTree::with_data(&data);
+                tree.build();
+                let target = Vec2::new(4.4, 4.4);
+
+                let mut result = TreeKfnResult::new(1);
+                let by = SearchBy::Count(1);
+                tree.search_farthest(target, by, &mut result);
+
+                let farthest = result.data[0];
+                let farthest_data = data[farthest.0];
+                let farthest_distance = farthest.1.sqrt();
+
+                assert_relative_eq!(farthest_data.distance(Vec2::new(9f32, 9f32)), 0f32);
+                assert_relative_eq!(
+                    (farthest_distance * 1000000f32).round(),
+                    ((4.6f32.powi(2) * 2.).sqrt() * 1000000f32).round()
                 );
             }
         }
