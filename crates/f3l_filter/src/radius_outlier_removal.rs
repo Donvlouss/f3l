@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 use f3l_core::rayon::prelude::*;
 use f3l_core::BasicFloat;
 use f3l_search_tree::{KdTree, SearchBy, TreeRadiusResult, TreeResult};
@@ -17,20 +19,20 @@ use crate::F3lFilter;
 #[derive(Debug)]
 pub struct RadiusOutlierRemoval<'a, P, T: BasicFloat, const D: usize>
 where
-    P: Into<[T; D]> + Clone + Copy,
+    P: Into<[T; D]> + Clone + Copy + Index<usize, Output = T>,
     [T; D]: Into<P>,
 {
     pub negative: bool,
     pub radius: T,
     pub threshold: usize,
     data: Option<&'a [P]>,
-    tree: KdTree<T, D>,
+    tree: KdTree<'a, T, D, P>,
     inlier: Vec<bool>,
 }
 
 impl<'a, P, T: BasicFloat, const D: usize> RadiusOutlierRemoval<'a, P, T, D>
 where
-    P: Into<[T; D]> + Clone + Copy + Send + Sync,
+    P: Into<[T; D]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
     [T; D]: Into<P>,
 {
     pub fn new(radius: T, threshold: usize) -> Self {
@@ -39,7 +41,7 @@ where
             radius,
             threshold,
             data: None,
-            tree: KdTree::<T, D>::new(),
+            tree: KdTree::<'a, T, D, P>::new(),
             inlier: vec![],
         }
     }
@@ -58,7 +60,7 @@ where
 
 impl<'a, P, T: BasicFloat, const D: usize> F3lFilter<'a, P> for RadiusOutlierRemoval<'a, P, T, D>
 where
-    P: Into<[T; D]> + Clone + Copy + Send + Sync,
+    P: Into<[T; D]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
     [T; D]: Into<P>,
 {
     fn set_negative(&mut self, negative: bool) {
@@ -94,11 +96,11 @@ where
     }
 
     fn apply_filter(&mut self) -> bool {
-        if self.tree.data.is_empty() {
+        if let None = self.tree.data {
             return false;
-        }
+        };
         self.tree.build();
-        let capacity = self.tree.data.len() / 10;
+        let capacity = self.tree.data.unwrap().len() / 10;
         let capacity = if capacity > 10 { capacity } else { 10 };
 
         let r = (self.radius.to_f32().unwrap()).powi(2);

@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 use f3l_core::BasicFloat;
 use f3l_search_tree::{KdTree, SearchBy, TreeRadiusResult, TreeResult};
 
@@ -25,25 +27,25 @@ use crate::{F3lCluster, F3lClusterParameter};
 pub struct EuclideanClusterExtractor<'a, T, P, const D: usize>
 where
     T: BasicFloat,
-    P: Into<[T; D]> + Clone + Copy,
+    P: Into<[T; D]> + Clone + Copy + Index<usize, Output = T>,
 {
     pub parameter: F3lClusterParameter<T>,
     data: Option<&'a [P]>,
-    tree: KdTree<T, D>,
+    tree: KdTree<'a, T, D, P>,
     clusters: Vec<Vec<usize>>,
 }
 
 impl<'a, T, P, const D: usize> EuclideanClusterExtractor<'a, T, P, D>
 where
     T: BasicFloat,
-    P: Into<[T; D]> + Clone + Copy + Send + Sync,
+    P: Into<[T; D]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
     [T; D]: Into<P>,
 {
     pub fn new(parameter: F3lClusterParameter<T>) -> Self {
         Self {
             parameter,
             data: None,
-            tree: KdTree::<T, D>::new(),
+            tree: KdTree::<'a, T, D, P>::new(),
             clusters: vec![],
         }
     }
@@ -58,7 +60,7 @@ where
 impl<'a, T, P, const D: usize> F3lCluster<'a, T, P> for EuclideanClusterExtractor<'a, T, P, D>
 where
     T: BasicFloat,
-    P: Into<[T; D]> + Clone + Copy + Send + Sync,
+    P: Into<[T; D]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
     [T; D]: Into<P>,
 {
     fn set_parameter(&mut self, parameter: F3lClusterParameter<T>) {

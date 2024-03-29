@@ -87,7 +87,7 @@ fn main() {
 
     let vertices = load_ply("../../data/table_voxel_down.ply");
 
-    let mut tree = OcTree::with_data(&vertices, 100, 2);
+    let mut tree = OcTree::with_data(&vertices, 100, 8);
     
     use std::time::Instant;
     let start = Instant::now();

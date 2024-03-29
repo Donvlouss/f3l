@@ -5,35 +5,37 @@ mod kd_tree {
     use nalgebra::Point3;
 
     mod insert {
+        use std::ops::Index;
+
         use super::*;
 
         #[test]
         pub fn test_insert_data_glam() {
-            let mut tree = KdTree::<f32, 3>::new();
-            tree.set_data(&vec![Vec3::new(1.0, 2.0, 3.0), Vec3::new(4.0, 5.0, 6.0)]);
+            let data = vec![Vec3::new(1.0, 2.0, 3.0), Vec3::new(4.0, 5.0, 6.0)];
+            let tree = KdTree::with_data(&data);
 
             let mut d = 1.0f32;
-            tree.data.iter().for_each(|element| {
-                element.iter().for_each(|e| {
-                    assert_relative_eq!(d, e);
+            tree.data.unwrap().iter().for_each(|element| {
+                (0..3).for_each(|i| {
+                    assert_relative_eq!(d, element[i]);
                     d += 1f32;
-                })
+                });
             });
         }
         #[test]
         pub fn test_insert_data_nalgebra() {
-            let mut tree = KdTree::<f32, 3>::new();
-            tree.set_data(&vec![
+            let data = vec![
                 Point3::<f32>::new(1.0, 2.0, 3.0),
                 Point3::<f32>::new(4.0, 5.0, 6.0),
-            ]);
+            ];
+            let tree = KdTree::with_data(&data);
 
             let mut d = 1.0f32;
-            tree.data.iter().for_each(|element| {
-                element.iter().for_each(|e| {
-                    assert_relative_eq!(d, e);
+            tree.data.unwrap().iter().for_each(|element| {
+                (0..3).for_each(|i| {
+                    assert_relative_eq!(d, element[i]);
                     d += 1f32;
-                })
+                });
             });
         }
 
@@ -60,10 +62,22 @@ mod kd_tree {
             }
         }
 
+        impl Index<usize> for MyStruct {
+            type Output = f32;
+        
+            fn index(&self, index: usize) -> &Self::Output {
+                match index {
+                    0 => &self.x,
+                    1 => &self.y,
+                    2 => &self.z,
+                    _ => panic!("Out of Range")
+                }
+            }
+        }
+
         #[test]
         pub fn test_insert_data_custom() {
-            let mut tree = KdTree::<f32, 3>::new();
-            tree.set_data(&vec![
+            let data = vec![
                 MyStruct {
                     x: 1.0f32,
                     y: 2.0f32,
@@ -74,27 +88,29 @@ mod kd_tree {
                     y: 5.0f32,
                     z: 6.0f32,
                 },
-            ]);
+            ];
+            let tree = KdTree::with_data(&data);
+
             let mut d = 1.0f32;
-            tree.data.iter().for_each(|element| {
-                element.iter().for_each(|e| {
-                    assert_relative_eq!(d, e);
+            tree.data.unwrap().iter().for_each(|element| {
+                (0..3).for_each(|i| {
+                    assert_relative_eq!(d, element[i]);
                     d += 1f32;
-                })
+                });
             });
         }
 
         #[test]
         pub fn test_insert_data_array() {
-            let mut tree = KdTree::<f32, 3>::new();
-            tree.set_data(&vec![[1f32, 2f32, 3f32], [4f32, 5f32, 6f32]]);
+            let data = vec![[1f32, 2f32, 3f32], [4f32, 5f32, 6f32]];
+            let tree = KdTree::with_data(&data);
 
             let mut d = 1.0f32;
-            tree.data.iter().for_each(|element| {
-                element.iter().for_each(|e| {
-                    assert_relative_eq!(d, e);
+            tree.data.unwrap().iter().for_each(|element| {
+                (0..3).for_each(|i| {
+                    assert_relative_eq!(d, element[i]);
                     d += 1f32;
-                })
+                });
             });
         }
     }
@@ -106,8 +122,8 @@ mod kd_tree {
             use super::*;
             #[test]
             fn query_nearest_knn_1d() {
-                let mut tree = KdTree::<f32, 1>::new();
-                tree.set_data(&(0..10).map(|i| [i as f32]).collect::<Vec<_>>());
+                let data = (0..10).map(|i| [i as f32]).collect::<Vec<_>>();
+                let mut tree = KdTree::with_data(&data);
                 tree.build();
                 let result = tree.search_knn(&[5.1f32], 1);
                 let nearest_data = result[0].0[0];
@@ -119,8 +135,8 @@ mod kd_tree {
 
             #[test]
             fn query_knn_4_1d() {
-                let mut tree = KdTree::<f32, 1>::new();
-                tree.set_data(&(0..10).map(|i| [i as f32]).collect::<Vec<_>>());
+                let data = (0..10).map(|i| [i as f32]).collect::<Vec<_>>();
+                let mut tree = KdTree::with_data(&data);
                 tree.build();
                 // range: 3.1 to 7.1
                 let result = tree.search_knn(&[5.1f32], 4);
@@ -134,8 +150,8 @@ mod kd_tree {
 
             #[test]
             fn query_radius_2_1d() {
-                let mut tree = KdTree::<f32, 1>::new();
-                tree.set_data(&(0..10).map(|i| [i as f32]).collect::<Vec<_>>());
+                let data = (0..10).map(|i| [i as f32]).collect::<Vec<_>>();
+                let mut tree = KdTree::with_data(&data);
                 tree.build();
                 // range: 3.1 to 7.1
                 let result = tree.search_radius(&[5.1f32], 2f32);
@@ -153,16 +169,14 @@ mod kd_tree {
 
             #[test]
             fn query_nearest_knn_glam_2d() {
-                let mut tree = KdTree::<f32, 2>::new();
-                tree.set_data(
-                    &(0..10)
-                        .flat_map(|y| {
-                            (0..10)
-                                .map(|x| Vec2::new(x as f32, y as f32))
-                                .collect::<Vec<_>>()
-                        })
-                        .collect::<Vec<_>>(),
-                );
+                let data = (0..10)
+                .flat_map(|y| {
+                    (0..10)
+                        .map(|x| Vec2::new(x as f32, y as f32))
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>();
+                let mut tree = KdTree::with_data(&data);
                 tree.build();
                 let target = Vec2::new(5.1, 5.1);
 
@@ -183,23 +197,21 @@ mod kd_tree {
 
             #[test]
             fn query_nearest_knn_nalgebra_3d() {
-                let mut tree = KdTree::<f32, 3>::new();
-                tree.set_data(
-                    &(0..10)
-                        .flat_map(|x| {
+                let data = (0..10)
+                .flat_map(|x| {
+                    (0..10)
+                        .flat_map(|y| {
                             (0..10)
-                                .flat_map(|y| {
-                                    (0..10)
-                                        .map(|z| Vec3::new(x as f32, y as f32, z as f32))
-                                        .collect::<Vec<_>>()
-                                })
+                                .map(|z| Vec3::new(x as f32, y as f32, z as f32))
                                 .collect::<Vec<_>>()
                         })
-                        .collect::<Vec<_>>(),
-                );
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>();
+                let mut tree = KdTree::with_data(&data);
                 tree.build();
 
-                let target = Point3::<f32>::new(5.1, 5.1, 5.1);
+                let target = Vec3::new(5.1, 5.1, 5.1);
                 let result = tree.search_knn(&target, 1);
                 let nearest_data = result[0].0;
                 let nearest_distance = result[0].1;

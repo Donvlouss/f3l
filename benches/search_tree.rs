@@ -58,22 +58,14 @@ fn bench_tree_build(c: &mut Criterion) {
         let mut tree = OcTree::with_data(&data, 100, 5);
         tree.build();
     }));
-    group.bench_function("Oc-Tree_1000_5", |b| b.iter(|| {
-        let mut tree = OcTree::with_data(&data, 1000, 5);
-        tree.build();
-    }));
     group.bench_function("Oc-Tree_100_8", |b| b.iter(|| {
         let mut tree = OcTree::with_data(&data, 100, 8);
-        tree.build();
-    }));
-    group.bench_function("Oc-Tree_1000_8", |b| b.iter(|| {
-        let mut tree = OcTree::with_data(&data, 1000, 8);
         tree.build();
     }));
 }
 
 fn bench_tree_knn_1(c: &mut Criterion) {
-    let data = load_ply("data/table_voxel_down.ply");
+    let data = load_ply("data/table_scene_lms400.ply");
     let mut group = c.benchmark_group("Tree-Search-Nearest_1");
 
     let target = &data[data.len()/2];
@@ -106,22 +98,8 @@ fn bench_tree_knn_1(c: &mut Criterion) {
             tree.search_knn(target, 1);
         });
     });
-    group.bench_function("Oc-Tree_1000_5", |b| {
-        let mut tree = OcTree::with_data(&data, 1000, 5);
-        tree.build();
-        b.iter(|| {
-            tree.search_knn(target, 1);
-        });
-    });
     group.bench_function("Oc-Tree_100_8", |b| {
         let mut tree = OcTree::with_data(&data, 100, 8);
-        tree.build();
-        b.iter(|| {
-            tree.search_knn(target, 1);
-        });
-    });
-    group.bench_function("Oc-Tree_1000_8", |b| {
-        let mut tree = OcTree::with_data(&data, 1000, 8);
         tree.build();
         b.iter(|| {
             tree.search_knn(target, 1);
@@ -130,7 +108,7 @@ fn bench_tree_knn_1(c: &mut Criterion) {
 }
 
 fn bench_tree_knn_10(c: &mut Criterion) {
-    let data = load_ply("data/table_voxel_down.ply");
+    let data = load_ply("data/table_scene_lms400.ply");
     let mut group = c.benchmark_group("Tree-Search-Nearest_10");
 
     let target = &data[data.len()/2];
@@ -163,22 +141,8 @@ fn bench_tree_knn_10(c: &mut Criterion) {
             tree.search_knn(target, 10);
         });
     });
-    group.bench_function("Oc-Tree_1000_5", |b| {
-        let mut tree = OcTree::with_data(&data, 1000, 5);
-        tree.build();
-        b.iter(|| {
-            tree.search_knn(target, 10);
-        });
-    });
     group.bench_function("Oc-Tree_100_8", |b| {
         let mut tree = OcTree::with_data(&data, 100, 8);
-        tree.build();
-        b.iter(|| {
-            tree.search_knn(target, 10);
-        });
-    });
-    group.bench_function("Oc-Tree_1000_8", |b| {
-        let mut tree = OcTree::with_data(&data, 1000, 8);
         tree.build();
         b.iter(|| {
             tree.search_knn(target, 10);
@@ -187,7 +151,7 @@ fn bench_tree_knn_10(c: &mut Criterion) {
 }
 
 fn bench_tree_radius_search_0_03(c: &mut Criterion) {
-    let data = load_ply("data/table_voxel_down.ply");
+    let data = load_ply("data/table_scene_lms400.ply");
     let mut group = c.benchmark_group("Tree-Search-Radius_0.03");
 
     let target = &data[data.len()/2];
@@ -220,22 +184,8 @@ fn bench_tree_radius_search_0_03(c: &mut Criterion) {
             tree.search_radius(target, 0.03);
         });
     });
-    group.bench_function("Oc-Tree_1000_5", |b| {
-        let mut tree = OcTree::with_data(&data, 1000, 5);
-        tree.build();
-        b.iter(|| {
-            tree.search_radius(target, 0.03);
-        });
-    });
     group.bench_function("Oc-Tree_100_8", |b| {
         let mut tree = OcTree::with_data(&data, 100, 8);
-        tree.build();
-        b.iter(|| {
-            tree.search_radius(target, 0.03);
-        });
-    });
-    group.bench_function("Oc-Tree_1000_8", |b| {
-        let mut tree = OcTree::with_data(&data, 1000, 8);
         tree.build();
         b.iter(|| {
             tree.search_radius(target, 0.03);
@@ -244,7 +194,7 @@ fn bench_tree_radius_search_0_03(c: &mut Criterion) {
 }
 
 fn bench_tree_radius_search_0_08(c: &mut Criterion) {
-    let data = load_ply("data/table_voxel_down.ply");
+    let data = load_ply("data/table_scene_lms400.ply");
     let mut group = c.benchmark_group("Tree-Search-Radius_0.08");
 
     let target = &data[data.len()/2];
@@ -277,22 +227,8 @@ fn bench_tree_radius_search_0_08(c: &mut Criterion) {
             tree.search_radius(target, 0.08);
         });
     });
-    group.bench_function("Oc-Tree_1000_5", |b| {
-        let mut tree = OcTree::with_data(&data, 1000, 5);
-        tree.build();
-        b.iter(|| {
-            tree.search_radius(target, 0.08);
-        });
-    });
     group.bench_function("Oc-Tree_100_8", |b| {
         let mut tree = OcTree::with_data(&data, 100, 8);
-        tree.build();
-        b.iter(|| {
-            tree.search_radius(target, 0.08);
-        });
-    });
-    group.bench_function("Oc-Tree_1000_8", |b| {
-        let mut tree = OcTree::with_data(&data, 1000, 8);
         tree.build();
         b.iter(|| {
             tree.search_radius(target, 0.08);
