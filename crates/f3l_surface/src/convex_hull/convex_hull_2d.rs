@@ -1,0 +1,190 @@
+use std::ops::Index;
+use f3l_core::BasicFloat;
+
+use crate::Convex;
+
+
+#[derive(Debug, Clone)]
+pub struct ConvexHull2D<'a, T: BasicFloat, P>
+where
+    P: Into<[T; 2]> + Clone + Copy + Send + Sync + Index<usize, Output = T>
+{
+    pub data: &'a [P],
+    pub hulls: Vec<usize>,
+}
+
+impl <'a, T: BasicFloat, P> ConvexHull2D<'a, T, P>
+where
+    P: Into<[T; 2]> + Clone + Copy + Send + Sync + Index<usize, Output = T>
+{
+    /// ax + by + c = 0
+    #[inline]
+    fn generate_line(id: &(P, P)) -> [T; 3] {
+        if (id.0[0] - id.1[0]).abs() <= T::epsilon() {
+            return [T::one(), T::zero(), -id.0[0]];
+        }
+        if (id.0[1] - id.1[1]).abs() <= T::epsilon() {
+            return [T::zero(), T::one(), -id.0[1]];
+        }   
+
+        let m = (id.1[1] - id.0[1]) / (id.1[0] - id.0[0]);
+        [m, -T::one(), id.0[1] - id.0[0] * m]
+    }
+
+    #[inline]
+    fn distance_slice(line: &[T; 3], p: &[T; 2]) -> T {
+        line[0] * p[0] + line[1] * p[1] + line[2]
+    }
+
+    fn split_data(&self, line: &[T; 3], points: &[usize], signed: bool, outside: &mut Vec<usize>) {
+        *outside = points.iter().filter_map(|&i| {
+            let d = Self::distance_slice(line, &self.data[i].into()) * if signed { -T::one() } else { T::one() };
+            if  d < T::zero() {
+                Some(i)
+            } else {
+                None
+            }
+        }).collect::<Vec<usize>>()
+    }
+
+    fn compute_recursive(&self, ids: &[usize], edge: &[usize; 2], hulls: &mut Vec<usize>) {
+        if ids.is_empty() {
+            return;
+        } else if ids.len() == 1 {
+            hulls.insert(edge[1], ids[0]);
+            return;
+        }
+
+        let [start, end] = *edge;
+
+        let (head, tail) = (
+            self.data[hulls[edge[0]]],
+            self.data[hulls[edge[1]]],
+        );
+
+        let line = Self::generate_line(&(head, tail));
+
+        let mut farthest = 0_usize;
+        let mut farthest_value = T::zero();
+        ids.iter().for_each(|&i| {
+            let d = Self::distance_slice(&line, &self.data[i].into()).abs();
+            if d > farthest_value {
+                farthest_value = d;
+                farthest = i; 
+            }
+        });
+        if farthest_value <= T::epsilon() {
+            return;
+        }
+        hulls.insert(end, farthest);
+        let mid = self.data[farthest];
+
+        let center = [
+            (head[0] + tail[0] + mid[0]) / T::from(3f32).unwrap(),
+            (head[1] + tail[1] + mid[1]) / T::from(3f32).unwrap(),
+        ];
+
+        let splits = [
+                Self::generate_line(&(head, mid)),
+                Self::generate_line(&(mid, tail)),
+            ].into_iter().map(|line| {
+                let sign = Self::distance_slice(&line, &center) < T::zero();
+                let mut outside = Vec::with_capacity(ids.len());
+                self.split_data(&line, ids, sign, &mut outside);
+                outside
+            }).collect::<Vec<_>>();
+        
+        self.compute_recursive(&splits[1], &[end, end+1], hulls);
+        self.compute_recursive(&splits[0], &[start, end], hulls);
+    }
+}
+
+impl<'a, T: BasicFloat, P> Convex<'a, P> for ConvexHull2D<'a, T, P>
+where
+    P: Into<[T; 2]> + Clone + Copy + Send + Sync + Index<usize, Output = T>
+{
+    fn new(data: &'a [P]) -> Self {
+        Self {
+            data, hulls: vec![],
+        }
+    }
+
+    fn compute(&mut self) {
+        let data = self.data;
+        let mut min_id = [0usize; 2];
+        let mut max_id = [0usize; 2];
+        let mut min_v = [data[0][0]; 2];
+        let mut max_v = [data[0][1]; 2];
+        (0..data.len()).for_each(|i| {
+            (0..2).for_each(|ii| {
+                if data[i][ii] < min_v[ii] {
+                    min_v[ii] = data[i][ii];
+                    min_id[ii] = i;
+                }
+                if data[i][ii] > max_v[ii] {
+                    max_v[ii] = data[i][ii];
+                    max_id[ii] = i;
+                }
+            });
+        });
+        let largest = if (max_v[0]-min_v[0]) > (max_v[1]-min_v[1]) {
+            0
+        } else {
+            1
+        };
+
+        let (p0, p1) = (data[min_id[largest]], data[max_id[largest]]);
+        let line = Self::generate_line(&(p0, p1));
+
+        let mut side_a = Vec::with_capacity(data.len());
+        let mut side_b = Vec::with_capacity(data.len());
+        (0..data.len()).for_each(|i| {
+            let d = Self::distance_slice(&line, &data[i].into());
+            if d < T::zero() {
+                side_a.push(i);
+            } else if d > T::zero() {
+                side_b.push(i);
+            }
+        });
+
+        let mut hull_a = Vec::with_capacity(data.len());
+        let mut hull_b = Vec::with_capacity(data.len());
+
+        hull_a.push(min_id[largest]);
+        hull_a.push(max_id[largest]);
+
+        hull_b.push(max_id[largest]);
+        hull_b.push(min_id[largest]);
+
+        f3l_core::rayon::scope(|s| {
+            s.spawn(|_| self.compute_recursive(&side_a, &[0, 1], &mut hull_a));
+            s.spawn(|_| self.compute_recursive(&side_b, &[0, 1], &mut hull_b));
+        });
+        // self.compute_recursive(&side_a, &[0, 1], &mut hull_a);
+        // self.compute_recursive(&side_b, &[0, 1], &mut hull_b);
+
+        let nb_hull_b = hull_b.len();
+        let hull_b = &mut hull_b[1..nb_hull_b-1].to_owned();
+        if !hull_b.is_empty() {
+            hull_a.append(hull_b);
+        }
+        self.hulls = hull_a;
+    }
+    
+}
+
+#[test]
+fn convex_hull_2d() {
+    let points = vec![
+        [0f32, 0.,],
+        [3., -1.,],
+        [6., 0.,],
+        [5., 3.,],
+        [3., 4.,],
+        [1., 3.,],
+        [0.5, 2.,],
+    ];
+    let mut cvh = ConvexHull2D::new(&points);
+    cvh.compute();
+    assert_eq!(cvh.hulls, [0_usize, 1, 2, 3, 4, 5, 6]);
+}

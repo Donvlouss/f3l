@@ -2,4 +2,4 @@
 .vscode
 .idea
 Cargo.lock
-*.ply
+data
