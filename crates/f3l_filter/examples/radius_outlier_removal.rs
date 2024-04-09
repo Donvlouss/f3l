@@ -3,7 +3,7 @@ use kiss3d::light::Light;
 #[cfg(feature = "app_kiss3d")]
 use kiss3d::window::Window;
 #[cfg(feature = "app_kiss3d")]
-use nalgebra::Point3;
+use kiss3d::nalgebra::Point3;
 
 use f3l_filter::*;
 

@@ -3,9 +3,10 @@ mod kd_leaf;
 pub use kd_features::KdFeature;
 pub use kd_leaf::KdLeaf;
 
-use crate::{SearchBy, TreeHeapElement, TreeKnnResult, TreeRadiusResult, TreeResult, TreeSearch};
+use crate::{SearchBy, SearchQueue, TreeFarthestSearch, TreeHeapElement, TreeKnnResult, TreeRadiusResult, TreeResult, TreeSearch};
 use f3l_core::BasicFloat;
 use std::{cmp::Reverse, collections::BinaryHeap, ops::Index};
+
 
 /// KD-Tree Implement
 ///
@@ -188,17 +189,19 @@ where
     }
 
     pub fn search<R: TreeResult>(&self, data: P, by: SearchBy, result: &mut R) {
-        let mut search_queue =
-            BinaryHeap::with_capacity(std::cmp::max(10, (self.data.unwrap().len() as f32).sqrt() as usize));
+        let mut search_queue = BinaryHeap::with_capacity(std::cmp::max(10, (self.data.unwrap().len() as f32).sqrt() as usize));
+
         if self.root.is_none() {
             return;
         }
         if let Some(root) = &self.root {
-            self.search_(result, root, &data, by, 0.0, &mut search_queue);
+            self.search_(result, root, &data, by, if result.is_farthest() {f32::MAX} else {0.0}, &mut search_queue);
 
-            // Use Binary Heap to search the minimal node first
-            while let Some(Reverse(node)) = search_queue.pop() {
-                self.search_(result, node.raw, &data, by, node.order, &mut search_queue);
+            while let Some(node) = search_queue.pop() {
+                match node {
+                    SearchQueue::MaxHeap(node) => self.search_(result, node.raw, &data, by, node.order, &mut search_queue),
+                    SearchQueue::MinHeap(Reverse(node)) => self.search_(result, node.raw, &data, by, node.order, &mut search_queue),
+                };
             }
         };
     }
@@ -210,9 +213,13 @@ where
         data: &P,
         by: SearchBy,
         min_dist: f32,
-        queue: &mut BinaryHeap<Reverse<TreeHeapElement<&'a KdLeaf, f32>>>,
+        queue: &mut BinaryHeap<SearchQueue<TreeHeapElement<&'a Box<KdLeaf>, f32>>>,
     ) {
-        if result.worst() < min_dist {
+        let is_farthest = result.is_farthest();
+        if match is_farthest {
+            true => result.worst() > min_dist,
+            false => result.worst() < min_dist,
+        } {
             return;
         }
         let p: [T; D] = (*data).into();
@@ -238,6 +245,11 @@ where
                 }
             }
         };
+        let (near, far) = if is_farthest {
+            (far, near)
+        } else {
+            (near, far)
+        };
 
         if let Some(far) = far {
             let add_far = match by {
@@ -245,16 +257,23 @@ where
                     if !result.is_full() {
                         true
                     } else {
-                        d * d < T::from(result.worst() + f32::EPSILON).unwrap()
+                        match is_farthest {
+                            true => d * d > T::from(result.worst() + f32::EPSILON).unwrap(),
+                            false => d * d < T::from(result.worst() + f32::EPSILON).unwrap(),
+                        }
                     }
                 }
                 SearchBy::Radius(r) => d * d <= T::from(r).unwrap(),
             };
             if add_far {
-                queue.push(Reverse(TreeHeapElement {
+                let node = TreeHeapElement {
                     raw: far,
                     order: min_dist + (d * d).to_f32().unwrap(),
-                }));
+                };
+                queue.push( match result.is_farthest() {
+                    true => SearchQueue::MaxHeap(node),
+                    false => SearchQueue::MinHeap(Reverse(node)),
+                });
             }
         }
 
@@ -321,5 +340,39 @@ where
         let mut result = TreeRadiusResult::new(radius * radius);
         self.search(*point, by, &mut result);
         result.data
+    }
+}
+
+impl<'a, T: BasicFloat, const D: usize, P> TreeFarthestSearch<P> for KdTree<'a, T, D, P>
+where
+    P: Into<[T; D]> + Send + Sync + Clone + Copy + Index<usize, Output = T>,
+    [T; D]: Into<P>,
+{
+    fn search_kfn_ids(&self, point: &P, k: usize) -> Vec<usize> {
+        let by = if k == 0 {
+            SearchBy::Count(1)
+        } else {
+            SearchBy::Count(k)
+        };
+        let mut result = TreeKnnResult::new(k);
+        result.set_search_farthest(true);
+        self.search(*point, by, &mut result);
+        result.data.iter().map(|&(i, _)| i).collect()
+    }
+
+    fn search_kfn(&self, point: &P, k: usize) -> Vec<(P, f32)> {
+        let by = if k == 0 {
+            SearchBy::Count(1)
+        } else {
+            SearchBy::Count(k)
+        };
+        let mut result = TreeKnnResult::new(k);
+        result.set_search_farthest(true);
+        self.search(*point, by, &mut result);
+        result
+            .result()
+            .iter()
+            .map(|&(i, d)| (self.data.unwrap()[i], d.sqrt()))
+            .collect::<Vec<(P, f32)>>()
     }
 }
