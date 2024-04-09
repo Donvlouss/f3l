@@ -35,9 +35,14 @@ fn main() {
         }
     }).collect::<Vec<_>>();
 
-    let mut cvh = ConvexHull2D::new(&points);
+    let mut cvh = ConvexHull::new(&points);
     cvh.compute();
-    let hulls = cvh.hulls;
+
+    let hulls = if let ConvexHullId::D2(hulls) = cvh.hulls() {
+        hulls
+    } else {
+        panic!("Could not resolve to D2 type.")
+    };
 
     let view_points = points.iter().map(|&p| {
         Point3::new(p[0], p[1], 0.)

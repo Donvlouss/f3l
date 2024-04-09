@@ -3,7 +3,10 @@ use f3l_core::BasicFloat;
 
 use crate::Convex;
 
+const EPS: f32 = 1e-5;
 
+/// Convex Hull of 2d data.
+/// A `QuickHull` implement.
 #[derive(Debug, Clone)]
 pub struct ConvexHull2D<'a, T: BasicFloat, P>
 where
@@ -17,13 +20,13 @@ impl <'a, T: BasicFloat, P> ConvexHull2D<'a, T, P>
 where
     P: Into<[T; 2]> + Clone + Copy + Send + Sync + Index<usize, Output = T>
 {
-    /// ax + by + c = 0
+    /// Return line model as `[a, b, c]` `a`x + `b`y + `c` = 0.
     #[inline]
     fn generate_line(id: &(P, P)) -> [T; 3] {
-        if (id.0[0] - id.1[0]).abs() <= T::epsilon() {
+        if (id.0[0] - id.1[0]).abs() <= T::from(EPS).unwrap() {
             return [T::one(), T::zero(), -id.0[0]];
         }
-        if (id.0[1] - id.1[1]).abs() <= T::epsilon() {
+        if (id.0[1] - id.1[1]).abs() <= T::from(EPS).unwrap() {
             return [T::zero(), T::one(), -id.0[1]];
         }   
 
@@ -31,11 +34,13 @@ where
         [m, -T::one(), id.0[1] - id.0[0] * m]
     }
 
+    /// Return distance of `p` to `line`.
     #[inline]
     fn distance_slice(line: &[T; 3], p: &[T; 2]) -> T {
         line[0] * p[0] + line[1] * p[1] + line[2]
     }
 
+    /// Split points to outside or inside by line and signed.
     fn split_data(&self, line: &[T; 3], points: &[usize], signed: bool, outside: &mut Vec<usize>) {
         *outside = points.iter().filter_map(|&i| {
             let d = Self::distance_slice(line, &self.data[i].into()) * if signed { -T::one() } else { T::one() };
@@ -47,10 +52,16 @@ where
         }).collect::<Vec<usize>>()
     }
 
+    /// QuickHull implement.
+    /// 
+    /// 1. Find the farthest point of line and outside points.
+    /// 2. Insert the farthest point to edge_start and edge_end.
+    /// 3. Split data to right and left of two edges.
+    /// 4. recursive finding until no outside data.
     fn compute_recursive(&self, ids: &[usize], edge: &[usize; 2], hulls: &mut Vec<usize>) {
-        if ids.is_empty() {
+        if ids.is_empty() { // no outside, is convex hull already.
             return;
-        } else if ids.len() == 1 {
+        } else if ids.len() == 1 { // only one outside, set it to hull directly.
             hulls.insert(edge[1], ids[0]);
             return;
         }
@@ -73,7 +84,7 @@ where
                 farthest = i; 
             }
         });
-        if farthest_value <= T::epsilon() {
+        if farthest_value <= T::from(EPS).unwrap() {
             return;
         }
         hulls.insert(end, farthest);
@@ -109,8 +120,13 @@ where
         }
     }
 
+    /// 1. Find min max of xy, got 4 ids
+    /// 2. Find longest distance between ids as edge.
+    /// 3. Split data to upper and lower data, compute recursive to insert hulls.
     fn compute(&mut self) {
         let data = self.data;
+        assert!(data.len() >= 3);
+        
         let mut min_id = [0usize; 2];
         let mut max_id = [0usize; 2];
         let mut min_v = [data[0][0]; 2];
@@ -160,8 +176,6 @@ where
             s.spawn(|_| self.compute_recursive(&side_a, &[0, 1], &mut hull_a));
             s.spawn(|_| self.compute_recursive(&side_b, &[0, 1], &mut hull_b));
         });
-        // self.compute_recursive(&side_a, &[0, 1], &mut hull_a);
-        // self.compute_recursive(&side_b, &[0, 1], &mut hull_b);
 
         let nb_hull_b = hull_b.len();
         let hull_b = &mut hull_b[1..nb_hull_b-1].to_owned();
