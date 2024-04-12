@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use f3l_core::{find_circle, get_minmax};
+use f3l_core::{find_circle, get_minmax, EdgeLinker};
 
 use super::{BasicFloat, FaceIdType, SubTriangle};
 
@@ -8,7 +8,6 @@ pub struct Delaunay2D<'a, T: BasicFloat> {
     pub data: &'a [[T; 2]],
     pub triangles: Vec<FaceIdType>,
     pub super_triangle: [[T;2];3],
-    pub edges: Vec<(usize, usize)>,
     pub contours: Vec<Vec<(usize, usize)>>
 }
 
@@ -19,7 +18,6 @@ impl<'a, T: BasicFloat> Delaunay2D<'a, T> {
             data, 
             triangles: vec![],
             super_triangle: [[T::zero(); 2]; 3],
-            edges: vec![],
             contours: vec![]
         }
     }
@@ -132,10 +130,12 @@ impl<'a, T: BasicFloat> Delaunay2D<'a, T> {
         
         let (mesh, contours) = self.compute_alpha(&triangles, alpha*alpha);
         self.triangles = mesh;
-        self.edges = contours.clone();
         
-        let wires = search_continuos_wire(&contours);
-        self.contours = wires;
+        // let wires = search_continuos_wire(&contours);
+        // self.contours = wires;
+        let mut solver = EdgeLinker::new(&contours);
+        solver.search(false);
+        self.contours = solver.closed;
     }
 
     pub fn compute_alpha(&self, triangles: &Vec<SubTriangle<T>>, alpha: T) -> (Vec<FaceIdType>, Vec<(usize, usize)>) {
@@ -171,8 +171,9 @@ impl<'a, T: BasicFloat> Delaunay2D<'a, T> {
 // TODO Large shape could contains small shape, need to split.
 fn search_continuos_wire(edges: &[(usize, usize)]) -> Vec<Vec<(usize, usize)>> {
     let mut visited_edge = vec![false; edges.len()];
-    let mut closed: Vec<Vec<(usize, usize)>>= vec![];
+    let mut wires: Vec<Vec<(usize, usize)>>= vec![];
 
+    // Recursive search opened edges.
     let mut linked_points = HashMap::new();
     edges.iter().for_each(|&(e0, e1)| {
         let e = linked_points.entry(e0).or_insert(0_usize);
@@ -205,13 +206,17 @@ fn search_continuos_wire(edges: &[(usize, usize)]) -> Vec<Vec<(usize, usize)>> {
             }
         });
     }
+    let mut opened = vec![];
     let edges = edges.iter().filter_map(|&(e0, e1)| {
         if !linked_points.contains_key(&e0) || !linked_points.contains_key(&e1) {
+            opened.push((e0, e1));
             None
         } else {
             Some((e0, e1))
         }
     }).collect::<Vec<_>>();
+
+    search_opened(&opened, &mut wires);
 
     for i in 0..edges.len() {
         if visited_edge[i] {
@@ -221,18 +226,43 @@ fn search_continuos_wire(edges: &[(usize, usize)]) -> Vec<Vec<(usize, usize)>> {
         let mut temp = vec![edges[i]];
         let mut temp_list = vec![i];
         while temp[0].0 != temp[temp.len()-1].1 {
-            search_recursive(&edges, &mut visited_edge, &mut temp, &mut temp_list, &mut closed);
+            search_recursive(&edges, &mut visited_edge, &mut temp, &mut temp_list, &mut wires);
         }
     }
     
-    closed
+    wires
+}
+
+fn search_opened(opened: &[(usize, usize)], wires: &mut Vec<Vec<(usize, usize)>>) {
+    let mut linked = vec![false; opened.len()];
+    let mut opened_wires: Vec<Vec<(usize, usize)>> = vec![];
+
+    (0..opened.len()).for_each(|i| {
+
+        if linked[i] { return; }
+
+        let mut temp = vec![opened[i]];
+        let mut temp_list = vec![i];
+        let mut nb = temp.len();
+
+        loop {
+            search_recursive(&opened, &mut linked, &mut temp, &mut temp_list, &mut opened_wires);
+            if nb == temp.len() {
+                break;
+            }
+            nb = temp.len();
+        }
+        temp_list.into_iter().for_each(|ii| linked[ii]=true);
+
+        wires.push(temp);
+    });
 }
 
 fn search_recursive(edges: &[(usize, usize)], visited: &mut Vec<bool>, temp: &mut Vec<(usize, usize)>, temp_list: &mut Vec<usize>, closed: &mut Vec<Vec<(usize, usize)>>) {
 
     for i in 0..edges.len() {
         // visited
-        if /*visited[i] || */temp_list.contains(&i) {
+        if temp_list.contains(&i) {
             continue;
         }
         let (previous, current) = temp[temp.len()-1];

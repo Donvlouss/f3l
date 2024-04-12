@@ -61,6 +61,7 @@ fn load_img(path: &str) -> Vec<[f32; 2]> {
 fn main() {
     use f3l_surface::Delaunay2D;
 
+
     println!("Using Kiss3d app");
 
     let mut window = Window::new("Kiss3d: points");
@@ -69,7 +70,7 @@ fn main() {
     window.set_point_size(10.0); // (Not supported by all graphic drivers)
 
     // let points = load_img("../../data/hull.png");
-    let points = load_img("../../data/hull_hole.png");
+    let points = load_img("../../data/hull_hole_multiple.png");
 
     let mut solver = Delaunay2D::new(&points);
 
