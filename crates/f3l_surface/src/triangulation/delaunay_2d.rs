@@ -1,27 +1,42 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use f3l_core::{find_circle, get_minmax, EdgeLinker};
 
+use crate::Delaunay2DShape;
+
 use super::{BasicFloat, FaceIdType, SubTriangle};
 
+/// Compute Delaunay Triangles with alpha shape. Implement [Bowyer–Watson algorithm](https://en.wikipedia.org/wiki/Bowyer%E2%80%93Watson_algorithm)
+/// 
+/// 1. Generate a super-triangle which could contains all data.
+/// 2. Recursive insert point, and generate sub-triangles.
+/// 3. Remove triangles which linked to super-triangles.
+/// 4. Remove triangle which radius of circumscribed smaller than `alpha`.
+/// 5. Find all contours (non-common edge).
+/// 6. Classify contours to each shapes.
 pub struct Delaunay2D<'a, T: BasicFloat> {
     pub data: &'a [[T; 2]],
-    pub triangles: Vec<FaceIdType>,
     pub super_triangle: [[T;2];3],
-    pub contours: Vec<Vec<(usize, usize)>>
+    pub shapes: Vec<Delaunay2DShape>,
 }
-
 
 impl<'a, T: BasicFloat> Delaunay2D<'a, T> {
     pub fn new(data: &'a [[T; 2]]) -> Self {
         Self {
             data, 
-            triangles: vec![],
             super_triangle: [[T::zero(); 2]; 3],
-            contours: vec![]
+            shapes: vec![]
         }
     }
 
+    /// Return point data at `id`.
+    /// 
+    /// Cause data is a reference, could not add vertices of super-triangles 
+    /// to data. Using this method to check `id` if over than data, if true,
+    /// which may get vertex of super-triangle.
+    /// 
+    /// # Panic
+    /// `id` is larger than `nb of data` + 3 (vertices of super-triangle).
     #[inline]
     pub fn at(&self, id: usize) -> [T; 2] {
         match id >= self.data.len() {
@@ -30,6 +45,9 @@ impl<'a, T: BasicFloat> Delaunay2D<'a, T> {
         }
     }
 
+    /// Return center and radius of circumscribed.
+    /// 
+    /// Compute triangles circumscribed circle.
     pub fn find_out_circle(&self, ids: [usize; 3]) -> ([T; 2], T) {
         let p1 = self.at(ids[0]);
         let p2 = self.at(ids[1]);
@@ -44,6 +62,9 @@ impl<'a, T: BasicFloat> Delaunay2D<'a, T> {
 
     }
 
+    /// Return [`SubTriangle`] instance.
+    /// 
+    /// A factory of creating a [`SubTriangle`] by three ids.
     pub fn generate_triangle(&self, ids: [usize; 3]) -> SubTriangle<T> {
         let (center, radius) = self.find_out_circle(ids);
         SubTriangle {
@@ -53,6 +74,7 @@ impl<'a, T: BasicFloat> Delaunay2D<'a, T> {
         }
     }
 
+    /// Return super-triangle.
     pub fn find_super_triangle(&mut self) -> SubTriangle<T> {
         let minmax = get_minmax(self.data);
         let c = [
@@ -80,7 +102,13 @@ impl<'a, T: BasicFloat> Delaunay2D<'a, T> {
         self.generate_triangle([n, n+1, n+2])
     }
 
-    pub fn insert(&mut self, id: usize, triangles: &mut Vec<SubTriangle<T>>) -> Vec<SubTriangle<T>> {
+    /// Insert point to current delaunay triangles.
+    /// 
+    /// 1. Find triangle which point is inside the circumscribed circle.
+    /// 2. Mark found triangles to removed, and save edges. 
+    /// 3. Find non-common edges as a hole, and found the ring of hole.
+    /// 4. Link point to edges of ring as new triangles, then push to queue.
+    pub fn insert(&mut self, id: usize, triangles: &mut Vec<SubTriangle<T>>) {
         let mut new_faces = vec![];
         let mut edges = HashMap::new();
         let p = self.at(id);
@@ -103,14 +131,15 @@ impl<'a, T: BasicFloat> Delaunay2D<'a, T> {
                 triangles.push(face);
                 new_faces.push(face);
             });
-            
-        new_faces
     }
 
+    /// Compute delaunay triangles, and using alpha to remove invalid triangles.
+    /// 
+    /// 1. Find super-triangle, push to queue.
+    /// 2. Insert each point. see [`Delaunay2D::insert`]
+    /// 3. Split triangle and contours by alpha.
+    /// 4. Found contours of each shapes.
     pub fn compute(&mut self, alpha: T) {
-        self.triangles.clear();
-        self.contours.clear();
-
         let mut triangles = vec![self.find_super_triangle()];
         let n = self.data.len();
         for i in 0..n {
@@ -129,16 +158,18 @@ impl<'a, T: BasicFloat> Delaunay2D<'a, T> {
         }).collect();
         
         let (mesh, contours) = self.compute_alpha(&triangles, alpha*alpha);
-        self.triangles = mesh;
         
-        // let wires = search_continuos_wire(&contours);
-        // self.contours = wires;
         let mut solver = EdgeLinker::new(&contours);
         solver.search(false);
-        self.contours = solver.closed;
+
+        self.shapes = Self::cluster_alpha_shapes(mesh, solver.closed);
     }
 
-    pub fn compute_alpha(&self, triangles: &Vec<SubTriangle<T>>, alpha: T) -> (Vec<FaceIdType>, Vec<(usize, usize)>) {
+    /// Compute alpha shape
+    /// 
+    /// 1. Remove triangles which radius of circumscribed larger than alpha.
+    /// 2. Split to meshes an contours.
+    pub fn compute_alpha(&self, triangles: &Vec<SubTriangle<T>>, alpha: T) -> (Vec<SubTriangle<T>>, Vec<(usize, usize)>) {
         let mut inner = HashMap::new();
         let inner_triangles = triangles.iter().filter_map(|&face| {
             if face.radius < alpha {
@@ -148,7 +179,7 @@ impl<'a, T: BasicFloat> Delaunay2D<'a, T> {
                     let entry = inner.entry(edge).or_insert(0);
                     *entry += 1;
                 });
-                Some(face.tri)
+                Some(face)
             } else {
                 None
             }
@@ -166,160 +197,86 @@ impl<'a, T: BasicFloat> Delaunay2D<'a, T> {
             }).collect()
         )
     }
-}
 
-// TODO Large shape could contains small shape, need to split.
-fn search_continuos_wire(edges: &[(usize, usize)]) -> Vec<Vec<(usize, usize)>> {
-    let mut visited_edge = vec![false; edges.len()];
-    let mut wires: Vec<Vec<(usize, usize)>>= vec![];
+    /// Return list of [`Delaunay2DShape`].
+    /// 
+    /// 1. Search cluster of triangles which have common-edge.
+    /// 2. Search owned contours of each shape.
+    pub fn cluster_alpha_shapes(triangles: Vec<SubTriangle<T>>, contours: Vec<Vec<(usize, usize)>>) -> Vec<Delaunay2DShape> {
+        // If there is only one contour, means all triangles in one shape, and has no holes.
+        if contours.len() == 1 {
+            return vec![
+                Delaunay2DShape { 
+                    mesh: triangles.into_iter().map(|tri| tri.tri).collect(),
+                    contours
+                }
+            ];
+        }
 
-    // Recursive search opened edges.
-    let mut linked_points = HashMap::new();
-    edges.iter().for_each(|&(e0, e1)| {
-        let e = linked_points.entry(e0).or_insert(0_usize);
-        *e += 1;
-        let e = linked_points.entry(e1).or_insert(0_usize);
-        *e += 1;
-    });
-    while linked_points.values().any(|&count| count == 1) {
-        let opened_pts = linked_points.iter().filter_map(|(&k, &v)| {
-            if v == 1 {
-                Some(k)
-            } else {
-                None
+
+        let mut triangles = triangles;
+        for tri in triangles.iter_mut() {
+            tri.removed = false;
+        }
+
+        let mut shapes = vec![];
+        (0..triangles.len()).for_each(|i| {
+            if triangles[i].removed {
+                return;
             }
-        }).collect::<Vec<_>>();
-        opened_pts.iter().for_each(|&p| {
-            linked_points.remove_entry(&p);
-            for i in 0..edges.len() {
-                let (e0, e1) = edges[i];
-                let other = if e0 == p {e1} else if e1 == p {e0} else {continue;};
-                match linked_points.get_mut(&other) {
-                    Some(entry) => {
-                        *entry -= 1;
-                        if *entry == 0 {
-                            linked_points.remove_entry(&other);
-                        }
-                    },
-                    None => continue,
-                };
+            
+            let mut selected = vec![triangles[i].tri];
+            let mut edges = HashSet::new();
+            {
+                let tri = &mut triangles[i];
+                tri.removed = true;
             }
-        });
-    }
-    let mut opened = vec![];
-    let edges = edges.iter().filter_map(|&(e0, e1)| {
-        if !linked_points.contains_key(&e0) || !linked_points.contains_key(&e1) {
-            opened.push((e0, e1));
-            None
-        } else {
-            Some((e0, e1))
-        }
-    }).collect::<Vec<_>>();
-
-    search_opened(&opened, &mut wires);
-
-    for i in 0..edges.len() {
-        if visited_edge[i] {
-            continue;
-        }
-
-        let mut temp = vec![edges[i]];
-        let mut temp_list = vec![i];
-        while temp[0].0 != temp[temp.len()-1].1 {
-            search_recursive(&edges, &mut visited_edge, &mut temp, &mut temp_list, &mut wires);
-        }
-    }
-    
-    wires
-}
-
-fn search_opened(opened: &[(usize, usize)], wires: &mut Vec<Vec<(usize, usize)>>) {
-    let mut linked = vec![false; opened.len()];
-    let mut opened_wires: Vec<Vec<(usize, usize)>> = vec![];
-
-    (0..opened.len()).for_each(|i| {
-
-        if linked[i] { return; }
-
-        let mut temp = vec![opened[i]];
-        let mut temp_list = vec![i];
-        let mut nb = temp.len();
-
-        loop {
-            search_recursive(&opened, &mut linked, &mut temp, &mut temp_list, &mut opened_wires);
-            if nb == temp.len() {
-                break;
-            }
-            nb = temp.len();
-        }
-        temp_list.into_iter().for_each(|ii| linked[ii]=true);
-
-        wires.push(temp);
-    });
-}
-
-fn search_recursive(edges: &[(usize, usize)], visited: &mut Vec<bool>, temp: &mut Vec<(usize, usize)>, temp_list: &mut Vec<usize>, closed: &mut Vec<Vec<(usize, usize)>>) {
-
-    for i in 0..edges.len() {
-        // visited
-        if temp_list.contains(&i) {
-            continue;
-        }
-        let (previous, current) = temp[temp.len()-1];
-        
-        let (e0, e1) = edges[i];
-        // edge not connect current temp wire
-        if e0 != current && e1 != current {
-            continue;
-        }
-        if e0 == previous || e1 == previous {
-            continue;
-        }
-        let next = if e0 == current {(e0, e1)} else {(e1, e0)};
-        // Only one edge, just push
-        if temp.len() == 1 {
-            temp.push(next);
-            temp_list.push(i);
-            continue;
-        }
-        // Reverse search temp list.
-        let mut id = None;
-        for ii in (0..=temp.len()-2).rev() {
-            if temp[ii].0 == next.1 {
-                id = Some(ii);
-            }
-        }
-        if let Some(id) = id {
-            (id..temp.len()).for_each(|iii| {
-                visited[temp_list[iii]] = true;
+            
+            let ps = triangles[i].tri.point;
+            [(0, 1), (1, 2), (2, 0)].into_iter().for_each(|(a, b)| {
+                edges.insert(if ps[a] < ps[b] {(ps[a], ps[b])} else {(ps[b], ps[a])});
             });
-            visited[i] = true;
-            temp.push(next);
-            closed.push(temp.clone());
-            break;
-        } else {
-            temp.push(next);
-            temp_list.push(i);
-        };
-    }
-}
 
-#[test]
-fn test() {
-    let edges = vec![
-        (0, 1),
-        (1, 2),
-        (1, 6),
-        (2, 3),
-        (2, 6),
-        (2, 7),
-        (3, 4),
-        (3, 7),
-        (4, 5),
-        (6, 8),
-        (7, 8),
-        (8, 9),
-        (8, 10)
-    ];
-    println!("{:?}", search_continuos_wire(&edges));
+            let mut n = selected.len();
+            loop {
+                (i+1..triangles.len()).for_each(|ii| {
+                    if triangles[ii].removed {
+                        return;
+                    }
+
+                    let ps = triangles[ii].tri.point;
+                    let es = [(0, 1), (1, 2), (2, 0)].into_iter().map(|(a, b)|
+                        if ps[a] < ps[b] {(ps[a], ps[b])} else {(ps[b], ps[a])}).collect::<Vec<_>>();
+                    if es.iter().any(|e| edges.contains(e)) {
+                        es.iter().for_each(|e| {edges.insert(*e);});
+                        selected.push(triangles[ii].tri);
+
+                        let tri = &mut triangles[ii];
+                        tri.removed = true;
+                    }
+                });
+                if n == selected.len() {
+                    break;
+                }
+                n = selected.len();
+            }
+
+            let mut shape_contours = vec![];
+            for ii in 0..contours.len() {
+                if contours[ii].iter().all(|&(a, b)| {
+                    let e = if a < b {(a, b)} else {(b, a)};
+                    edges.contains(&e)
+                }) {
+                    shape_contours.push(contours[ii].clone());
+                }
+            };
+
+            shapes.push(Delaunay2DShape{
+                mesh: selected,
+                contours: shape_contours,
+            })
+        });
+
+        shapes
+    }
 }

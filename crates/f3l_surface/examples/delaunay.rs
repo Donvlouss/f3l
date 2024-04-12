@@ -59,23 +59,25 @@ fn load_img(path: &str) -> Vec<[f32; 2]> {
 
 #[cfg(feature = "app_kiss3d")]
 fn main() {
-    use f3l_surface::Delaunay2D;
-
+    use f3l_surface::{Delaunay2D, Delaunay2DShape, FaceIdType};
 
     println!("Using Kiss3d app");
+    println!("Vertex Voxel Down 10x, so edges may not be straight.");
 
     let mut window = Window::new("Kiss3d: points");
 
     window.set_light(Light::StickToCamera);
     window.set_point_size(10.0); // (Not supported by all graphic drivers)
 
+    // Four pictures could be used to show example.
     // let points = load_img("../../data/hull.png");
-    let points = load_img("../../data/hull_hole_multiple.png");
+    // let points = load_img("../../data/hull_hole.png");
+    // let points = load_img("../../data/hull_hole_multiple.png");
+    let points = load_img("../../data/hull_hole_multiples.png");
 
     let mut solver = Delaunay2D::new(&points);
 
     solver.compute(0.005);
-    // solver.compute(6.);
 
     let view_points = points.iter().map(|&p| {
         Point3::new(p[0], p[1], 0.)
@@ -90,44 +92,33 @@ fn main() {
     let zc = Point3::<f32>::new(0., 0., 1.);
     let w = Point3::<f32>::new(1., 1., 1.);
 
-    let activate = solver.triangles.iter().flat_map(|tri| {
-        [(0, 1), (0, 2), (1, 2)].iter().map(|&(e0, e1)| {
-            (
-                Point3::new(points[tri.point[e0]][0], points[tri.point[e0]][1], 0.),
-                Point3::new(points[tri.point[e1]][0], points[tri.point[e1]][1], 0.),
-            )
-        }).collect::<Vec<_>>()
-    }).collect::<Vec<_>>();
+    let shapes = solver.shapes;
 
-    let mut contour_color: Vec<Point3<f32>> = vec![];
-    let alpha_edge = solver.contours.iter().map(|wire| {
-        contour_color.push(random_color().into());
-        wire.iter().map(|&(e0, e1)| {
-            (
-                &view_points[e0],
-                &view_points[e1],
-            )
-        }).collect::<Vec<_>>()
+    let shapes = shapes.into_iter().map(|shape| {
+        let Delaunay2DShape { mesh, contours } = shape;
+        let c: Point3<f32> = random_color().into();
+
+        let mesh = mesh.into_iter().flat_map(|FaceIdType{point}| {
+            [(0, 1), (0, 2), (1, 2)].into_iter().map(|(a, b)| (view_points[point[a]], view_points[point[b]])).collect::<Vec<_>>()
+        }).collect::<Vec<_>>();
+        let contours = contours.into_iter().flat_map(|contour| {
+            contour.into_iter().map(|(a, b)| (view_points[a], view_points[b])).collect::<Vec<_>>()
+        }).collect::<Vec<_>>();
+        (c, mesh, contours)
     }).collect::<Vec<_>>();
 
     while window.render() {
         window.draw_line(&o, &x, &xc);
         window.draw_line(&o, &y, &yc);
         window.draw_line(&o, &z, &zc);
-
-
-        view_points.iter().for_each(|p| {
-                window.draw_point(&p, &yc);
-        });
-        
-        activate.iter().for_each(|e| {
-            window.draw_line(&e.0, &e.1, &w);
-        });
-
-        alpha_edge.iter().zip(&contour_color).for_each(|(wire, c)| {
-            wire.iter().for_each(|&(e0, e1)| {
-                window.draw_line(e0, e1, c);
-            })
+    
+        shapes.iter().for_each(|(color, mesh, contours)| {
+            mesh.iter().for_each(|(a, b)| {
+                window.draw_line(a, b, color);
+            });
+            contours.iter().for_each(|(a, b)| {
+                window.draw_line(a, b, &w);
+            });
         });
     }
 

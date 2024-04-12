@@ -1,19 +1,24 @@
 use std::collections::{HashMap, HashSet};
 
+/// A Solver to find multiple-edges, which could be shapes.
 pub struct EdgeLinker<'a> {
     pub edges: &'a [(usize, usize)],
     pub opened: Vec<Vec<(usize, usize)>>,
     pub closed: Vec<Vec<(usize, usize)>>,
 }
 
-struct ShapeDetail<'a> {
-    pub edges: &'a [(usize, usize)],
+/// Private Structure to represent continuos edges profile.
+/// 
+/// Build map and set when call [`ShapeDetail::new`]
+struct ShapeDetail {
+    /// To check common-edges.
     pub map: HashMap<(usize, usize), usize>,
+    /// To Check common-vertices.
     pub set: HashSet<usize>,
 }
 
-impl<'a> ShapeDetail<'a> {
-    pub fn new(edges: &'a [(usize, usize)]) -> Self {
+impl ShapeDetail {
+    pub fn new(edges: &[(usize, usize)]) -> Self {
         let mut map = HashMap::new();
         let mut set = HashSet::new();
         edges.iter().for_each(|&e| {
@@ -25,7 +30,7 @@ impl<'a> ShapeDetail<'a> {
             set.insert(e.1);
         });
         
-        Self { edges, map, set }
+        Self { map, set }
     }
 }
 
@@ -38,6 +43,13 @@ impl<'a> EdgeLinker<'a> {
         }
     }
 
+    /// Search continuos edges and opened edges.
+    /// 
+    /// 1. Split edges to opened and closed. see [`EdgeLinker::split_open_close`]
+    /// 2. If `search_opened` is `true`, [`EdgeLinker::search_opened`]
+    /// 3. Search closed, [`EdgeLinker::search_closed`]
+    /// 4. Some shape contains other shape, need to tear down, [`EdgeLinker::tear_down_large_shape`]
+    /// 
     pub fn search(&mut self, search_opened: bool) {
         // Split to closed edges and opened edges by counting linked numbers of vertices.
         let (closed, opened) = self.split_open_close(search_opened);
@@ -53,6 +65,13 @@ impl<'a> EdgeLinker<'a> {
         self.closed = self.tear_down_large_shape(closed_shape);
     }
 
+    /// Return (closed-edges, opened-edges).
+    /// 
+    /// 1. Build Map to find non-common vertices.
+    /// 2. Recursive loop Map of non-common vertices, reduce counter of vertex.
+    /// 3. If counter is 0, remove this vertex in Map.
+    /// 4. Iterate edges to find start and end of edge are all in Map.
+    /// 5. If vertices of edge are all in Mpa, add to closed, else add to opened.
     fn split_open_close(&self, search_opened: bool) -> (Vec<(usize, usize)>, Vec<(usize, usize)>) {
         // First search opened edges.
         let mut linked_points = HashMap::new();
@@ -103,37 +122,24 @@ impl<'a> EdgeLinker<'a> {
         (edges, opened)
     }
 
+    /// Return all non-overlapped edges of shapes.
+    /// 
+    /// 1. Sort closed list to a decreasing list. (The last one must not be overlapped.)
+    /// 2. Iterate closed, build [`ShapeDetail`] then call [`EdgeLinker::tear_down_recursive`] to recursive search.
+    /// 3. Add all result to a list, then remove duplicated.
     fn tear_down_large_shape(&mut self, closed: Vec<Vec<(usize, usize)>>) -> Vec<Vec<(usize, usize)>> {
         let mut closed = closed;
 
         let mut generated = vec![];
-        let mut pointer = 0_usize;
-        loop {
-            if pointer >= closed.len() {
-                break;
-            }
-            closed.sort_by(|a, b| b.len().partial_cmp(&a.len()).unwrap());
-            let i = pointer;
-            
+        closed.sort_by(|a, b| b.len().partial_cmp(&a.len()).unwrap());
 
-            let mut edges = HashMap::new();
-            let mut set = HashSet::new();
-            closed[i].iter().for_each(|&e| {
-                let entry = edges.entry(
-                        if e.0 < e.1 {(e.0, e.1)} else {(e.1, e.0)}
-                    ).or_insert(0_usize);
-                *entry += 1;
-                set.insert(e.0);
-                set.insert(e.1);
-            });
-
-
+        (0..closed.len()-1).for_each(|i| {
             let mut partial_closed = vec![];
-            Self::tear_down_recursive(&closed, i, &edges, &set, &mut partial_closed);
+            let profile = ShapeDetail::new(&closed[i]);
+            Self::tear_down_recursive(&closed, i, profile, &mut partial_closed);
             partial_closed.into_iter().for_each(|e| generated.push(e));
-
-            pointer += 1;
-        }
+        });
+        generated.push(closed[closed.len()-1].clone());
 
         let mut non_duplicated = HashSet::new();
         generated = generated.into_iter().filter_map(|shape| {
@@ -155,20 +161,25 @@ impl<'a> EdgeLinker<'a> {
         generated
     }
 
+    /// Tear-down recursive method.
+    /// 
+    /// 1. Iterate to find contour which all vertices is overlap the target one.
+    /// 2. Find non-common edges., then [`EdgeLinker::search_closed`].
+    /// 3. If result of [`EdgeLinker::search_closed`] is empty, means this is a closed, push to `partial_closed`, return.
+    /// 4. Iterate the result of [`EdgeLinker::search_closed`], recursive this.
     fn tear_down_recursive(
         closed: &[Vec<(usize, usize)>],
         start: usize,
-        edges: &HashMap<(usize, usize), usize>,
-        vertices: &HashSet<usize>,
+        profile: ShapeDetail,
         partial_closed: &mut Vec<Vec<(usize, usize)>>)
     {
         let mut per_closed = vec![];
         (start+1..closed.len()).rev().for_each(|ii| {
-            if closed[ii].iter().any(|j| !vertices.contains(&j.0) || !vertices.contains(&j.1)) {
+            if closed[ii].iter().any(|j| !&profile.set.contains(&j.0) || !&profile.set.contains(&j.1)) {
                 return;
             }
             
-            let mut edge_map = edges.clone();
+            let mut edge_map = profile.map.clone();
             closed[ii].iter().for_each(|&e| {
                 let entry = edge_map.entry(
                     if e.0 < e.1 {(e.0, e.1)} else {(e.1, e.0)}
@@ -187,7 +198,7 @@ impl<'a> EdgeLinker<'a> {
         });
 
         if per_closed.is_empty() {
-            let shape = edges.into_iter().map(|(&k, _)| {k}).collect::<Vec<_>>();
+            let shape = profile.map.into_iter().map(|(k, _)| {k}).collect::<Vec<_>>();
             partial_closed.push(shape);
             return;
         }
@@ -203,11 +214,16 @@ impl<'a> EdgeLinker<'a> {
                 set.insert(e.0);
                 set.insert(e.1);
             });
-            Self::tear_down_recursive(closed, start, &map, &set, partial_closed);
+            let profile = ShapeDetail::new(&per);
+            Self::tear_down_recursive(closed, start, profile, partial_closed);
         });
 
     }
 
+    /// Search opened-edges.
+    /// 
+    /// Recursive [`EdgeLinker::search_recursive`], if `temp` is the same number between before and after,
+    /// means search end.
     fn search_opened(opened: &[(usize, usize)], wires: &mut Vec<Vec<(usize, usize)>>) {
         let mut linked = vec![false; opened.len()];
     
@@ -232,6 +248,10 @@ impl<'a> EdgeLinker<'a> {
         });
     }
 
+    /// Search closed-edge.
+    /// 
+    /// Recursive [`EdgeLinker::search_recursive`], if `temp.first.start` == `temp.last.end`,
+    /// means search end.
     fn search_closed(closed: &[(usize, usize)], wires: &mut Vec<Vec<(usize, usize)>>) {
         let mut visited_edge = vec![false; closed.len()];
 
@@ -248,6 +268,13 @@ impl<'a> EdgeLinker<'a> {
         }
     }
 
+    /// A Search Recursive method.
+    /// 
+    /// 1. Iterate edges.
+    /// 2. Find index not in `temp_list` and not (start, end) of edge is not equal to current or is not matched previous.
+    /// 3. If `temp.len()` is 1, just push, cause a closed-shape contains at least 3 edges.
+    /// 4. Reverse search `id` which could be a closed-shape.
+    /// 5. If has `id`, update `temp`, `temp_list`, `visited`, and end, else push this to temp.
     fn search_recursive(edges: &[(usize, usize)], visited: &mut Vec<bool>, temp: &mut Vec<(usize, usize)>, temp_list: &mut Vec<usize>, closed: &mut Vec<Vec<(usize, usize)>>) {
 
         for i in 0..edges.len() {
@@ -315,6 +342,38 @@ fn test() {
     let mut solver = EdgeLinker::new(&edges);
     solver.search(true);
 
-    println!("Opened: {:?}", solver.opened);
-    println!("Closed: {:?}", solver.closed);
+    let mut opened = vec![
+        vec![(0_usize, 1_usize)],
+        vec![(3, 4), (4, 5)],
+        vec![(8, 9)],
+        vec![(8, 10)]
+    ];
+    let mut closed = vec![
+        vec![(2, 6), (2, 7), (6, 8), (7, 8)],
+        vec![(1, 2), (1, 6), (2, 6)],
+        vec![(2, 7), (3, 2), (7, 3)]
+    ];
+    let mut solver_opened = solver.opened;
+    let mut solver_closed = solver.closed;
+
+    // Sort each to make sure indices could be the same.
+    for o in opened.iter_mut() {
+        o.sort();
+    }
+    for o in closed.iter_mut() {
+        o.sort();
+    }
+    for o in solver_opened.iter_mut() {
+        o.sort();
+    }
+    for o in solver_closed.iter_mut() {
+        o.sort();
+    }
+
+    solver_opened.iter().for_each(|e| {
+        assert!(opened.contains(e));
+    });
+    solver_closed.iter().for_each(|e| {
+        assert!(closed.contains(e));
+    });
 }
