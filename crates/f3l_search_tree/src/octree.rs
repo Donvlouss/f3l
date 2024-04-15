@@ -234,7 +234,7 @@ where
         }
     }
 
-    fn search_<'b, R: TreeResult>(
+    fn search_<R: TreeResult>(
         &self,
         result: &mut R,
         node: usize,
@@ -246,9 +246,9 @@ where
         if result.worst() < min_dist {
             return;
         }
-        let clusters;
+
         let node = &self.nodes[node];
-        match node.feature {
+        let clusters = match node.feature {
             OcFeature::Split(children) => {
                 let mut ids = (0..8).collect::<Vec<usize>>();
                 // If is inside, move target to front.
@@ -256,7 +256,7 @@ where
                     let id = node.locate_at(*data).unwrap();
                     ids.swap(0, id);
                 }
-                clusters = ids.into_iter().map(|i| children[i]).collect::<Vec<usize>>();
+                ids.into_iter().map(|i| children[i]).collect::<Vec<usize>>()
             }
             OcFeature::Leaf => {
                 node.points.iter().for_each(|&i| {
@@ -266,7 +266,7 @@ where
                 });
                 return;
             }
-        }
+        };
         let first = clusters[0];
         clusters.into_iter().skip(1).for_each(|i| {
             let distance_type = self.nodes[i].distance(*data);

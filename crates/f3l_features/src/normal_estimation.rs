@@ -84,7 +84,7 @@ where
     }
 
     pub fn compute(&mut self) -> bool {
-        if let None = self.tree.data {
+        if self.tree.data.is_none() {
             return false;
         };
         self.tree.build();

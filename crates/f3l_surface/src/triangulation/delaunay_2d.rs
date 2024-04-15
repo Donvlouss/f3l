@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use f3l_core::{find_circle, get_minmax, EdgeLinker};
+use f3l_core::{find_circle, get_minmax, EdgeLinker, Line};
 
 use crate::Delaunay2DShape;
 
@@ -154,25 +154,22 @@ where
         let n = self.data.len();
         for i in 0..n {
             self.insert(i, &mut triangles);
-            triangles = triangles.into_iter().filter(|tri| !tri.removed).collect();
+            triangles.retain(|tri| !tri.removed);
         }
         // Remove triangles connected to super-triangle.
         let out_ids = [n, n + 1, n + 2];
-        triangles = triangles
-            .into_iter()
-            .filter_map(|tri| {
-                let SubTriangle {
-                    tri: face, removed, ..
-                } = tri;
-                if removed {
-                    return None;
-                }
-                if face.point.iter().any(|i| out_ids.contains(i)) {
-                    return None;
-                }
-                Some(tri)
-            })
-            .collect();
+        triangles.retain(|&tri| {
+            let SubTriangle {
+                tri: face, removed, ..
+            } = tri;
+            if removed {
+                return false;
+            }
+            if face.point.iter().any(|i| out_ids.contains(i)) {
+                return false;
+            }
+            true
+        });
 
         let (mesh, contours) = self.compute_alpha(&triangles, alpha * alpha);
 
@@ -188,9 +185,9 @@ where
     /// 2. Split to meshes an contours.
     pub fn compute_alpha(
         &self,
-        triangles: &Vec<SubTriangle<T>>,
+        triangles: &[SubTriangle<T>],
         alpha: T,
-    ) -> (Vec<SubTriangle<T>>, Vec<(usize, usize)>) {
+    ) -> (Vec<SubTriangle<T>>, Vec<Line>) {
         let mut inner = HashMap::new();
         let inner_triangles = triangles
             .iter()
@@ -224,7 +221,7 @@ where
     /// 2. Search owned contours of each shape.
     pub fn cluster_alpha_shapes(
         triangles: Vec<SubTriangle<T>>,
-        contours: Vec<Vec<(usize, usize)>>,
+        contours: Vec<Vec<Line>>,
     ) -> Vec<Delaunay2DShape> {
         // If there is only one contour, means all triangles in one shape, and has no holes.
         if contours.len() == 1 {
@@ -296,12 +293,12 @@ where
             }
 
             let mut shape_contours = vec![];
-            for ii in 0..contours.len() {
-                if contours[ii].iter().all(|&(a, b)| {
+            for contour in &contours {
+                if contour.iter().all(|&(a, b)| {
                     let e = if a < b { (a, b) } else { (b, a) };
                     edges.contains(&e)
                 }) {
-                    shape_contours.push(contours[ii].clone());
+                    shape_contours.push(contour.clone());
                 }
             }
 

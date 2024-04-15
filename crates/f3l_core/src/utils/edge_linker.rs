@@ -1,10 +1,11 @@
+use crate::Line;
 use std::collections::{HashMap, HashSet};
 
 /// A Solver to find multiple-edges, which could be shapes.
 pub struct EdgeLinker<'a> {
-    pub edges: &'a [(usize, usize)],
-    pub opened: Vec<Vec<(usize, usize)>>,
-    pub closed: Vec<Vec<(usize, usize)>>,
+    pub edges: &'a [Line],
+    pub opened: Vec<Vec<Line>>,
+    pub closed: Vec<Vec<Line>>,
 }
 
 /// Private Structure to represent continuos edges profile.
@@ -12,13 +13,13 @@ pub struct EdgeLinker<'a> {
 /// Build map and set when call [`ShapeDetail::new`]
 struct ShapeDetail {
     /// To check common-edges.
-    pub map: HashMap<(usize, usize), usize>,
+    pub map: HashMap<Line, usize>,
     /// To Check common-vertices.
     pub set: HashSet<usize>,
 }
 
 impl ShapeDetail {
-    pub fn new(edges: &[(usize, usize)]) -> Self {
+    pub fn new(edges: &[Line]) -> Self {
         let mut map = HashMap::new();
         let mut set = HashSet::new();
         edges.iter().for_each(|&e| {
@@ -35,7 +36,7 @@ impl ShapeDetail {
 }
 
 impl<'a> EdgeLinker<'a> {
-    pub fn new(edges: &'a [(usize, usize)]) -> Self {
+    pub fn new(edges: &'a [Line]) -> Self {
         Self {
             edges,
             opened: Vec::with_capacity(edges.len()),
@@ -72,7 +73,7 @@ impl<'a> EdgeLinker<'a> {
     /// 3. If counter is 0, remove this vertex in Map.
     /// 4. Iterate edges to find start and end of edge are all in Map.
     /// 5. If vertices of edge are all in Mpa, add to closed, else add to opened.
-    fn split_open_close(&self, search_opened: bool) -> (Vec<(usize, usize)>, Vec<(usize, usize)>) {
+    fn split_open_close(&self, search_opened: bool) -> (Vec<Line>, Vec<Line>) {
         // First search opened edges.
         let mut linked_points = HashMap::new();
         self.edges.iter().for_each(|&(e0, e1)| {
@@ -134,10 +135,7 @@ impl<'a> EdgeLinker<'a> {
     /// 1. Sort closed list to a decreasing list. (The last one must not be overlapped.)
     /// 2. Iterate closed, build [`ShapeDetail`] then call [`EdgeLinker::tear_down_recursive`] to recursive search.
     /// 3. Add all result to a list, then remove duplicated.
-    fn tear_down_large_shape(
-        &mut self,
-        closed: Vec<Vec<(usize, usize)>>,
-    ) -> Vec<Vec<(usize, usize)>> {
+    fn tear_down_large_shape(&mut self, closed: Vec<Vec<Line>>) -> Vec<Vec<Line>> {
         let mut closed = closed;
         if closed.is_empty() {
             return vec![];
@@ -184,10 +182,10 @@ impl<'a> EdgeLinker<'a> {
     /// 3. If result of [`EdgeLinker::search_closed`] is empty, means this is a closed, push to `partial_closed`, return.
     /// 4. Iterate the result of [`EdgeLinker::search_closed`], recursive this.
     fn tear_down_recursive(
-        closed: &[Vec<(usize, usize)>],
+        closed: &[Vec<Line>],
         start: usize,
         profile: ShapeDetail,
-        partial_closed: &mut Vec<Vec<(usize, usize)>>,
+        partial_closed: &mut Vec<Vec<Line>>,
     ) {
         let mut per_closed = vec![];
         (start + 1..closed.len()).rev().for_each(|ii| {
@@ -239,7 +237,7 @@ impl<'a> EdgeLinker<'a> {
     ///
     /// Recursive [`EdgeLinker::search_recursive`], if `temp` is the same number between before and after,
     /// means search end.
-    fn search_opened(opened: &[(usize, usize)], wires: &mut Vec<Vec<(usize, usize)>>) {
+    fn search_opened(opened: &[Line], wires: &mut Vec<Vec<Line>>) {
         let mut linked = vec![false; opened.len()];
 
         (0..opened.len()).for_each(|i| {
@@ -252,13 +250,7 @@ impl<'a> EdgeLinker<'a> {
             let mut nb = temp.len();
 
             loop {
-                Self::search_recursive(
-                    &opened,
-                    &mut linked,
-                    &mut temp,
-                    &mut temp_list,
-                    &mut vec![],
-                );
+                Self::search_recursive(opened, &mut linked, &mut temp, &mut temp_list, &mut vec![]);
                 if nb == temp.len() {
                     break;
                 }
@@ -274,7 +266,7 @@ impl<'a> EdgeLinker<'a> {
     ///
     /// Recursive [`EdgeLinker::search_recursive`], if `temp.first.start` == `temp.last.end`,
     /// means search end.
-    fn search_closed(closed: &[(usize, usize)], wires: &mut Vec<Vec<(usize, usize)>>) {
+    fn search_closed(closed: &[Line], wires: &mut Vec<Vec<Line>>) {
         let mut visited_edge = vec![false; closed.len()];
 
         for i in 0..closed.len() {
@@ -285,13 +277,7 @@ impl<'a> EdgeLinker<'a> {
             let mut temp = vec![closed[i]];
             let mut temp_list = vec![i];
             while temp[0].0 != temp[temp.len() - 1].1 {
-                Self::search_recursive(
-                    &closed,
-                    &mut visited_edge,
-                    &mut temp,
-                    &mut temp_list,
-                    wires,
-                );
+                Self::search_recursive(closed, &mut visited_edge, &mut temp, &mut temp_list, wires);
             }
         }
     }
@@ -304,11 +290,11 @@ impl<'a> EdgeLinker<'a> {
     /// 4. Reverse search `id` which could be a closed-shape.
     /// 5. If has `id`, update `temp`, `temp_list`, `visited`, and end, else push this to temp.
     fn search_recursive(
-        edges: &[(usize, usize)],
-        visited: &mut Vec<bool>,
-        temp: &mut Vec<(usize, usize)>,
+        edges: &[Line],
+        visited: &mut [bool],
+        temp: &mut Vec<Line>,
         temp_list: &mut Vec<usize>,
-        closed: &mut Vec<Vec<(usize, usize)>>,
+        closed: &mut Vec<Vec<Line>>,
     ) {
         for i in 0..edges.len() {
             // visited

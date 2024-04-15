@@ -130,9 +130,8 @@ where
                     Bound::Excluded(v) => p < v,
                     Bound::Unbounded => true,
                 };
-                if !self.negative && (b_start && b_end) {
-                    Some(i)
-                } else if self.negative && !(b_start && b_end) {
+                if (!self.negative && (b_start && b_end)) || (self.negative && !(b_start && b_end))
+                {
                     Some(i)
                 } else {
                     None

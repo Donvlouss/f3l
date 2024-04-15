@@ -3,7 +3,7 @@ use std::{
     ops::Index,
 };
 
-use f3l_core::{apply_both, BasicFloat, SimpleSliceMath};
+use f3l_core::{apply_both, BasicFloat, Line, SimpleSliceMath};
 
 use crate::{Convex, ConvexHull3D2D, ConvexHullId, FaceIdType};
 
@@ -70,7 +70,7 @@ where
     /// Return distance from point to plane is larger than 0 or not.
     #[inline]
     fn visible(plane: &[T; 4], target: &[T; 3]) -> bool {
-        Self::distance_to_plane(target, &plane) > T::from(EPS).unwrap()
+        Self::distance_to_plane(target, plane) > T::from(EPS).unwrap()
     }
 
     /// Return points are not equal and not colinear.
@@ -125,8 +125,8 @@ where
 
     /// Return largest distance between extremum.
     #[inline]
-    fn find_first_edge(&self, ids: &[usize]) -> (usize, usize) {
-        let mut farthest_pair: (usize, usize) = (0, 0);
+    fn find_first_edge(&self, ids: &[usize]) -> Line {
+        let mut farthest_pair: Line = (0, 0);
         let mut farthest_value = T::min_value();
         (0..6).for_each(|i| {
             (i + 1..6).for_each(|ii| {
@@ -142,7 +142,7 @@ where
 
     /// Return farthest id to first_edge.
     #[inline]
-    fn find_third_point(&self, edge: &(usize, usize), ids: &[usize]) -> usize {
+    fn find_third_point(&self, edge: &Line, ids: &[usize]) -> usize {
         let mut third_one = 0usize;
         let mut farthest_value = T::min_value();
 
@@ -177,7 +177,7 @@ where
         let mut farthest_one = None;
         let mut farthest_value = T::zero();
         ids.iter().for_each(|&i| {
-            let d = Self::distance_to_plane(&self.data[i].into(), &plane).abs();
+            let d = Self::distance_to_plane(&self.data[i].into(), plane).abs();
             if d <= T::from(EPS).unwrap() {
                 return;
             }
@@ -222,15 +222,11 @@ where
     /// Return ids of faces which point `P` could see (distance from p to plane is larger than 0).
     fn find_visible_faces(faces: &Vec<(FacePlane<T>, Vec<usize>)>, p: &[T; 3]) -> Vec<usize> {
         (0..faces.len())
-            .filter_map(|i| {
+            .filter(|&i| {
                 if faces[i].0.removed {
-                    return None;
+                    return false;
                 }
-                if Self::visible(&faces[i].0.plane, p) {
-                    Some(i)
-                } else {
-                    None
-                }
+                Self::visible(&faces[i].0.plane, p)
             })
             .collect()
     }
@@ -238,10 +234,7 @@ where
     /// Return list of edges.
     ///
     /// Iterate all visible faces, find non-overlap edges.
-    fn find_hole_edge(
-        faces: &Vec<(FacePlane<T>, Vec<usize>)>,
-        selected: &Vec<usize>,
-    ) -> Vec<(usize, usize)> {
+    fn find_hole_edge(faces: &Vec<(FacePlane<T>, Vec<usize>)>, selected: &[usize]) -> Vec<Line> {
         let mut edges_map = HashMap::new();
         (0..faces.len())
             .filter(|i| selected.contains(i))
@@ -285,12 +278,12 @@ where
         let mut new_face = Vec::with_capacity(face_set.len());
         let mut id = None;
         // Select First face which has outlier points and non-removed face.
-        for i in 0..face_set.len() {
+        for (i, face) in face_set.iter().enumerate() {
             // Ignore removed face.
-            if face_set[i].0.removed {
+            if face.0.removed {
                 continue;
             }
-            let (_, outliers) = &face_set[i];
+            let (_, outliers) = &face;
             // Check has outlier.
             if outliers.is_empty() {
                 continue;
@@ -304,12 +297,12 @@ where
             None => return,
         };
         // If outlier is on the plane or is the corner, return.
-        let farthest = match self.find_farthest_to_plane(&&face_set[i].1, &face_set[i].0.plane) {
+        let farthest = match self.find_farthest_to_plane(&face_set[i].1, &face_set[i].0.plane) {
             Some(farthest) => farthest,
             None => return,
         };
         // Find all faces which farthest point could see.
-        let visible = Self::find_visible_faces(&face_set, &self.data[farthest].into());
+        let visible = Self::find_visible_faces(face_set, &self.data[farthest].into());
         // Mark all visible faces to removed, and collect outlier points.
         let mut outliers = vec![];
         {
@@ -320,7 +313,7 @@ where
             });
         }
         // Find the edges of ring.
-        let hole_edges = Self::find_hole_edge(&face_set, &visible);
+        let hole_edges = Self::find_hole_edge(face_set, &visible);
 
         let mut outlier_set = HashSet::with_capacity(outliers.len());
         hole_edges.into_iter().for_each(|(e0, e1)| {
@@ -378,15 +371,15 @@ where
             .map(|face| {
                 let plane = face.plane;
                 let outlier = (0..self.data.len())
-                    .filter_map(|i| {
+                    .filter(|&i| {
                         if points_set.contains(&i) {
-                            return None;
+                            return false;
                         }
                         if Self::visible(&plane, &self.data[i].into()) {
                             points_set.insert(i);
-                            Some(i)
+                            true
                         } else {
-                            None
+                            false
                         }
                     })
                     .collect::<Vec<_>>();
@@ -396,7 +389,7 @@ where
 
         loop {
             self.expend_hull(&mid, &mut hulls);
-            hulls = hulls.into_iter().filter(|h| !h.0.removed).collect();
+            hulls.retain(|h| !h.0.removed);
 
             if hulls.iter().all(|(_, outliers)| outliers.is_empty()) {
                 break;

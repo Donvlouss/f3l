@@ -64,12 +64,12 @@ where
         Self {
             root: None,
             dim: D,
-            data: Some(&data),
+            data: Some(data),
         }
     }
 
     pub fn set_data(&mut self, data: &'a [P]) {
-        self.data = Some(&data);
+        self.data = Some(data);
     }
 
     pub fn build(&mut self) {

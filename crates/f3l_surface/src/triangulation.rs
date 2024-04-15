@@ -1,7 +1,7 @@
 mod delaunay_2d;
 
 pub use delaunay_2d::*;
-use f3l_core::BasicFloat;
+use f3l_core::{BasicFloat, Line};
 
 use crate::FaceIdType;
 
@@ -18,5 +18,5 @@ pub struct SubTriangle<T: BasicFloat> {
 #[derive(Debug, Clone)]
 pub struct Delaunay2DShape {
     pub mesh: Vec<FaceIdType>,
-    pub contours: Vec<Vec<(usize, usize)>>,
+    pub contours: Vec<Vec<Line>>,
 }
