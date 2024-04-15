@@ -1,4 +1,5 @@
 /// Face Types.
+#[derive(Debug, Clone, Copy)]
 pub enum FaceType<T> {
     /// Vertex Id of data.
     Id(usize),
@@ -7,6 +8,7 @@ pub enum FaceType<T> {
 }
 
 /// Generic Face object.
+#[derive(Debug, Clone, Copy)]
 pub struct Face<T> {
     pub point: [FaceType<T>; 3]
 }

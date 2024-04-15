@@ -14,14 +14,19 @@ use super::{BasicFloat, FaceIdType, SubTriangle};
 /// 4. Remove triangle which radius of circumscribed smaller than `alpha`.
 /// 5. Find all contours (non-common edge).
 /// 6. Classify contours to each shapes.
-pub struct Delaunay2D<'a, T: BasicFloat> {
-    pub data: &'a [[T; 2]],
+#[derive(Debug, Clone)]
+pub struct Delaunay2D<'a, T: BasicFloat, P> {
+    pub data: &'a [P],
     pub super_triangle: [[T;2];3],
     pub shapes: Vec<Delaunay2DShape>,
 }
 
-impl<'a, T: BasicFloat> Delaunay2D<'a, T> {
-    pub fn new(data: &'a [[T; 2]]) -> Self {
+impl<'a, T: BasicFloat, P> Delaunay2D<'a, T, P>
+where
+    P: Into<[T; 2]> + Copy + std::ops::Index<usize, Output = T>,
+    [T; 2]: Into<P>,
+{
+    pub fn new(data: &'a [P]) -> Self {
         Self {
             data, 
             super_triangle: [[T::zero(); 2]; 3],
@@ -41,7 +46,7 @@ impl<'a, T: BasicFloat> Delaunay2D<'a, T> {
     pub fn at(&self, id: usize) -> [T; 2] {
         match id >= self.data.len() {
             true => self.super_triangle[id - self.data.len()],
-            false => self.data[id],
+            false => self.data[id].into(),
         }
     }
 

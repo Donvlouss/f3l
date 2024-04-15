@@ -17,6 +17,7 @@ app_kiss3d = [
 
 [dependencies]
 f3l_core = { path = "../f3l_core"}
+f3l_segmentation = { path = "../f3l_segmentation"}
 
 kiss3d = { version = "0.35.0", optional = true }
 nalgebra   = { version = "0.32", features = ["rand", "glam025"], optional = true}
