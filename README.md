@@ -14,6 +14,7 @@ See more for each `README.md` of crates.
 |f3l_filter| 3D and 2D points filter.|
 |f3l_segmentation| 3D and 2D Cluster and Model Optimize.|
 |f3l_features| 3D and 2D data features.|
+|f3l_surface| Compute Hulls and triangulation.|
 
 ## Data of examples
 |file|source|
