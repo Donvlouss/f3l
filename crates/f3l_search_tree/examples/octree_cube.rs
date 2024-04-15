@@ -88,45 +88,59 @@ fn main() {
     let vertices = load_ply("../../data/table_voxel_down.ply");
 
     let mut tree = OcTree::with_data(&vertices, 100, 8);
-    
+
     use std::time::Instant;
     let start = Instant::now();
-    
+
     tree.build();
 
     let end = start.elapsed().as_micros();
     println!("Elapsed: {}", end);
 
-    let mut colors: Vec<Point3::<f32>> = vec![];
+    let mut colors: Vec<Point3<f32>> = vec![];
     let mut points_cubes = vec![];
-    let bdx = tree.nodes.iter().filter_map(|node| {
-        let OcLeaf{ lower, upper, feature, points, .. }
-            = node;
-        match feature {
-            OcFeature::Split(_) => {return None;},
-            OcFeature::Leaf => {
-                if points.is_empty() {
+    let bdx = tree
+        .nodes
+        .iter()
+        .filter_map(|node| {
+            let OcLeaf {
+                lower,
+                upper,
+                feature,
+                points,
+                ..
+            } = node;
+            match feature {
+                OcFeature::Split(_) => {
                     return None;
                 }
-            },
-        };
-        points_cubes.push(points.iter().map(|&i| Point3::new(vertices[i].x, vertices[i].y, vertices[i].z)
-            ).collect::<Vec<Point3<f32>>>());
-        colors.push(random_color().into());
-        let p0 = *lower;
-        let p1 = *upper;
-        Some([
-            Point3::new(p0[0], p0[1], p0[2]),
-            Point3::new(p1[0], p0[1], p0[2]),
-            Point3::new(p0[0], p1[1], p0[2]),
-            Point3::new(p0[0], p0[1], p1[2]),
-
-            Point3::new(p1[0], p1[1], p0[2]),
-            Point3::new(p1[0], p0[1], p1[2]),
-            Point3::new(p0[0], p1[1], p1[2]),
-            Point3::new(p1[0], p1[1], p1[2]),
-        ])
-    }).collect::<Vec<_>>();
+                OcFeature::Leaf => {
+                    if points.is_empty() {
+                        return None;
+                    }
+                }
+            };
+            points_cubes.push(
+                points
+                    .iter()
+                    .map(|&i| Point3::new(vertices[i].x, vertices[i].y, vertices[i].z))
+                    .collect::<Vec<Point3<f32>>>(),
+            );
+            colors.push(random_color().into());
+            let p0 = *lower;
+            let p1 = *upper;
+            Some([
+                Point3::new(p0[0], p0[1], p0[2]),
+                Point3::new(p1[0], p0[1], p0[2]),
+                Point3::new(p0[0], p1[1], p0[2]),
+                Point3::new(p0[0], p0[1], p1[2]),
+                Point3::new(p1[0], p1[1], p0[2]),
+                Point3::new(p1[0], p0[1], p1[2]),
+                Point3::new(p0[0], p1[1], p1[2]),
+                Point3::new(p1[0], p1[1], p1[2]),
+            ])
+        })
+        .collect::<Vec<_>>();
     let pairs = [
         (0_usize, 1_usize),
         (0, 2),
@@ -161,13 +175,8 @@ fn main() {
                 window.draw_point(p, color);
             });
             pairs.iter().for_each(|&(a, b)| {
-                window.draw_line(
-                    &bdx[i][a],
-                    &bdx[i][b],
-                    color
-                );
+                window.draw_line(&bdx[i][a], &bdx[i][b], color);
             });
         });
     }
-
 }

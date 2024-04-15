@@ -110,7 +110,7 @@ where
         } else {
             return Err("Data corrupted.".to_owned());
         };
-        
+
         let (pc, normal, radius) = find_circle(&[p1, p2, p3]);
 
         Ok((pc, normal.normalized(), radius))

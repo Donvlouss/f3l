@@ -1,18 +1,17 @@
-use std::ops::Index;
 use f3l_core::{
     compute_covariance_matrix,
     glam::{Mat3A, Vec3A},
     jacobi_eigen_square_n, BasicFloat, EigenSet, F3lCast, SimpleSliceMath,
 };
+use std::ops::Index;
 
 use crate::{Convex, ConvexHull2D, ConvexHullId};
-
 
 /// This structure is using to process 3D data which is near a plane.
 #[derive(Debug, Clone)]
 pub struct ConvexHull3D2D<'a, T: BasicFloat, P>
 where
-    P: Into<[T; 3]> + Clone + Copy + Send + Sync + Index<usize, Output = T>
+    P: Into<[T; 3]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
 {
     pub data: &'a [P],
     pub hulls: ConvexHullId,
@@ -20,11 +19,12 @@ where
 
 impl<'a, T: BasicFloat, P> Convex<'a, P> for ConvexHull3D2D<'a, T, P>
 where
-    P: Into<[T; 3]> + Clone + Copy + Send + Sync + Index<usize, Output = T>
+    P: Into<[T; 3]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
 {
     fn new(data: &'a [P]) -> Self {
         Self {
-            data, hulls: ConvexHullId::D2(vec![])
+            data,
+            hulls: ConvexHullId::D2(vec![]),
         }
     }
 
@@ -50,7 +50,8 @@ where
 
         let mat = Mat3A::from_cols(major, second, third).inverse();
 
-        let align = self.data
+        let align = self
+            .data
             .iter()
             .map(|&p| {
                 let align_p = mat.mul_vec3a(Vec3A::new(
@@ -61,7 +62,7 @@ where
                 [align_p[0], align_p[1]]
             })
             .collect::<Vec<_>>();
-        
+
         let mut cvh = ConvexHull2D::new(&align);
         cvh.compute();
 

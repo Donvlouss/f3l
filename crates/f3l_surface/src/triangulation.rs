@@ -11,12 +11,12 @@ pub struct SubTriangle<T: BasicFloat> {
     pub tri: FaceIdType,
     pub removed: bool,
     pub center: [T; 2],
-    pub radius: T
+    pub radius: T,
 }
 
 /// Structure represent a shape contains triangle meshes and multiple contours(with holes).
 #[derive(Debug, Clone)]
 pub struct Delaunay2DShape {
     pub mesh: Vec<FaceIdType>,
-    pub contours: Vec<Vec<(usize, usize)>>
+    pub contours: Vec<Vec<(usize, usize)>>,
 }

@@ -1,4 +1,7 @@
-use std::{collections::{HashMap, HashSet}, ops::Index};
+use std::{
+    collections::{HashMap, HashSet},
+    ops::Index,
+};
 
 use f3l_core::{apply_both, BasicFloat, SimpleSliceMath};
 
@@ -11,7 +14,7 @@ const EPS: f32 = 1e-5;
 #[derive(Debug, Clone)]
 pub struct ConvexHull3D<'a, T: BasicFloat, P>
 where
-    P: Into<[T; 3]> + Clone + Copy + Send + Sync + Index<usize, Output = T>
+    P: Into<[T; 3]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
 {
     pub data: &'a [P],
     pub hulls: ConvexHullId,
@@ -26,23 +29,18 @@ struct FacePlane<T: BasicFloat> {
 
 impl<'a, T: BasicFloat, P> ConvexHull3D<'a, T, P>
 where
-    P: 'a +Into<[T; 3]> + Clone + Copy + Send + Sync + Index<usize, Output = T>
+    P: 'a + Into<[T; 3]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
 {
     /// Return distance between points;
     #[inline]
     fn distance(a: P, b: P) -> T {
-        (0..3).fold(T::zero(), |acc, i| {
-            acc + (a[i] - b[i]).powi(2)
-        })
+        (0..3).fold(T::zero(), |acc, i| acc + (a[i] - b[i]).powi(2))
     }
-    
+
     /// Return distance to point to plane.
     #[inline]
     fn distance_to_plane(p: &[T; 3], plane: &[T; 4]) -> T {
-        p[0] * plane[0]
-        + p[1] * plane[1]
-        + p[2] * plane[2]
-        + plane[3]
+        p[0] * plane[0] + p[1] * plane[1] + p[2] * plane[2] + plane[3]
     }
 
     /// Return plane model from three points. `a`x + `b`y + `c`z + `d` = 0;
@@ -52,20 +50,20 @@ where
             points.1[0] - points.0[0],
             points.1[1] - points.0[1],
             points.1[2] - points.0[2],
-        ].normalized();
+        ]
+        .normalized();
         let d1 = [
             points.2[0] - points.0[0],
             points.2[1] - points.0[1],
             points.2[2] - points.0[2],
-        ].normalized();
+        ]
+        .normalized();
         let normal = d0.cross(&d1).normalized();
         [
-            normal[0], normal[1], normal[2],
-            - (
-                normal[0] * points.0[0]
-                + normal[1] * points.0[1]
-                + normal[2] * points.0[2]
-            )
+            normal[0],
+            normal[1],
+            normal[2],
+            -(normal[0] * points.0[0] + normal[1] * points.0[1] + normal[2] * points.0[2]),
         ]
     }
 
@@ -79,14 +77,22 @@ where
     #[inline]
     fn check_face_valid(&self, edges: &[usize; 3]) -> bool {
         // Same vertex check
-        if edges[0] == edges[1]
-        || edges[0] == edges[2]
-        || edges[1] == edges[2] {
-            return  false;
+        if edges[0] == edges[1] || edges[0] == edges[2] || edges[1] == edges[2] {
+            return false;
         }
         // Colinear check
-        let d1 = apply_both(&self.data[edges[1]].into(), &self.data[edges[0]].into(), std::ops::Div::div).normalized();
-        let d2 = apply_both(&self.data[edges[2]].into(), &self.data[edges[0]].into(), std::ops::Div::div).normalized();
+        let d1 = apply_both(
+            &self.data[edges[1]].into(),
+            &self.data[edges[0]].into(),
+            std::ops::Div::div,
+        )
+        .normalized();
+        let d2 = apply_both(
+            &self.data[edges[2]].into(),
+            &self.data[edges[0]].into(),
+            std::ops::Div::div,
+        )
+        .normalized();
         if apply_both(&d2, &d1, std::ops::Div::div).len() <= T::from(EPS).unwrap() {
             return false;
         }
@@ -100,12 +106,7 @@ where
         let data = self.data;
         let mut extremum = [0usize; 6];
         let mut extremum_value = [
-            data[0][0],
-            data[0][1],
-            data[0][2],
-            data[0][0],
-            data[0][1],
-            data[0][2],
+            data[0][0], data[0][1], data[0][2], data[0][0], data[0][1], data[0][2],
         ];
         (0..data.len()).for_each(|i| {
             (0..3).for_each(|ii| {
@@ -113,22 +114,22 @@ where
                     extremum_value[ii] = data[i][ii];
                     extremum[ii] = i;
                 }
-                if data[i][ii] > extremum_value[ii+3] {
-                    extremum_value[ii+3] = data[i][ii];
-                    extremum[ii+3] = i;
+                if data[i][ii] > extremum_value[ii + 3] {
+                    extremum_value[ii + 3] = data[i][ii];
+                    extremum[ii + 3] = i;
                 }
             });
         });
         extremum
     }
-    
+
     /// Return largest distance between extremum.
     #[inline]
     fn find_first_edge(&self, ids: &[usize]) -> (usize, usize) {
         let mut farthest_pair: (usize, usize) = (0, 0);
         let mut farthest_value = T::min_value();
         (0..6).for_each(|i| {
-            (i+1..6).for_each(|ii| {
+            (i + 1..6).for_each(|ii| {
                 let d = Self::distance(self.data[ids[i]], self.data[ids[ii]]);
                 if d > farthest_value {
                     farthest_value = d;
@@ -151,24 +152,21 @@ where
                 self.data[edge.1][0] - self.data[edge.0][0],
                 self.data[edge.1][1] - self.data[edge.0][1],
                 self.data[edge.1][2] - self.data[edge.0][2],
-            ].normalized()
+            ]
+            .normalized(),
         );
 
         (0..ids.len())
             .filter(|&i| ids[i] != edge.0 && ids[i] != edge.1)
             .for_each(|i| {
-            let p: [T; 3] = self.data[ids[i]].into();
-            let p_dir = [
-                p[0] - line.0[0],
-                p[1] - line.0[1],
-                p[2] - line.0[2],
-            ];
-            let d = p_dir.cross(&line.1).len();
-            if d > farthest_value {
-                farthest_value = d;
-                third_one = ids[i];
-            }
-        });
+                let p: [T; 3] = self.data[ids[i]].into();
+                let p_dir = [p[0] - line.0[0], p[1] - line.0[1], p[2] - line.0[2]];
+                let d = p_dir.cross(&line.1).len();
+                if d > farthest_value {
+                    farthest_value = d;
+                    third_one = ids[i];
+                }
+            });
 
         third_one
     }
@@ -192,7 +190,7 @@ where
     }
 
     /// Return a face oriented to outside.
-    /// 
+    ///
     /// * None: three points are equal or colinear.
     #[inline]
     fn generate_face(&self, points: &[usize; 3], target: &[T; 3]) -> Option<FacePlane<T>> {
@@ -200,59 +198,82 @@ where
             return None;
         }
         let plane = Self::generate_plane(&(
-            self.data[points[0]], self.data[points[1]], self.data[points[2]]
+            self.data[points[0]],
+            self.data[points[1]],
+            self.data[points[2]],
         ));
         if !Self::visible(&plane, target) {
-            Some(FacePlane{
-                face: FaceIdType {point: *points},
+            Some(FacePlane {
+                face: FaceIdType { point: *points },
                 plane,
                 removed: false,
             })
         } else {
             Some(FacePlane {
-                face: FaceIdType {point: [points[0], points[2], points[1]]},
+                face: FaceIdType {
+                    point: [points[0], points[2], points[1]],
+                },
                 plane: [-plane[0], -plane[1], -plane[2], -plane[3]],
                 removed: false,
-            } )
+            })
         }
-
     }
 
     /// Return ids of faces which point `P` could see (distance from p to plane is larger than 0).
     fn find_visible_faces(faces: &Vec<(FacePlane<T>, Vec<usize>)>, p: &[T; 3]) -> Vec<usize> {
-        (0..faces.len()).filter_map(|i| {
-            if faces[i].0.removed {
-                return None;
-            }
-            if Self::visible(&faces[i].0.plane, p) {
-                Some(i)
-            } else {
-                None
-            }
-        }).collect()
+        (0..faces.len())
+            .filter_map(|i| {
+                if faces[i].0.removed {
+                    return None;
+                }
+                if Self::visible(&faces[i].0.plane, p) {
+                    Some(i)
+                } else {
+                    None
+                }
+            })
+            .collect()
     }
 
     /// Return list of edges.
-    /// 
+    ///
     /// Iterate all visible faces, find non-overlap edges.
-    fn find_hole_edge(faces: &Vec<(FacePlane<T>, Vec<usize>)>, selected: &Vec<usize>) -> Vec<(usize, usize)> {
+    fn find_hole_edge(
+        faces: &Vec<(FacePlane<T>, Vec<usize>)>,
+        selected: &Vec<usize>,
+    ) -> Vec<(usize, usize)> {
         let mut edges_map = HashMap::new();
-        (0..faces.len()).filter(|i| selected.contains(i))
+        (0..faces.len())
+            .filter(|i| selected.contains(i))
             .for_each(|i| {
-                let (FacePlane{face: FaceIdType{point: [p0, p1, p2]}, ..}, _) = faces[i];
-                [(p0, p1), (p0, p2), (p1, p2)].into_iter().for_each(|(a, b)| {
-                    let edge = if a < b {(a, b)} else {(b, a)};
-                    let count = edges_map.entry(edge).or_insert(0_usize);
-                    *count += 1;
-                });
+                let (
+                    FacePlane {
+                        face:
+                            FaceIdType {
+                                point: [p0, p1, p2],
+                            },
+                        ..
+                    },
+                    _,
+                ) = faces[i];
+                [(p0, p1), (p0, p2), (p1, p2)]
+                    .into_iter()
+                    .for_each(|(a, b)| {
+                        let edge = if a < b { (a, b) } else { (b, a) };
+                        let count = edges_map.entry(edge).or_insert(0_usize);
+                        *count += 1;
+                    });
             });
 
-        edges_map.into_iter().filter(|&(_, v)| v<=1)
-            .map(|(k, _)| k).collect()
+        edges_map
+            .into_iter()
+            .filter(|&(_, v)| v <= 1)
+            .map(|(k, _)| k)
+            .collect()
     }
 
     /// Expend first hull which has outlier.
-    /// 
+    ///
     /// 1. Find the first non-removed face and outliers not empty one. If not match, return;
     /// 2. Find the farthest point (`P`) of outliers to this face. If not match return.
     /// 3. Find faces which `P` could see.
@@ -266,7 +287,9 @@ where
         // Select First face which has outlier points and non-removed face.
         for i in 0..face_set.len() {
             // Ignore removed face.
-            if face_set[i].0.removed { continue; }
+            if face_set[i].0.removed {
+                continue;
+            }
             let (_, outliers) = &face_set[i];
             // Check has outlier.
             if outliers.is_empty() {
@@ -307,17 +330,20 @@ where
                 None => return,
             };
             // Classify outlier points to sub faces.
-            let sub_outlier = outliers.iter().filter_map(|&o| {
-                if outlier_set.contains(&o) {
-                    return None;
-                }
-                if Self::visible(&new_triangle.plane, &self.data[o].into()) {
-                    outlier_set.insert(o);
-                    Some(o)
-                } else {
-                    None
-                }
-            }).collect::<Vec<_>>();
+            let sub_outlier = outliers
+                .iter()
+                .filter_map(|&o| {
+                    if outlier_set.contains(&o) {
+                        return None;
+                    }
+                    if Self::visible(&new_triangle.plane, &self.data[o].into()) {
+                        outlier_set.insert(o);
+                        Some(o)
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
             new_face.push((new_triangle, sub_outlier));
         });
         // Add generated faces last, to avoid re-borrow.
@@ -329,16 +355,16 @@ where
     /// 3. Loop: [`ConvexHull3D::expend_hull`], and remove faces which mark as removed. If all faces have no outside, finish.
     fn compute_3d(&mut self, tetrahedron: [usize; 4]) {
         let [edge_0, edge_1, third, fourth] = tetrahedron;
-        
-        let mid = [edge_0, edge_1, third, fourth].into_iter().fold(
-            [T::zero(); 3], |acc, i| {
+
+        let mid = [edge_0, edge_1, third, fourth]
+            .into_iter()
+            .fold([T::zero(); 3], |acc, i| {
                 [
                     acc[0] + self.data[i][0] * T::from(0.25f32).unwrap(),
                     acc[1] + self.data[i][1] * T::from(0.25f32).unwrap(),
                     acc[2] + self.data[i][2] * T::from(0.25f32).unwrap(),
                 ]
-            }
-        );
+            });
 
         let face1 = self.generate_face(&[edge_0, edge_1, third], &mid).unwrap();
         let face2 = self.generate_face(&[edge_0, edge_1, fourth], &mid).unwrap();
@@ -347,21 +373,26 @@ where
 
         let mut points_set = HashSet::with_capacity(self.data.len());
 
-        let mut hulls = [face1, face2, face3, face4].into_iter().map(|face| {
-            let plane = face.plane;
-            let outlier = (0..self.data.len()).filter_map(|i| {
-                if points_set.contains(&i) {
-                    return None;
-                }
-                if Self::visible(&plane, &self.data[i].into()) {
-                    points_set.insert(i);
-                    Some(i)
-                } else {
-                    None
-                }
-            }).collect::<Vec<_>>();
-            (face, outlier)
-        }).collect::<Vec<_>>();
+        let mut hulls = [face1, face2, face3, face4]
+            .into_iter()
+            .map(|face| {
+                let plane = face.plane;
+                let outlier = (0..self.data.len())
+                    .filter_map(|i| {
+                        if points_set.contains(&i) {
+                            return None;
+                        }
+                        if Self::visible(&plane, &self.data[i].into()) {
+                            points_set.insert(i);
+                            Some(i)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>();
+                (face, outlier)
+            })
+            .collect::<Vec<_>>();
 
         loop {
             self.expend_hull(&mid, &mut hulls);
@@ -372,13 +403,12 @@ where
             }
         }
 
-        self.hulls = ConvexHullId::D3(hulls.into_iter().filter_map(|(h, _)| {
-            if !h.removed {
-                Some(h.face)
-            } else {
-                None
-            }
-        }).collect());
+        self.hulls = ConvexHullId::D3(
+            hulls
+                .into_iter()
+                .filter_map(|(h, _)| if !h.removed { Some(h.face) } else { None })
+                .collect(),
+        );
     }
 
     /// Compute 2D Convex using [`ConvexHull3D2D`]
@@ -391,11 +421,12 @@ where
 
 impl<'a, T: BasicFloat, P> Convex<'a, P> for ConvexHull3D<'a, T, P>
 where
-    P: Into<[T; 3]> + Clone + Copy + Send + Sync + Index<usize, Output = T>
+    P: Into<[T; 3]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
 {
     fn new(data: &'a [P]) -> Self {
         Self {
-            data, hulls: ConvexHullId::D3(vec![])
+            data,
+            hulls: ConvexHullId::D3(vec![]),
         }
     }
 
@@ -417,11 +448,9 @@ where
         // Find the farthest one to line model.
         let third = self.find_third_point(&edge, &extremum);
         // Find Tetrahedron the fourth point.
-        let plane = Self::generate_plane(&(
-            data[edge.0], data[edge.1], data[third]
-        ));
+        let plane = Self::generate_plane(&(data[edge.0], data[edge.1], data[third]));
         match self.find_farthest_to_plane(&(0..self.data.len()).collect::<Vec<_>>(), &plane) {
-            Some(fourth) =>  self.compute_3d([edge.0, edge.1, third, fourth]),
+            Some(fourth) => self.compute_3d([edge.0, edge.1, third, fourth]),
             // Could not happen, cause check near plane before.
             None => self.compute_2d(),
         };

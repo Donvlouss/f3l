@@ -38,37 +38,46 @@ fn load_ply(path: &str) -> Vec<Vec3> {
         .collect()
 }
 
-
 fn bench_tree_build(c: &mut Criterion) {
     let data = load_ply("data/table_voxel_down.ply");
     let mut group = c.benchmark_group("Tree-Build");
-    group.bench_function("KD-Tree", |b| b.iter(|| {
-        let mut tree = KdTree::with_data(&data);
-        tree.build();
-    }));
-    group.bench_function("Oc-Tree_100_3", |b| b.iter(|| {
-        let mut tree = OcTree::with_data(&data, 100, 3);
-        tree.build();
-    }));
-    group.bench_function("Oc-Tree_1000_3", |b| b.iter(|| {
-        let mut tree = OcTree::with_data(&data, 1000, 3);
-        tree.build();
-    }));
-    group.bench_function("Oc-Tree_100_5", |b| b.iter(|| {
-        let mut tree = OcTree::with_data(&data, 100, 5);
-        tree.build();
-    }));
-    group.bench_function("Oc-Tree_100_8", |b| b.iter(|| {
-        let mut tree = OcTree::with_data(&data, 100, 8);
-        tree.build();
-    }));
+    group.bench_function("KD-Tree", |b| {
+        b.iter(|| {
+            let mut tree = KdTree::with_data(&data);
+            tree.build();
+        })
+    });
+    group.bench_function("Oc-Tree_100_3", |b| {
+        b.iter(|| {
+            let mut tree = OcTree::with_data(&data, 100, 3);
+            tree.build();
+        })
+    });
+    group.bench_function("Oc-Tree_1000_3", |b| {
+        b.iter(|| {
+            let mut tree = OcTree::with_data(&data, 1000, 3);
+            tree.build();
+        })
+    });
+    group.bench_function("Oc-Tree_100_5", |b| {
+        b.iter(|| {
+            let mut tree = OcTree::with_data(&data, 100, 5);
+            tree.build();
+        })
+    });
+    group.bench_function("Oc-Tree_100_8", |b| {
+        b.iter(|| {
+            let mut tree = OcTree::with_data(&data, 100, 8);
+            tree.build();
+        })
+    });
 }
 
 fn bench_tree_knn_1(c: &mut Criterion) {
     let data = load_ply("data/table_scene_lms400.ply");
     let mut group = c.benchmark_group("Tree-Search-Nearest_1");
 
-    let target = &data[data.len()/2];
+    let target = &data[data.len() / 2];
 
     group.bench_function("KD", |b| {
         let mut tree = KdTree::with_data(&data);
@@ -118,7 +127,7 @@ fn bench_tree_knn_10(c: &mut Criterion) {
     let data = load_ply("data/table_scene_lms400.ply");
     let mut group = c.benchmark_group("Tree-Search-Nearest_10");
 
-    let target = &data[data.len()/2];
+    let target = &data[data.len() / 2];
 
     group.bench_function("KD", |b| {
         let mut tree = KdTree::with_data(&data);
@@ -168,7 +177,7 @@ fn bench_tree_radius_search_0_03(c: &mut Criterion) {
     let data = load_ply("data/table_scene_lms400.ply");
     let mut group = c.benchmark_group("Tree-Search-Radius_0.03");
 
-    let target = &data[data.len()/2];
+    let target = &data[data.len() / 2];
 
     group.bench_function("KD", |b| {
         let mut tree = KdTree::with_data(&data);
@@ -211,7 +220,7 @@ fn bench_tree_radius_search_0_08(c: &mut Criterion) {
     let data = load_ply("data/table_scene_lms400.ply");
     let mut group = c.benchmark_group("Tree-Search-Radius_0.08");
 
-    let target = &data[data.len()/2];
+    let target = &data[data.len() / 2];
 
     group.bench_function("KD", |b| {
         let mut tree = KdTree::with_data(&data);

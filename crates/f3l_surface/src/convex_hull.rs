@@ -11,9 +11,9 @@ pub use convex_hull_3d_2d::*;
 use crate::{FaceIdType, FaceInstanceType};
 
 /// Generic Convex Hull wrapper of [`ConvexHull2D`] and [`ConvexHull3D`] points data.
-/// 
+///
 /// [`ConvexHull3D2D`] If 3d cloud is near a plane, would align 3d to 2d, then compute 2d.
-/// 
+///
 /// # Panic
 /// * 2d: data.len() < 3
 /// * 3d: data.len() < 4
@@ -33,10 +33,10 @@ use crate::{FaceIdType, FaceInstanceType};
 ///         None
 ///     }
 /// }).collect::<Vec<_>>();
-/// 
+///
 /// let mut cvh = ConvexHull::new(&points);
 /// cvh.compute();
-/// 
+///
 /// let hulls = if let ConvexHullId::D2(hulls) = cvh.hulls() {
 ///     hulls
 /// } else {
@@ -58,29 +58,28 @@ use crate::{FaceIdType, FaceInstanceType};
 pub struct ConvexHull<'a, T: f3l_core::BasicFloat, P, const D: usize, CVH>
 where
     P: Into<[T; D]> + Clone + Copy + Send + Sync + std::ops::Index<usize, Output = T>,
-    CVH: Convex<'a, P>
+    CVH: Convex<'a, P>,
 {
     cvh: CVH,
-    _marker: PhantomData<(T, &'a P)>
+    _marker: PhantomData<(T, &'a P)>,
 }
 
 /// Represent Convex Hull result of Ids.
 #[derive(Debug, Clone)]
-pub enum ConvexHullId
-{
+pub enum ConvexHullId {
     D2(Vec<usize>),
     D3(Vec<FaceIdType>),
 }
 
 /// Represent Convex Hull result of data.
 #[derive(Debug, Clone)]
-pub enum ConvexHullInstance<P: Copy>
-{
+pub enum ConvexHullInstance<P: Copy> {
     D2(Vec<P>),
     D3(Vec<FaceInstanceType<P>>),
 }
 
-impl<'a, T: f3l_core::BasicFloat, P> Convex<'a, P> for ConvexHull<'a, T, P, 2, ConvexHull2D<'a, T, P>>
+impl<'a, T: f3l_core::BasicFloat, P> Convex<'a, P>
+    for ConvexHull<'a, T, P, 2, ConvexHull2D<'a, T, P>>
 where
     P: Into<[T; 2]> + Clone + Copy + Send + Sync + std::ops::Index<usize, Output = T>,
 {
@@ -88,7 +87,7 @@ where
     fn new(data: &'a [P]) -> Self {
         Self {
             cvh: ConvexHull2D::new(data),
-            _marker: PhantomData
+            _marker: PhantomData,
         }
     }
 
@@ -106,13 +105,12 @@ where
     }
 
     pub fn hulls_instance(&self) -> Vec<P> {
-        self.cvh.hulls.iter().map(|&i| {
-            self.cvh.data[i]
-        }).collect()
+        self.cvh.hulls.iter().map(|&i| self.cvh.data[i]).collect()
     }
 }
 
-impl<'a, T: f3l_core::BasicFloat, P> Convex<'a, P> for ConvexHull<'a, T, P, 3, ConvexHull3D<'a, T, P>>
+impl<'a, T: f3l_core::BasicFloat, P> Convex<'a, P>
+    for ConvexHull<'a, T, P, 3, ConvexHull3D<'a, T, P>>
 where
     P: Into<[T; 3]> + Clone + Copy + Send + Sync + std::ops::Index<usize, Output = T>,
 {
@@ -120,7 +118,7 @@ where
     fn new(data: &'a [P]) -> Self {
         Self {
             cvh: ConvexHull3D::new(data),
-            _marker: PhantomData
+            _marker: PhantomData,
         }
     }
 
@@ -146,22 +144,20 @@ where
     pub fn hulls_instance(&self) -> ConvexHullInstance<P> {
         match self.cvh.hulls.clone() {
             ConvexHullId::D2(edges) => {
-                ConvexHullInstance::D2(
-                    edges.iter().map(|&i| self.cvh.data[i]).collect()
-                )
-            },
-            ConvexHullId::D3(faces) => {
-                ConvexHullInstance::D3(
-                    faces.iter().map(|&tri| 
-                        FaceInstanceType{ point: [
-                                self.cvh.data[tri.point[0]],
-                                self.cvh.data[tri.point[1]],
-                                self.cvh.data[tri.point[2]],
-                            ]
-                        }
-                    ).collect()
-                )
-            },
+                ConvexHullInstance::D2(edges.iter().map(|&i| self.cvh.data[i]).collect())
+            }
+            ConvexHullId::D3(faces) => ConvexHullInstance::D3(
+                faces
+                    .iter()
+                    .map(|&tri| FaceInstanceType {
+                        point: [
+                            self.cvh.data[tri.point[0]],
+                            self.cvh.data[tri.point[1]],
+                            self.cvh.data[tri.point[2]],
+                        ],
+                    })
+                    .collect(),
+            ),
         }
     }
 }

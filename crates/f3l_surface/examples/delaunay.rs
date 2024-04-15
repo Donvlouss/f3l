@@ -1,9 +1,9 @@
 #[cfg(feature = "app_kiss3d")]
 use kiss3d::light::Light;
 #[cfg(feature = "app_kiss3d")]
-use kiss3d::window::Window;
-#[cfg(feature = "app_kiss3d")]
 use kiss3d::nalgebra::Point3;
+#[cfg(feature = "app_kiss3d")]
+use kiss3d::window::Window;
 
 #[cfg(not(feature = "app_kiss3d"))]
 fn main() {
@@ -41,20 +41,21 @@ fn load_img(path: &str) -> Vec<[f32; 2]> {
     use image::GenericImageView;
     let img = image::open(path).unwrap();
     let dimension = img.dimensions();
-    img.pixels().into_iter().enumerate().filter_map(|(i, (x, y, rgb))| {
-        if i % 10  != 0 {
-            return None;
-        }
-        let a = rgb.0;
-        if a.iter().all(|&c| c != 0) {
-            Some([
-                x as f32 / dimension.0 as f32,
-                y as f32 / dimension.1 as f32,
-            ])
-        } else {
-            None
-        }
-    }).collect::<Vec<_>>()
+    img.pixels()
+        .into_iter()
+        .enumerate()
+        .filter_map(|(i, (x, y, rgb))| {
+            if i % 10 != 0 {
+                return None;
+            }
+            let a = rgb.0;
+            if a.iter().all(|&c| c != 0) {
+                Some([x as f32 / dimension.0 as f32, y as f32 / dimension.1 as f32])
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>()
 }
 
 #[cfg(feature = "app_kiss3d")]
@@ -79,9 +80,10 @@ fn main() {
 
     solver.compute(0.005);
 
-    let view_points = points.iter().map(|&p| {
-        Point3::new(p[0], p[1], 0.)
-    }).collect::<Vec<_>>();
+    let view_points = points
+        .iter()
+        .map(|&p| Point3::new(p[0], p[1], 0.))
+        .collect::<Vec<_>>();
 
     let o = Point3::<f32>::origin();
     let x = Point3::<f32>::new(1., 0., 0.);
@@ -94,24 +96,39 @@ fn main() {
 
     let shapes = solver.shapes;
 
-    let shapes = shapes.into_iter().map(|shape| {
-        let Delaunay2DShape { mesh, contours } = shape;
-        let c: Point3<f32> = random_color().into();
+    let shapes = shapes
+        .into_iter()
+        .map(|shape| {
+            let Delaunay2DShape { mesh, contours } = shape;
+            let c: Point3<f32> = random_color().into();
 
-        let mesh = mesh.into_iter().flat_map(|FaceIdType{point}| {
-            [(0, 1), (0, 2), (1, 2)].into_iter().map(|(a, b)| (view_points[point[a]], view_points[point[b]])).collect::<Vec<_>>()
-        }).collect::<Vec<_>>();
-        let contours = contours.into_iter().flat_map(|contour| {
-            contour.into_iter().map(|(a, b)| (view_points[a], view_points[b])).collect::<Vec<_>>()
-        }).collect::<Vec<_>>();
-        (c, mesh, contours)
-    }).collect::<Vec<_>>();
+            let mesh = mesh
+                .into_iter()
+                .flat_map(|FaceIdType { point }| {
+                    [(0, 1), (0, 2), (1, 2)]
+                        .into_iter()
+                        .map(|(a, b)| (view_points[point[a]], view_points[point[b]]))
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>();
+            let contours = contours
+                .into_iter()
+                .flat_map(|contour| {
+                    contour
+                        .into_iter()
+                        .map(|(a, b)| (view_points[a], view_points[b]))
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>();
+            (c, mesh, contours)
+        })
+        .collect::<Vec<_>>();
 
     while window.render() {
         window.draw_line(&o, &x, &xc);
         window.draw_line(&o, &y, &yc);
         window.draw_line(&o, &z, &zc);
-    
+
         shapes.iter().for_each(|(color, mesh, contours)| {
             mesh.iter().for_each(|(a, b)| {
                 window.draw_line(a, b, color);
@@ -121,5 +138,4 @@ fn main() {
             });
         });
     }
-
 }

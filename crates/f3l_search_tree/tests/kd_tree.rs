@@ -64,13 +64,13 @@ mod kd_tree {
 
         impl Index<usize> for MyStruct {
             type Output = f32;
-        
+
             fn index(&self, index: usize) -> &Self::Output {
                 match index {
                     0 => &self.x,
                     1 => &self.y,
                     2 => &self.z,
-                    _ => panic!("Out of Range")
+                    _ => panic!("Out of Range"),
                 }
             }
         }
@@ -184,12 +184,12 @@ mod kd_tree {
             #[test]
             fn query_nearest_knn_glam_2d() {
                 let data = (0..10)
-                .flat_map(|y| {
-                    (0..10)
-                        .map(|x| Vec2::new(x as f32, y as f32))
-                        .collect::<Vec<_>>()
-                })
-                .collect::<Vec<_>>();
+                    .flat_map(|y| {
+                        (0..10)
+                            .map(|x| Vec2::new(x as f32, y as f32))
+                            .collect::<Vec<_>>()
+                    })
+                    .collect::<Vec<_>>();
                 let mut tree = KdTree::with_data(&data);
                 tree.build();
                 let target = Vec2::new(5.1, 5.1);
@@ -208,12 +208,12 @@ mod kd_tree {
             #[test]
             fn query_farthest_kfn_glam_2d() {
                 let data = (0..10)
-                .flat_map(|y| {
-                    (0..10)
-                        .map(|x| Vec2::new(x as f32, y as f32))
-                        .collect::<Vec<_>>()
-                })
-                .collect::<Vec<_>>();
+                    .flat_map(|y| {
+                        (0..10)
+                            .map(|x| Vec2::new(x as f32, y as f32))
+                            .collect::<Vec<_>>()
+                    })
+                    .collect::<Vec<_>>();
                 let mut tree = KdTree::with_data(&data);
                 tree.build();
                 let target = Vec2::new(4.4, 4.4);
@@ -236,16 +236,16 @@ mod kd_tree {
             #[test]
             fn query_nearest_knn_nalgebra_3d() {
                 let data = (0..10)
-                .flat_map(|x| {
-                    (0..10)
-                        .flat_map(|y| {
-                            (0..10)
-                                .map(|z| Vec3::new(x as f32, y as f32, z as f32))
-                                .collect::<Vec<_>>()
-                        })
-                        .collect::<Vec<_>>()
-                })
-                .collect::<Vec<_>>();
+                    .flat_map(|x| {
+                        (0..10)
+                            .flat_map(|y| {
+                                (0..10)
+                                    .map(|z| Vec3::new(x as f32, y as f32, z as f32))
+                                    .collect::<Vec<_>>()
+                            })
+                            .collect::<Vec<_>>()
+                    })
+                    .collect::<Vec<_>>();
                 let mut tree = KdTree::with_data(&data);
                 tree.build();
 

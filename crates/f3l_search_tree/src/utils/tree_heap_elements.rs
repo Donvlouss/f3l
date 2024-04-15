@@ -1,6 +1,5 @@
 use f3l_core::BasicFloat;
 
-
 /// Represent a Min or Max heap for nearest or farthest neighbors search
 #[derive(Eq, Ord, PartialEq, PartialOrd)]
 pub enum SearchQueue<ELEMENT: Ord + PartialOrd + Eq + PartialEq> {

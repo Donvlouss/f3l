@@ -4,13 +4,13 @@ pub enum FaceType<T> {
     /// Vertex Id of data.
     Id(usize),
     /// Vertex Entry of data.
-    Entry(T)
+    Entry(T),
 }
 
 /// Generic Face object.
 #[derive(Debug, Clone, Copy)]
 pub struct Face<T> {
-    pub point: [FaceType<T>; 3]
+    pub point: [FaceType<T>; 3],
 }
 
 /// Face Instance object.
@@ -22,7 +22,7 @@ pub struct FaceInstanceType<P: Copy> {
 /// Face Id object.
 #[derive(Debug, Clone, Copy)]
 pub struct FaceIdType {
-    pub point: [usize; 3]
+    pub point: [usize; 3],
 }
 
 impl<T> From<FaceIdType> for Face<T> {
@@ -32,7 +32,7 @@ impl<T> From<FaceIdType> for Face<T> {
                 FaceType::Id(value.point[0]),
                 FaceType::Id(value.point[1]),
                 FaceType::Id(value.point[2]),
-            ]
+            ],
         }
     }
 }
@@ -44,7 +44,7 @@ impl<P: Copy> From<FaceInstanceType<P>> for Face<P> {
                 FaceType::Entry(value.point[0]),
                 FaceType::Entry(value.point[1]),
                 FaceType::Entry(value.point[2]),
-            ]
+            ],
         }
     }
 }

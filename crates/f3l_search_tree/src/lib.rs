@@ -1,9 +1,9 @@
 mod kdtree;
+mod octree;
 mod tree;
 mod utils;
-mod octree;
 
 pub use kdtree::*;
+pub use octree::*;
 pub use tree::*;
 pub use utils::*;
-pub use octree::*;

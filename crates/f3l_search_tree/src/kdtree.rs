@@ -3,10 +3,12 @@ mod kd_leaf;
 pub use kd_features::KdFeature;
 pub use kd_leaf::KdLeaf;
 
-use crate::{SearchBy, SearchQueue, TreeFarthestSearch, TreeHeapElement, TreeKnnResult, TreeRadiusResult, TreeResult, TreeSearch};
+use crate::{
+    SearchBy, SearchQueue, TreeFarthestSearch, TreeHeapElement, TreeKnnResult, TreeRadiusResult,
+    TreeResult, TreeSearch,
+};
 use f3l_core::BasicFloat;
 use std::{cmp::Reverse, collections::BinaryHeap, ops::Index};
-
 
 /// KD-Tree Implement
 ///
@@ -38,7 +40,7 @@ use std::{cmp::Reverse, collections::BinaryHeap, ops::Index};
 #[derive(Debug, Clone, Default)]
 pub struct KdTree<'a, T: BasicFloat, const D: usize, P>
 where
-    P: Into<[T; D]> + Index<usize, Output = T> + Clone + Copy
+    P: Into<[T; D]> + Index<usize, Output = T> + Clone + Copy,
 {
     pub root: Option<Box<KdLeaf>>,
     pub dim: usize,
@@ -48,7 +50,7 @@ where
 impl<'a, T: BasicFloat, const D: usize, P> KdTree<'a, T, D, P>
 where
     P: Into<[T; D]> + Index<usize, Output = T> + Clone + Copy + Send + Sync,
-    [T; D]: Into<P>
+    [T; D]: Into<P>,
 {
     pub fn new() -> Self {
         Self {
@@ -62,7 +64,7 @@ where
         Self {
             root: None,
             dim: D,
-            data: Some(&data)
+            data: Some(&data),
         }
     }
 
@@ -189,18 +191,32 @@ where
     }
 
     pub fn search<R: TreeResult>(&self, data: P, by: SearchBy, result: &mut R) {
-        let mut search_queue = BinaryHeap::with_capacity(std::cmp::max(10, (self.data.unwrap().len() as f32).sqrt() as usize));
+        let mut search_queue = BinaryHeap::with_capacity(std::cmp::max(
+            10,
+            (self.data.unwrap().len() as f32).sqrt() as usize,
+        ));
 
         if self.root.is_none() {
             return;
         }
         if let Some(root) = &self.root {
-            self.search_(result, root, &data, by, if result.is_farthest() {f32::MAX} else {0.0}, &mut search_queue);
+            self.search_(
+                result,
+                root,
+                &data,
+                by,
+                if result.is_farthest() { f32::MAX } else { 0.0 },
+                &mut search_queue,
+            );
 
             while let Some(node) = search_queue.pop() {
                 match node {
-                    SearchQueue::MaxHeap(node) => self.search_(result, node.raw, &data, by, node.order, &mut search_queue),
-                    SearchQueue::MinHeap(Reverse(node)) => self.search_(result, node.raw, &data, by, node.order, &mut search_queue),
+                    SearchQueue::MaxHeap(node) => {
+                        self.search_(result, node.raw, &data, by, node.order, &mut search_queue)
+                    }
+                    SearchQueue::MinHeap(Reverse(node)) => {
+                        self.search_(result, node.raw, &data, by, node.order, &mut search_queue)
+                    }
                 };
             }
         };
@@ -270,7 +286,7 @@ where
                     raw: far,
                     order: min_dist + (d * d).to_f32().unwrap(),
                 };
-                queue.push( match result.is_farthest() {
+                queue.push(match result.is_farthest() {
                     true => SearchQueue::MaxHeap(node),
                     false => SearchQueue::MinHeap(Reverse(node)),
                 });

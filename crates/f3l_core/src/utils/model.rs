@@ -1,9 +1,9 @@
-use std::ops::Index;
 use crate::{apply_both, BasicFloat, SimpleSliceMath};
+use std::ops::Index;
 
 pub fn find_circle<T: BasicFloat, const D: usize, P>(points: &[P; 3]) -> ([T; 3], [T; 3], T)
 where
-    P: Into<[T; D]> + Index<usize, Output=T>,
+    P: Into<[T; D]> + Index<usize, Output = T>,
 {
     assert!(D >= 2 && D <= 4);
     let mut mat = [[T::zero(); 3]; 3];
@@ -12,14 +12,14 @@ where
         3 => 3,
         4 => 3,
         // This could not happened.
-        _ => panic!("Out of Range.")
+        _ => panic!("Out of Range."),
     };
     (0..n).for_each(|i| {
         (0..n).for_each(|ii| {
             mat[i][ii] = points[i][ii];
         });
     });
-    
+
     let v12 = apply_both(&mat[0], &mat[1], std::ops::Sub::sub);
     let v21 = apply_both(&mat[1], &mat[0], std::ops::Sub::sub);
     let v13 = apply_both(&mat[0], &mat[2], std::ops::Sub::sub);

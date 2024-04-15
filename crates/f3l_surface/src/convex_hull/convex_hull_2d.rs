@@ -1,5 +1,5 @@
-use std::ops::Index;
 use f3l_core::BasicFloat;
+use std::ops::Index;
 
 use crate::Convex;
 
@@ -10,15 +10,15 @@ const EPS: f32 = 1e-5;
 #[derive(Debug, Clone)]
 pub struct ConvexHull2D<'a, T: BasicFloat, P>
 where
-    P: Into<[T; 2]> + Clone + Copy + Send + Sync + Index<usize, Output = T>
+    P: Into<[T; 2]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
 {
     pub data: &'a [P],
     pub hulls: Vec<usize>,
 }
 
-impl <'a, T: BasicFloat, P> ConvexHull2D<'a, T, P>
+impl<'a, T: BasicFloat, P> ConvexHull2D<'a, T, P>
 where
-    P: Into<[T; 2]> + Clone + Copy + Send + Sync + Index<usize, Output = T>
+    P: Into<[T; 2]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
 {
     /// Return line model as `[a, b, c]` `a`x + `b`y + `c` = 0.
     #[inline]
@@ -28,7 +28,7 @@ where
         }
         if (id.0[1] - id.1[1]).abs() <= T::from(EPS).unwrap() {
             return [T::zero(), T::one(), -id.0[1]];
-        }   
+        }
 
         let m = (id.1[1] - id.0[1]) / (id.1[0] - id.0[0]);
         [m, -T::one(), id.0[1] - id.0[0] * m]
@@ -42,36 +42,39 @@ where
 
     /// Split points to outside or inside by line and signed.
     fn split_data(&self, line: &[T; 3], points: &[usize], signed: bool, outside: &mut Vec<usize>) {
-        *outside = points.iter().filter_map(|&i| {
-            let d = Self::distance_slice(line, &self.data[i].into()) * if signed { -T::one() } else { T::one() };
-            if  d < T::zero() {
-                Some(i)
-            } else {
-                None
-            }
-        }).collect::<Vec<usize>>()
+        *outside = points
+            .iter()
+            .filter_map(|&i| {
+                let d = Self::distance_slice(line, &self.data[i].into())
+                    * if signed { -T::one() } else { T::one() };
+                if d < T::zero() {
+                    Some(i)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<usize>>()
     }
 
     /// QuickHull implement.
-    /// 
+    ///
     /// 1. Find the farthest point of line and outside points.
     /// 2. Insert the farthest point to edge_start and edge_end.
     /// 3. Split data to right and left of two edges.
     /// 4. recursive finding until no outside data.
     fn compute_recursive(&self, ids: &[usize], edge: &[usize; 2], hulls: &mut Vec<usize>) {
-        if ids.is_empty() { // no outside, is convex hull already.
+        if ids.is_empty() {
+            // no outside, is convex hull already.
             return;
-        } else if ids.len() == 1 { // only one outside, set it to hull directly.
+        } else if ids.len() == 1 {
+            // only one outside, set it to hull directly.
             hulls.insert(edge[1], ids[0]);
             return;
         }
 
         let [start, end] = *edge;
 
-        let (head, tail) = (
-            self.data[hulls[edge[0]]],
-            self.data[hulls[edge[1]]],
-        );
+        let (head, tail) = (self.data[hulls[edge[0]]], self.data[hulls[edge[1]]]);
 
         let line = Self::generate_line(&(head, tail));
 
@@ -81,7 +84,7 @@ where
             let d = Self::distance_slice(&line, &self.data[i].into()).abs();
             if d > farthest_value {
                 farthest_value = d;
-                farthest = i; 
+                farthest = i;
             }
         });
         if farthest_value <= T::from(EPS).unwrap() {
@@ -96,27 +99,31 @@ where
         ];
 
         let splits = [
-                Self::generate_line(&(head, mid)),
-                Self::generate_line(&(mid, tail)),
-            ].into_iter().map(|line| {
-                let sign = Self::distance_slice(&line, &center) < T::zero();
-                let mut outside = Vec::with_capacity(ids.len());
-                self.split_data(&line, ids, sign, &mut outside);
-                outside
-            }).collect::<Vec<_>>();
-        
-        self.compute_recursive(&splits[1], &[end, end+1], hulls);
+            Self::generate_line(&(head, mid)),
+            Self::generate_line(&(mid, tail)),
+        ]
+        .into_iter()
+        .map(|line| {
+            let sign = Self::distance_slice(&line, &center) < T::zero();
+            let mut outside = Vec::with_capacity(ids.len());
+            self.split_data(&line, ids, sign, &mut outside);
+            outside
+        })
+        .collect::<Vec<_>>();
+
+        self.compute_recursive(&splits[1], &[end, end + 1], hulls);
         self.compute_recursive(&splits[0], &[start, end], hulls);
     }
 }
 
 impl<'a, T: BasicFloat, P> Convex<'a, P> for ConvexHull2D<'a, T, P>
 where
-    P: Into<[T; 2]> + Clone + Copy + Send + Sync + Index<usize, Output = T>
+    P: Into<[T; 2]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
 {
     fn new(data: &'a [P]) -> Self {
         Self {
-            data, hulls: vec![],
+            data,
+            hulls: vec![],
         }
     }
 
@@ -126,7 +133,7 @@ where
     fn compute(&mut self) {
         let data = self.data;
         assert!(data.len() >= 3);
-        
+
         let mut min_id = [0usize; 2];
         let mut max_id = [0usize; 2];
         let mut min_v = [data[0][0]; 2];
@@ -143,7 +150,7 @@ where
                 }
             });
         });
-        let largest = if (max_v[0]-min_v[0]) > (max_v[1]-min_v[1]) {
+        let largest = if (max_v[0] - min_v[0]) > (max_v[1] - min_v[1]) {
             0
         } else {
             1
@@ -178,25 +185,24 @@ where
         });
 
         let nb_hull_b = hull_b.len();
-        let hull_b = &mut hull_b[1..nb_hull_b-1].to_owned();
+        let hull_b = &mut hull_b[1..nb_hull_b - 1].to_owned();
         if !hull_b.is_empty() {
             hull_a.append(hull_b);
         }
         self.hulls = hull_a;
     }
-    
 }
 
 #[test]
 fn convex_hull_2d() {
     let points = vec![
-        [0f32, 0.,],
-        [3., -1.,],
-        [6., 0.,],
-        [5., 3.,],
-        [3., 4.,],
-        [1., 3.,],
-        [0.5, 2.,],
+        [0f32, 0.],
+        [3., -1.],
+        [6., 0.],
+        [5., 3.],
+        [3., 4.],
+        [1., 3.],
+        [0.5, 2.],
     ];
     let mut cvh = ConvexHull2D::new(&points);
     cvh.compute();

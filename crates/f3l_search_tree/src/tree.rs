@@ -238,7 +238,7 @@ impl TreeResult for TreeRadiusResult {
     fn clear(&mut self) {
         self.data.clear();
     }
-    
+
     #[inline]
     fn is_farthest(&self) -> bool {
         false

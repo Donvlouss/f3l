@@ -1,9 +1,9 @@
 #[cfg(feature = "app_kiss3d")]
 use kiss3d::light::Light;
 #[cfg(feature = "app_kiss3d")]
-use kiss3d::window::Window;
-#[cfg(feature = "app_kiss3d")]
 use kiss3d::nalgebra::Point3;
+#[cfg(feature = "app_kiss3d")]
+use kiss3d::window::Window;
 
 #[cfg(not(feature = "app_kiss3d"))]
 fn main() {
@@ -39,7 +39,10 @@ pub fn load_ply(path: &str) -> Vec<Point3<f32>> {
         })
         .collect::<Vec<Vec<f32>>>();
 
-    vertices.into_iter().map(|v| [v[0], v[1], v[2]].into()).collect()
+    vertices
+        .into_iter()
+        .map(|v| [v[0], v[1], v[2]].into())
+        .collect()
 }
 
 pub fn hsv_to_rgb(hsv: &[f32; 3]) -> [f32; 3] {
@@ -95,15 +98,22 @@ fn main() {
         panic!("Could resolve to D3 type.")
     };
 
-    let triangles = hulls.iter().map(|tri| {
-        let &FaceIdType { point: [p0, p1, p2] } = tri;
-        [
-            Point3::new(vertices[p0][0], vertices[p0][1], vertices[p0][2]),
-            Point3::new(vertices[p1][0], vertices[p1][1], vertices[p1][2]),
-            Point3::new(vertices[p2][0], vertices[p2][1], vertices[p2][2]),
-        ]
-    }).collect::<Vec<_>>();
-    let colors = (0..triangles.len()).map(|_| random_color().into()).collect::<Vec<Point3<f32>>>();
+    let triangles = hulls
+        .iter()
+        .map(|tri| {
+            let &FaceIdType {
+                point: [p0, p1, p2],
+            } = tri;
+            [
+                Point3::new(vertices[p0][0], vertices[p0][1], vertices[p0][2]),
+                Point3::new(vertices[p1][0], vertices[p1][1], vertices[p1][2]),
+                Point3::new(vertices[p2][0], vertices[p2][1], vertices[p2][2]),
+            ]
+        })
+        .collect::<Vec<_>>();
+    let colors = (0..triangles.len())
+        .map(|_| random_color().into())
+        .collect::<Vec<Point3<f32>>>();
 
     let o = Point3::<f32>::origin();
     let x = Point3::<f32>::new(5., 0., 0.);
