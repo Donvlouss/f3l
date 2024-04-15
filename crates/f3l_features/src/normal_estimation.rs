@@ -31,7 +31,7 @@ use f3l_search_tree::*;
 ///
 pub struct NormalEstimation<'a, P, T: BasicFloat>
 where
-    P: Into<[T; 3]> + Clone + Copy,
+    P: Into<[T; 3]> + Clone + Copy + Index<usize, Output = T>,
     [T; 3]: Into<P>,
 {
     /// Use Radius or KNN to search neighbors.
@@ -41,7 +41,7 @@ where
     /// - false : rigorous method.
     fast: bool,
     data: Option<&'a Vec<P>>,
-    tree: KdTree<T, 3>,
+    tree: KdTree<'a, T, 3, P>,
     normals: Vec<Option<Vec3>>,
 }
 
@@ -55,7 +55,7 @@ where
             method,
             fast: true,
             data: None,
-            tree: KdTree::<T, 3>::new(),
+            tree: KdTree::<'a, T, 3, P>::new(),
             normals: vec![],
         }
     }
@@ -84,9 +84,9 @@ where
     }
 
     pub fn compute(&mut self) -> bool {
-        if self.tree.data.is_empty() {
+        if self.tree.data.is_none() {
             return false;
-        }
+        };
         self.tree.build();
         let data = self.data.unwrap();
 

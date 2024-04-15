@@ -25,7 +25,7 @@ where
         }
     }
 
-    pub fn with_data(data: &'a Vec<P>) -> Self {
+    pub fn with_data(data: &'a [P]) -> Self {
         Self {
             coefficients: [T::zero(); 4],
             data: Some(data),

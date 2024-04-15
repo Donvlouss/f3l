@@ -1,5 +1,12 @@
 use f3l_core::BasicFloat;
 
+/// Represent a Min or Max heap for nearest or farthest neighbors search
+#[derive(Eq, Ord, PartialEq, PartialOrd)]
+pub enum SearchQueue<ELEMENT: Ord + PartialOrd + Eq + PartialEq> {
+    MaxHeap(ELEMENT),
+    MinHeap(std::cmp::Reverse<ELEMENT>),
+}
+
 /// A HeapElement of Tree searching
 pub struct TreeHeapElement<D, O: BasicFloat> {
     pub raw: D,

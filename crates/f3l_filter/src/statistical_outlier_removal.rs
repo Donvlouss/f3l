@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 use crate::F3lFilter;
 use f3l_core::rayon::prelude::*;
 use f3l_core::BasicFloat;
@@ -16,19 +18,19 @@ use f3l_search_tree::{KdTree, TreeSearch};
 /// ```
 pub struct StatisticalOutlierRemoval<'a, P, T: BasicFloat, const D: usize>
 where
-    P: Into<[T; D]> + Clone + Copy,
+    P: Into<[T; D]> + Clone + Copy + Index<usize, Output = T>,
 {
     pub negative: bool,
     pub multiply: T,
     pub k_neighbors: usize,
     data: Option<&'a [P]>,
-    tree: KdTree<T, D>,
+    tree: KdTree<'a, T, D, P>,
     inlier: Vec<bool>,
 }
 
 impl<'a, P, T: BasicFloat, const D: usize> StatisticalOutlierRemoval<'a, P, T, D>
 where
-    P: Into<[T; D]> + Clone + Copy + Send + Sync,
+    P: Into<[T; D]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
     [T; D]: Into<P>,
 {
     pub fn new(multiply: T, k_neighbors: usize) -> Self {
@@ -37,7 +39,7 @@ where
             multiply,
             k_neighbors,
             data: None,
-            tree: KdTree::<T, D>::new(),
+            tree: KdTree::<'a, T, D, P>::new(),
             inlier: vec![],
         }
     }
@@ -57,7 +59,7 @@ where
 impl<'a, P, T: BasicFloat, const D: usize> F3lFilter<'a, P>
     for StatisticalOutlierRemoval<'a, P, T, D>
 where
-    P: Into<[T; D]> + Clone + Copy + Send + Sync,
+    P: Into<[T; D]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
     [T; D]: Into<P>,
 {
     fn set_negative(&mut self, negative: bool) {
@@ -93,7 +95,7 @@ where
     }
 
     fn apply_filter(&mut self) -> bool {
-        if self.tree.data.is_empty() {
+        if self.tree.data.is_none() {
             return false;
         }
         self.tree.build();

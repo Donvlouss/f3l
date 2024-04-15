@@ -11,3 +11,5 @@ pub use utils::*;
 pub use f3l_glam::glam;
 pub use f3l_glam::*;
 pub use rayon;
+
+pub type Line = (usize, usize);

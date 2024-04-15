@@ -16,6 +16,11 @@ pub trait TreeSearch<P> {
     fn search_radius(&self, point: &P, radius: f32) -> Vec<P>;
 }
 
+pub trait TreeFarthestSearch<P> {
+    fn search_kfn_ids(&self, point: &P, k: usize) -> Vec<usize>;
+    fn search_kfn(&self, point: &P, k: usize) -> Vec<(P, f32)>;
+}
+
 /// Result of `KNN` and `Radius`
 pub trait TreeResult {
     type T;
@@ -35,6 +40,8 @@ pub trait TreeResult {
     fn worst(&self) -> f32;
     /// Clear data
     fn clear(&mut self);
+    /// Search Farthest
+    fn is_farthest(&self) -> bool;
 }
 
 /// KNN result
@@ -48,6 +55,14 @@ pub struct TreeKnnResult {
     pub count: usize,
     /// Used in searching.
     pub farthest: f32,
+    /// Is Search Farthest
+    pub search_farthest: bool,
+}
+
+impl TreeKnnResult {
+    pub fn set_search_farthest(&mut self, search_farthest: bool) {
+        self.search_farthest = search_farthest;
+    }
 }
 
 impl TreeResult for TreeKnnResult {
@@ -60,6 +75,7 @@ impl TreeResult for TreeKnnResult {
             size: arg,
             count: 0,
             farthest: f32::MAX,
+            search_farthest: false,
         }
     }
 
@@ -69,12 +85,16 @@ impl TreeResult for TreeKnnResult {
             size: capacity,
             count: 0,
             farthest: f32::MAX,
+            search_farthest: false,
         }
     }
 
     fn result(&self) -> Vec<Self::Output> {
         let mut queue = self.data.clone();
-        queue.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+        match self.search_farthest {
+            true => queue.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap()),
+            false => queue.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap()),
+        };
         queue
     }
 
@@ -88,30 +108,44 @@ impl TreeResult for TreeKnnResult {
             if distance > self.farthest {
                 return;
             }
-            let idx = self.data.partition_point(|x| x.1 < distance);
+            let idx = match self.search_farthest {
+                true => self.data.partition_point(|x| x.1 > distance),
+                false => self.data.partition_point(|x| x.1 < distance),
+            };
             self.data.insert(idx, (data, distance));
             self.data.pop();
         }
         if self.count == self.size {
             // Only sort when data is full
             if need_sort {
-                self.data.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+                match self.search_farthest {
+                    true => self.data.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap()),
+                    false => self.data.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap()),
+                };
             }
             self.farthest = self.data.last().unwrap().1;
         }
     }
 
+    #[inline]
     fn is_full(&self) -> bool {
         self.count >= self.size
     }
 
+    #[inline]
     fn worst(&self) -> f32 {
         self.farthest
     }
 
+    #[inline]
     fn clear(&mut self) {
         self.data.clear();
         self.count = 0;
+    }
+
+    #[inline]
+    fn is_farthest(&self) -> bool {
+        self.search_farthest
     }
 }
 
@@ -187,6 +221,7 @@ impl TreeResult for TreeRadiusResult {
         self.count += 1;
     }
 
+    #[inline]
     fn is_full(&self) -> bool {
         match self.size {
             None => false,
@@ -194,11 +229,18 @@ impl TreeResult for TreeRadiusResult {
         }
     }
 
+    #[inline]
     fn worst(&self) -> f32 {
         self.radius
     }
 
+    #[inline]
     fn clear(&mut self) {
         self.data.clear();
+    }
+
+    #[inline]
+    fn is_farthest(&self) -> bool {
+        false
     }
 }

@@ -90,7 +90,9 @@ fn main() {
     let vertices = load_ply("../../data/table_voxel_down.ply");
 
     let normal_len = 0.04f32;
-    let mut tree = KdTree::with_data(&vertices);
+    // let mut tree = KdTree::<f32, 3>::new();
+    let mut tree = OcTree::with_data(&vertices, 100, 3);
+    // tree.set_data(&vertices);
     tree.build();
 
     let search_range = 0.08f32;

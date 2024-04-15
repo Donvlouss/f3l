@@ -1,4 +1,4 @@
-use f3l_core::{apply_both, apply_each, project_vector, BasicFloat, SimpleSliceMath};
+use f3l_core::{apply_both, apply_each, find_circle, project_vector, BasicFloat, SimpleSliceMath};
 use std::marker::PhantomData;
 
 use super::SacModel;
@@ -110,24 +110,8 @@ where
         } else {
             return Err("Data corrupted.".to_owned());
         };
-        let v12 = apply_both(&p1, &p2, std::ops::Sub::sub);
-        let v21 = apply_both(&p2, &p1, std::ops::Sub::sub);
-        let v13 = apply_both(&p1, &p3, std::ops::Sub::sub);
-        let v31 = apply_both(&p3, &p1, std::ops::Sub::sub);
-        let v23 = apply_both(&p2, &p3, std::ops::Sub::sub);
-        let v32 = apply_both(&p3, &p2, std::ops::Sub::sub);
 
-        let normal = v12.cross(&v23);
-        let common_divided = T::one() / T::from(2.).unwrap() * normal.len().powi(2);
-
-        let alpha = (v23.len().powi(2) * v12.dot(&v13)) * common_divided;
-        let beta = (v13.len().powi(2) * v21.dot(&v23)) * common_divided;
-        let gamma = (v12.len().powi(2) * v31.dot(&v32)) * common_divided;
-
-        let mut pc = [T::zero(); 3];
-        (0..3).for_each(|i| pc[i] = alpha * p1[i] + beta * p2[i] + gamma * p3[i]);
-
-        let radius = apply_both(&pc, &p1, std::ops::Sub::sub).len();
+        let (pc, normal, radius) = find_circle(&[p1, p2, p3]);
 
         Ok((pc, normal.normalized(), radius))
     }
