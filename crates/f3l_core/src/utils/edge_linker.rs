@@ -129,6 +129,9 @@ impl<'a> EdgeLinker<'a> {
     /// 3. Add all result to a list, then remove duplicated.
     fn tear_down_large_shape(&mut self, closed: Vec<Vec<(usize, usize)>>) -> Vec<Vec<(usize, usize)>> {
         let mut closed = closed;
+        if closed.is_empty() {
+            return vec![];
+        }
 
         let mut generated = vec![];
         closed.sort_by(|a, b| b.len().partial_cmp(&a.len()).unwrap());
