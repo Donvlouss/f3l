@@ -3,8 +3,8 @@ Search Tree implementation.
 Input data is need to implement `Into<[T; D]>`
 
 ## Trees: 
-    -[X] KD-Tree
-    -[ ] OC-Tree
+* KD-Tree
+* OC-Tree
 
 ## Tree Search Parameter
 Search Method
