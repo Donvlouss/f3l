@@ -22,6 +22,7 @@ core = ["f3l_core", "f3l_glam", "f3l_search_tree"]
 filter = ["f3l_filter", "f3l_core", "f3l_glam", "f3l_search_tree"]
 segmentation = ["f3l_segmentation", "f3l_core", "f3l_glam", "f3l_search_tree"]
 features = ["f3l_features", "f3l_core", "f3l_glam", "f3l_search_tree"]
+surface = ["f3l_surface", "f3l_segmentation", "f3l_core", "f3l_glam", "f3l_search_tree"]
 
 [workspace]
 members = [ 
@@ -41,7 +42,7 @@ f3l_filter ={ path = "crates/f3l_filter", optional = true }
 f3l_glam ={ path = "crates/f3l_glam", optional = true }
 f3l_search_tree ={ path = "crates/f3l_search_tree", optional = true }
 f3l_segmentation ={ path = "crates/f3l_segmentation", optional = true }
-
+f3l_surface ={ path = "crates/f3l_surface", optional = true }
 
 [dev-dependencies]
 criterion = "0.5.1"

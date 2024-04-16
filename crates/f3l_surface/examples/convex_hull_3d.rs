@@ -10,6 +10,7 @@ fn main() {
     println!("Add --features=app_kiss3d")
 }
 
+#[cfg(feature = "app_kiss3d")]
 pub fn load_ply(path: &str) -> Vec<Point3<f32>> {
     use ply_rs as ply;
     use ply_rs::ply::Property;

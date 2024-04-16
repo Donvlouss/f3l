@@ -37,6 +37,7 @@ pub fn random_color() -> [f32; 3] {
     hsv_to_rgb(&[rng.gen_range(0f32..1f32), 1.0, 1.0])
 }
 
+#[cfg(feature = "app_kiss3d")]
 fn load_img(path: &str) -> Vec<[f32; 2]> {
     use image::GenericImageView;
     let img = image::open(path).unwrap();
