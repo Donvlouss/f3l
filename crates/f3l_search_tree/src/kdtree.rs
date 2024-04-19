@@ -92,14 +92,10 @@ where
         let mut data_l = indices[..index].to_owned();
         let mut data_r = indices[index..].to_owned();
 
-        f3l_core::rayon::scope(|s| {
-            s.spawn(|_| {
-                node.left = Some(self.build_recursive(&mut data_l));
-            });
-            s.spawn(|_| {
-                node.right = Some(self.build_recursive(&mut data_r));
-            });
-        });
+        (node.left, node.right) = rayon::join(
+            || Some(self.build_recursive(&mut data_l)),
+            || Some(self.build_recursive(&mut data_r))
+        );
         node.feature = split;
 
         node
