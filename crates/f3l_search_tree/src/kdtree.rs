@@ -7,7 +7,10 @@ use crate::{
     SearchBy, SearchQueue, TreeFarthestSearch, TreeHeapElement, TreeKnnResult, TreeRadiusResult,
     TreeResult, TreeSearch,
 };
-use f3l_core::BasicFloat;
+#[cfg(all(feature="core", not(feature="pure")))]
+use f3l_core::{BasicFloat, rayon};
+#[cfg(all(feature="pure", not(feature="core")))]
+use crate::BasicFloat;
 use std::{cmp::Reverse, collections::BinaryHeap, ops::Index};
 
 /// KD-Tree Implement

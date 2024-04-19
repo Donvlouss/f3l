@@ -2,8 +2,10 @@ mod oc_features;
 mod oc_leaf;
 
 use std::{cmp::Reverse, collections::BinaryHeap, ops::Index};
-
+#[cfg(all(feature="core", not(feature="pure")))]
 use f3l_core::{get_minmax, BasicFloat};
+#[cfg(all(feature="pure", not(feature="core")))]
+use crate::{BasicFloat, get_minmax};
 pub use oc_features::*;
 pub use oc_leaf::*;
 

@@ -1,4 +1,7 @@
+#[cfg(all(feature="core", not(feature="pure")))]
 use f3l_core::BasicFloat;
+#[cfg(all(feature="pure", not(feature="core")))]
+use crate::BasicFloat;
 
 use crate::{OcDistance, OcFeature};
 

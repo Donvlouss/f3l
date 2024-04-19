@@ -1,4 +1,7 @@
+#[cfg(all(feature="core", not(feature="pure")))]
 use f3l_core::BasicFloat;
+#[cfg(all(feature="pure", not(feature="core")))]
+use crate::BasicFloat;
 
 /// Represent a Min or Max heap for nearest or farthest neighbors search
 #[derive(Eq, Ord, PartialEq, PartialOrd)]
