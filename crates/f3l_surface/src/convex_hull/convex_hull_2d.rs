@@ -179,10 +179,10 @@ where
         hull_b.push(max_id[largest]);
         hull_b.push(min_id[largest]);
 
-        f3l_core::rayon::scope(|s| {
-            s.spawn(|_| self.compute_recursive(&side_a, &[0, 1], &mut hull_a));
-            s.spawn(|_| self.compute_recursive(&side_b, &[0, 1], &mut hull_b));
-        });
+        f3l_core::rayon::join(
+            || self.compute_recursive(&side_a, &[0, 1], &mut hull_a),
+            || self.compute_recursive(&side_b, &[0, 1], &mut hull_b)
+        );
 
         let nb_hull_b = hull_b.len();
         let hull_b = &mut hull_b[1..nb_hull_b - 1].to_owned();

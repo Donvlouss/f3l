@@ -1,5 +1,6 @@
 mod kd_tree {
     use approx::assert_relative_eq;
+    #[cfg(all(feature="core", not(feature="pure")))]
     use f3l_core::glam::{Vec2, Vec3};
     use f3l_search_tree::*;
     use nalgebra::Point3;
@@ -9,6 +10,7 @@ mod kd_tree {
 
         use super::*;
 
+        #[cfg(all(feature="core", not(feature="pure")))]
         #[test]
         pub fn test_insert_data_glam() {
             let data = vec![Vec3::new(1.0, 2.0, 3.0), Vec3::new(4.0, 5.0, 6.0)];
@@ -178,6 +180,7 @@ mod kd_tree {
             }
         }
 
+        #[cfg(all(feature="core", not(feature="pure")))]
         mod dimension_2 {
             use super::*;
 
@@ -230,6 +233,7 @@ mod kd_tree {
             }
         }
 
+        #[cfg(all(feature="core", not(feature="pure")))]
         mod dimension_3 {
             use super::*;
 

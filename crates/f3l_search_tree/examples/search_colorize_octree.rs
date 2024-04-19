@@ -1,3 +1,4 @@
+#[cfg(all(feature="core", not(feature="pure")))]
 use f3l_core::glam::Vec3;
 #[cfg(feature = "app_kiss3d")]
 use kiss3d::light::Light;
@@ -9,6 +10,7 @@ fn main() {
     println!("Add --features=app_kiss3d")
 }
 
+#[cfg(all(feature="core", not(feature="pure")))]
 pub fn load_ply(path: &str) -> Vec<Vec3> {
     use ply_rs as ply;
     use ply_rs::ply::Property;

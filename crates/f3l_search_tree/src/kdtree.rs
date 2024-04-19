@@ -7,7 +7,10 @@ use crate::{
     SearchBy, SearchQueue, TreeFarthestSearch, TreeHeapElement, TreeKnnResult, TreeRadiusResult,
     TreeResult, TreeSearch,
 };
-use f3l_core::BasicFloat;
+#[cfg(all(feature="core", not(feature="pure")))]
+use f3l_core::{BasicFloat, rayon};
+#[cfg(all(feature="pure", not(feature="core")))]
+use crate::BasicFloat;
 use std::{cmp::Reverse, collections::BinaryHeap, ops::Index};
 
 /// KD-Tree Implement
@@ -92,14 +95,10 @@ where
         let mut data_l = indices[..index].to_owned();
         let mut data_r = indices[index..].to_owned();
 
-        f3l_core::rayon::scope(|s| {
-            s.spawn(|_| {
-                node.left = Some(self.build_recursive(&mut data_l));
-            });
-            s.spawn(|_| {
-                node.right = Some(self.build_recursive(&mut data_r));
-            });
-        });
+        (node.left, node.right) = rayon::join(
+            || Some(self.build_recursive(&mut data_l)),
+            || Some(self.build_recursive(&mut data_r))
+        );
         node.feature = split;
 
         node
