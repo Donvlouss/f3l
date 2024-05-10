@@ -1,4 +1,4 @@
-use f3l_core::BasicFloat;
+use f3l_core::{BasicFloat, serde::{self, Deserialize, Serialize}};
 use rand::Rng;
 
 mod sac_model_circle3d;
@@ -10,13 +10,20 @@ pub use sac_model_line::*;
 pub use sac_model_plane::*;
 pub use sac_model_sphere::*;
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[serde(crate="self::serde")]
 pub enum SacModelType {
     #[default]
     SacModelPlane,
     SacModelLine,
     SacModelCircle3d,
     SacModelSphere,
+}
+
+pub trait ModelCoefficient {
+    type CoefficientsType;
+
+    fn coe(&self) -> Self::CoefficientsType;
 }
 
 /// Represent any model.

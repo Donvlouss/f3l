@@ -1,6 +1,6 @@
 use std::ops::Index;
 
-use f3l_core::BasicFloat;
+use f3l_core::{BasicFloat, serde::{self, Deserialize, Serialize}};
 use f3l_search_tree::{KdTree, SearchBy, TreeRadiusResult, TreeResult};
 
 use crate::{F3lCluster, F3lClusterParameter};
@@ -24,14 +24,15 @@ use crate::{F3lCluster, F3lClusterParameter};
 ///     .map(|i| extractor.at(i).unwrap())
 ///     .collect::<Vec<_>>();
 /// ```
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate="self::serde")]
 pub struct EuclideanClusterExtractor<'a, T, P, const D: usize>
 where
     T: BasicFloat,
     P: Into<[T; D]> + Clone + Copy + Index<usize, Output = T>,
 {
     pub parameter: F3lClusterParameter<T>,
-    data: Option<&'a [P]>,
-    tree: KdTree<'a, T, D, P>,
+    tree: KdTree<'a, T, P>,
     clusters: Vec<Vec<usize>>,
 }
 
@@ -44,13 +45,12 @@ where
     pub fn new(parameter: F3lClusterParameter<T>) -> Self {
         Self {
             parameter,
-            data: None,
-            tree: KdTree::<'a, T, D, P>::new(),
+            tree: KdTree::<T, P>::new(D),
             clusters: vec![],
         }
     }
 
-    pub fn with_data(parameter: F3lClusterParameter<T>, data: &'a [P]) -> Self {
+    pub fn with_data(parameter: F3lClusterParameter<T>, data: &'a Vec<P>) -> Self {
         let mut entity = Self::new(parameter);
         entity.set_data(data);
         entity
@@ -71,8 +71,7 @@ where
         self.parameter
     }
 
-    fn set_data(&mut self, data: &'a [P]) {
-        self.data = Some(data);
+    fn set_data(&mut self, data: &'a Vec<P>) {
         self.tree.set_data(data);
     }
 
@@ -81,6 +80,7 @@ where
     }
 
     fn extract(&mut self) -> Vec<Vec<usize>> {
+
         if !self.apply_extract() {
             return vec![];
         }
@@ -89,12 +89,8 @@ where
     }
 
     fn apply_extract(&mut self) -> bool {
-        let data = if let Some(data) = self.data {
-            data
-        } else {
-            return false;
-        };
         self.tree.build();
+        let data = &self.tree.data;
 
         let radius = self.parameter.tolerance.to_f32().unwrap();
         let radius = radius * radius;
@@ -148,11 +144,7 @@ where
             ));
         }
         let cluster = &self.clusters[id];
-        let data = if let Some(data) = self.data {
-            cluster.iter().map(|&i| data[i]).collect::<Vec<_>>()
-        } else {
-            return Err("Data corrupted".to_owned());
-        };
+        let data = cluster.iter().map(|&i| self.tree.data[i]).collect::<Vec<_>>();
         Ok(data)
     }
 

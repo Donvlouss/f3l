@@ -9,6 +9,7 @@ pub use convex_hull_3d::*;
 pub use convex_hull_3d_2d::*;
 
 use crate::{FaceIdType, FaceInstanceType};
+use f3l_core::serde::{self, Deserialize, Serialize};
 
 /// Generic Convex Hull wrapper of [`ConvexHull2D`] and [`ConvexHull3D`] points data.
 ///
@@ -54,7 +55,8 @@ use crate::{FaceIdType, FaceInstanceType};
 ///     panic!("Could not resolve to D2 type.")
 /// };
 /// ```
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(crate="self::serde")]
 pub struct ConvexHull<'a, T: f3l_core::BasicFloat, P, const D: usize, CVH>
 where
     P: Into<[T; D]> + Clone + Copy + Send + Sync + std::ops::Index<usize, Output = T>,

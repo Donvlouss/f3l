@@ -1,6 +1,6 @@
-use std::collections::{HashMap, HashSet};
+use std::{borrow::Cow, collections::{HashMap, HashSet}, fmt::Debug};
 
-use f3l_core::{find_circle, get_minmax, EdgeLinker, Line};
+use f3l_core::{find_circle, get_minmax, EdgeLinker, Line, serde::{self, Deserialize, Serialize}};
 
 use crate::Delaunay2DShape;
 
@@ -14,9 +14,22 @@ use super::{BasicFloat, FaceIdType, SubTriangle};
 /// 4. Remove triangle which radius of circumscribed smaller than `alpha`.
 /// 5. Find all contours (non-common edge).
 /// 6. Classify contours to each shapes.
-#[derive(Debug, Clone)]
-pub struct Delaunay2D<'a, T: BasicFloat, P> {
-    pub data: &'a [P],
+// #[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate="self::serde")]
+pub struct Delaunay2D<'a, T: BasicFloat, P: Clone> {
+    // pub data: &'a [P],
+    pub data: Cow<'a, Vec<P>>,
+    pub super_triangle: [[T; 2]; 3],
+    pub shapes: Vec<Delaunay2DShape>,
+}
+
+// #[serde_as]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate="self::serde")]
+pub struct Delaunay2DSerde<'a, T: BasicFloat, P: Clone>
+{
+    pub data: Cow<'a, Vec<P>>,
     pub super_triangle: [[T; 2]; 3],
     pub shapes: Vec<Delaunay2DShape>,
 }
@@ -26,9 +39,10 @@ where
     P: Into<[T; 2]> + Copy + std::ops::Index<usize, Output = T>,
     [T; 2]: Into<P>,
 {
-    pub fn new(data: &'a [P]) -> Self {
+    pub fn new(data: &'a Vec<P>) -> Self {
         Self {
-            data,
+            // data,
+            data: Cow::Borrowed(data),
             super_triangle: [[T::zero(); 2]; 3],
             shapes: vec![],
         }
@@ -81,7 +95,7 @@ where
 
     /// Return super-triangle.
     pub fn find_super_triangle(&mut self) -> SubTriangle<T> {
-        let minmax = get_minmax(self.data);
+        let minmax = get_minmax(&self.data);
         let c = [
             (minmax.0[0] + minmax.1[0]) / T::from(2.).unwrap(),
             (minmax.0[1] + minmax.1[1]) / T::from(2.).unwrap(),

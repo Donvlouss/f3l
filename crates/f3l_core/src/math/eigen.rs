@@ -3,12 +3,15 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+use serde::{Deserialize, Serialize};
+
 use crate::{BasicFloat, SimpleSliceMath};
 
 /// `Eigenvalue` and `Unit Eigenvector`
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Eigen<T: BasicFloat, const D: usize> {
     pub eigenvalue: T,
+    #[serde(with = "serde_arrays")]
     pub eigenvector: [T; D],
 }
 
@@ -24,8 +27,11 @@ impl<T: BasicFloat, const D: usize> Default for Eigen<T, D> {
 /// N dim of Eigen
 ///
 /// See [`Eigen`]
-#[derive(Debug, Clone, Copy)]
-pub struct EigenSet<T: BasicFloat, const D: usize, const N: usize>(pub [Eigen<T, D>; N]);
+#[derive(Debug, Clone, Copy, Serialize)]
+pub struct EigenSet<T: BasicFloat, const D: usize, const N: usize>(
+    #[serde(with = "serde_arrays")]
+    pub [Eigen<T, D>; N]
+);
 
 impl<T: BasicFloat, const D: usize, const N: usize> From<[[T; D]; N]> for EigenSet<T, D, N> {
     fn from(value: [[T; D]; N]) -> Self {

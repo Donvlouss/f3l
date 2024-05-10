@@ -1,11 +1,12 @@
-use f3l_core::BasicFloat;
+use f3l_core::{BasicFloat, serde::{self, Deserialize, Serialize}};
 
 mod db_scan;
 mod euclidean_cluster_extraction;
 mod sac_segmentation;
 
 /// Cluster Extractor parameter
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+#[serde(crate="self::serde")]
 pub struct F3lClusterParameter<T: BasicFloat> {
     /// `K`-NN or `Radius` search
     pub tolerance: T,
@@ -38,7 +39,7 @@ pub trait F3lCluster<'a, T: BasicFloat, P> {
     /// Get [`F3lClusterParameter`]
     fn parameter(&self) -> F3lClusterParameter<T>;
 
-    fn set_data(&mut self, data: &'a [P]);
+    fn set_data(&mut self, data: &'a Vec<P>);
     fn clusters(&self) -> usize;
     /// vector of points of clusters
     fn extract(&mut self) -> Vec<Vec<usize>>;

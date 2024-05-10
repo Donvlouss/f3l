@@ -12,8 +12,8 @@ mod filter {
         fn pass_through_1d() {
             let data = (0..10usize).map(|i| [i as f32]).collect::<Vec<_>>();
             let mut filter =
-                PassThrough::with_data(&data, Bound::Included(0.)..Bound::Excluded(6.), 0);
-            let out = filter.filter();
+                PassThrough::with_data(Bound::Included(0.)..Bound::Excluded(6.), 0);
+            let out = filter.filter(&data);
             assert_eq!(out.len(), 6);
         }
 
@@ -21,9 +21,9 @@ mod filter {
         fn pass_through_1d_negative() {
             let data = (0..10usize).map(|i| [i as f32]).collect::<Vec<_>>();
             let mut filter =
-                PassThrough::with_data(&data, Bound::Included(0.)..Bound::Excluded(6.), 0);
+                PassThrough::with_data(Bound::Included(0.)..Bound::Excluded(6.), 0);
             filter.set_negative(true);
-            let out = filter.filter();
+            let out = filter.filter(&data);
             assert_eq!(out.len(), 4);
         }
     }
@@ -49,8 +49,8 @@ mod filter {
             let size = 100 * 100 * 20usize;
 
             let mut filter =
-                PassThrough::with_data(&data, Bound::Included(80.)..Bound::Unbounded, 2);
-            let out = filter.filter();
+                PassThrough::with_data(Bound::Included(80.)..Bound::Unbounded, 2);
+            let out = filter.filter(&data);
 
             assert_eq!(out.len(), size);
         }

@@ -10,7 +10,7 @@ doctest = false
 [features]
 default = ["core"]
 core = ["f3l_core"]
-pure = ["num-traits", "rayon"]
+pure = ["num-traits", "rayon", "serde"]
 app_kiss3d = [
     "kiss3d",
     "nalgebra",
@@ -24,6 +24,7 @@ kiss3d = { version = "0.35.0", optional = true }
 
 num-traits = {version = "0.2.17", optional = true}
 rayon = {version = "1.8", optional = true}
+serde = {version = "1.0", features = ["serde_derive"], optional = true}
 
 [dev-dependencies]
 nalgebra = { version = "0.32", features = ["glam025"]}

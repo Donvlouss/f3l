@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 
-use f3l::{KdTree, OcTree, TreeFarthestSearch, TreeSearch};
+use f3l::{KdTree, OcTree, TreeSearch};
 use f3l_glam::glam::Vec3;
 
 fn load_ply(path: &str) -> Vec<Vec3> {
@@ -43,7 +43,7 @@ fn bench_tree_build(c: &mut Criterion) {
     let mut group = c.benchmark_group("Tree-Build");
     group.bench_function("KD-Tree", |b| {
         b.iter(|| {
-            let mut tree = KdTree::with_data(&data);
+            let mut tree = KdTree::with_data(3, &data);
             tree.build();
         })
     });
@@ -80,17 +80,10 @@ fn bench_tree_knn_1(c: &mut Criterion) {
     let target = &data[data.len() / 2];
 
     group.bench_function("KD", |b| {
-        let mut tree = KdTree::with_data(&data);
+        let mut tree = KdTree::with_data(3, &data);
         tree.build();
         b.iter(|| {
             tree.search_knn(target, 1);
-        });
-    });
-    group.bench_function("KD_Farthest", |b| {
-        let mut tree = KdTree::with_data(&data);
-        tree.build();
-        b.iter(|| {
-            tree.search_kfn(target, 1);
         });
     });
     group.bench_function("Oc-Tree_100_3", |b| {
@@ -130,17 +123,10 @@ fn bench_tree_knn_10(c: &mut Criterion) {
     let target = &data[data.len() / 2];
 
     group.bench_function("KD", |b| {
-        let mut tree = KdTree::with_data(&data);
+        let mut tree = KdTree::with_data(3, &data);
         tree.build();
         b.iter(|| {
             tree.search_knn(target, 10);
-        });
-    });
-    group.bench_function("KD_Farthest", |b| {
-        let mut tree = KdTree::with_data(&data);
-        tree.build();
-        b.iter(|| {
-            tree.search_kfn(target, 10);
         });
     });
     group.bench_function("Oc-Tree_100_3", |b| {
@@ -180,7 +166,7 @@ fn bench_tree_radius_search_0_03(c: &mut Criterion) {
     let target = &data[data.len() / 2];
 
     group.bench_function("KD", |b| {
-        let mut tree = KdTree::with_data(&data);
+        let mut tree = KdTree::with_data(3, &data);
         tree.build();
         b.iter(|| {
             tree.search_radius(target, 0.03);
@@ -223,7 +209,7 @@ fn bench_tree_radius_search_0_08(c: &mut Criterion) {
     let target = &data[data.len() / 2];
 
     group.bench_function("KD", |b| {
-        let mut tree = KdTree::with_data(&data);
+        let mut tree = KdTree::with_data(3, &data);
         tree.build();
         b.iter(|| {
             tree.search_radius(target, 0.08);

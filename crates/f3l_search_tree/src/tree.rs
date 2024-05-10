@@ -1,7 +1,13 @@
+#[cfg(all(feature="core", not(feature="pure")))]
+use f3l_core::serde::{self, Deserialize, Serialize};
+#[cfg(all(feature="pure", not(feature="core")))]
+use crate::serde::{self, Deserialize, Serialize};
+
 /// Search Method
 /// * Count : KNN
 /// * Radius: Radius Search
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[serde(crate="self::serde")]
 pub enum SearchBy {
     Count(usize),
     Radius(f32),
@@ -14,11 +20,6 @@ pub trait TreeSearch<P> {
 
     fn search_knn(&self, point: &P, k: usize) -> Vec<(P, f32)>;
     fn search_radius(&self, point: &P, radius: f32) -> Vec<P>;
-}
-
-pub trait TreeFarthestSearch<P> {
-    fn search_kfn_ids(&self, point: &P, k: usize) -> Vec<usize>;
-    fn search_kfn(&self, point: &P, k: usize) -> Vec<(P, f32)>;
 }
 
 /// Result of `KNN` and `Radius`
@@ -45,7 +46,8 @@ pub trait TreeResult {
 }
 
 /// KNN result
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate="self::serde")]
 pub struct TreeKnnResult {
     /// KNN ids and distances.
     pub data: Vec<(usize, f32)>,
@@ -150,7 +152,8 @@ impl TreeResult for TreeKnnResult {
 }
 
 /// Radius Search result
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate="self::serde")]
 pub struct TreeRadiusResult {
     /// Neighbors in radius.
     pub data: Vec<usize>,

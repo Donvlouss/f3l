@@ -3,6 +3,7 @@ use std::ops::Index;
 use f3l_core::{
     compute_covariance_matrix, glam::Vec3, matrix3x3::*, rayon::prelude::*, BasicFloat,
     GenericArray,
+    serde::{self, Deserialize, Serialize}
 };
 use f3l_search_tree::*;
 
@@ -29,6 +30,8 @@ use f3l_search_tree::*;
 /// let normals = estimator.normals();
 /// ```
 ///
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate="self::serde")]
 pub struct NormalEstimation<'a, P, T: BasicFloat>
 where
     P: Into<[T; 3]> + Clone + Copy + Index<usize, Output = T>,
@@ -40,8 +43,7 @@ where
     /// - true  : use fast method.
     /// - false : rigorous method.
     fast: bool,
-    data: Option<&'a Vec<P>>,
-    tree: KdTree<'a, T, 3, P>,
+    tree: KdTree<'a, T, P>,
     normals: Vec<Option<Vec3>>,
 }
 
@@ -54,8 +56,7 @@ where
         Self {
             method,
             fast: true,
-            data: None,
-            tree: KdTree::<'a, T, 3, P>::new(),
+            tree: KdTree::<T, P>::new(3),
             normals: vec![],
         }
     }
@@ -75,7 +76,6 @@ where
     }
 
     pub fn set_data(&mut self, data: &'a Vec<P>) {
-        self.data = Some(data);
         self.tree.set_data(data);
     }
 
@@ -83,12 +83,16 @@ where
         self.normals.clone()
     }
 
-    pub fn compute(&mut self) -> bool {
-        if self.tree.data.is_none() {
+    pub fn compute(&mut self, data: Option<&'a [P]>) -> bool {
+        if self.tree.data.is_empty() {
             return false;
         };
         self.tree.build();
-        let data = self.data.unwrap();
+        let data = if let Some(data) = data {
+            data
+        } else {
+            &self.tree.data
+        };
 
         let normals = (0..data.len())
             .into_par_iter()

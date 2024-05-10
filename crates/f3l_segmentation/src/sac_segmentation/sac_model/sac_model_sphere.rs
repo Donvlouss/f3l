@@ -1,7 +1,7 @@
-use f3l_core::{BasicFloat, SimpleSliceMath};
+use f3l_core::{BasicFloat, SimpleSliceMath, serde::{self, Deserialize, Serialize}};
 use std::marker::PhantomData;
 
-use super::SacModel;
+use super::{ModelCoefficient, SacModel};
 
 /// Compute a sphere
 #[derive(Debug, Clone, Default)]
@@ -14,6 +14,20 @@ where
     pub coefficients: ([T; 3], T),
     data: Option<&'a [P]>,
     _value_type: PhantomData<T>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(crate="self::serde")]
+pub struct SphereCoefficient<T: BasicFloat> {
+    pub coefficients: ([T; 3], T),
+}
+
+impl<T: BasicFloat> ModelCoefficient for SphereCoefficient<T> {
+    type CoefficientsType = ([T; 3], T);
+
+    fn coe(&self) -> Self::CoefficientsType {
+        self.coefficients
+    }
 }
 
 impl<'a, P, T: BasicFloat> SacModelSphere<'a, P, T>

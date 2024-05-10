@@ -1,7 +1,7 @@
-use f3l_core::{apply_both, apply_each, find_circle, project_vector, BasicFloat, SimpleSliceMath};
+use f3l_core::{apply_both, apply_each, find_circle, project_vector, BasicFloat, SimpleSliceMath, serde::{self, Deserialize, Serialize}};
 use std::marker::PhantomData;
 
-use super::SacModel;
+use super::{ModelCoefficient, SacModel};
 
 /// Compute a 3d circle, not sphere.
 #[derive(Debug, Clone, Default)]
@@ -17,6 +17,20 @@ where
     _value_type: PhantomData<T>,
 }
 
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(crate="self::serde")]
+pub struct Circle3dCoefficient<T: BasicFloat> {
+    pub coefficients: ([T; 3], [T; 3], T)
+}
+
+impl<T: BasicFloat> ModelCoefficient for Circle3dCoefficient<T> {
+    type CoefficientsType = ([T; 3], [T; 3], T);
+
+    fn coe(&self) -> Self::CoefficientsType {
+        self.coefficients
+    }
+}
+
 impl<'a, P, T: BasicFloat> SacModelCircle3d<'a, P, T>
 where
     P: Into<[T; 3]> + Clone + Copy,
@@ -29,7 +43,7 @@ where
         }
     }
 
-    pub fn with_data(data: &'a Vec<P>) -> Self {
+    pub fn with_data(data: &'a [P]) -> Self {
         Self {
             coefficients: ([T::zero(); 3], [T::zero(); 3], T::zero()),
             data: Some(data),

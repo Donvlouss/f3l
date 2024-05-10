@@ -1,16 +1,11 @@
 #[cfg(all(feature="core", not(feature="pure")))]
-use f3l_core::BasicFloat;
+use f3l_core::{BasicFloat, serde::{self, Deserialize, Serialize}};
 #[cfg(all(feature="pure", not(feature="core")))]
-use crate::BasicFloat;
-
-/// Represent a Min or Max heap for nearest or farthest neighbors search
-#[derive(Eq, Ord, PartialEq, PartialOrd)]
-pub enum SearchQueue<ELEMENT: Ord + PartialOrd + Eq + PartialEq> {
-    MaxHeap(ELEMENT),
-    MinHeap(std::cmp::Reverse<ELEMENT>),
-}
+use crate::{BasicFloat, serde::{self, Deserialize, Serialize}};
 
 /// A HeapElement of Tree searching
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(crate="self::serde")]
 pub struct TreeHeapElement<D, O: BasicFloat> {
     pub raw: D,
     pub order: O,

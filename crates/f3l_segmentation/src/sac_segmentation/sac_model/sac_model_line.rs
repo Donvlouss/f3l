@@ -1,6 +1,6 @@
-use f3l_core::{BasicFloat, SimpleSliceMath};
+use f3l_core::{BasicFloat, SimpleSliceMath, serde::{self, Deserialize, Serialize}};
 
-use super::SacModel;
+use super::{ModelCoefficient, SacModel};
 
 /// Compute 3d line
 #[derive(Debug, Clone, Default)]
@@ -14,6 +14,20 @@ where
     data: Option<&'a [P]>,
 }
 
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(crate="self::serde")]
+pub struct LineCoefficient<T: BasicFloat> {
+    pub coefficients: ([T; 3], [T; 3])
+}
+
+impl<T: BasicFloat> ModelCoefficient for LineCoefficient<T> {
+    type CoefficientsType = ([T; 3], [T; 3]);
+
+    fn coe(&self) -> Self::CoefficientsType {
+        self.coefficients
+    }
+}
+
 impl<'a, P, T: BasicFloat> SacModelLine<'a, P, T>
 where
     P: Into<[T; 3]> + Clone + Copy,
@@ -25,7 +39,7 @@ where
         }
     }
 
-    pub fn with_data(data: &'a Vec<P>) -> Self {
+    pub fn with_data(data: &'a [P]) -> Self {
         Self {
             coefficients: ([T::zero(); 3], [T::zero(); 3]),
             data: Some(data),

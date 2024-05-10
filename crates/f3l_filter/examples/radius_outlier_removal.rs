@@ -54,9 +54,9 @@ fn main() {
     window.set_point_size(10.0); // (Not supported by all graphic drivers)
 
     let vertices = load_ply("../../data/table_scene_lms400.ply");
-    let mut filter = RadiusOutlierRemoval::with_data(0.03f32, 20, &vertices);
+    let mut filter = RadiusOutlierRemoval::new(0.03f32, 20);
     filter.set_negative(true);
-    let out = filter.filter_instance();
+    let out = filter.filter_instance(&vertices);
 
     while window.render() {
         vertices.iter().for_each(|v| {

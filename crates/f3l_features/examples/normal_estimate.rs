@@ -65,7 +65,7 @@ fn main() {
     // let mut estimator = NormalEstimation::with_data(SearchBy::Radius(0.08f32), &vertices);
     let mut estimator = NormalEstimation::with_data(SearchBy::Count(10), &vertices);
 
-    if !estimator.compute() {
+    if !estimator.compute(None) {
         println!("Compute Normal Failed. Exit...");
         return;
     }

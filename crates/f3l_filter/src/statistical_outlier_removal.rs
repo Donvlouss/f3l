@@ -1,8 +1,8 @@
 use std::ops::Index;
 
-use crate::F3lFilter;
+use crate::{F3lFilter, F3lFilterInverse};
 use f3l_core::rayon::prelude::*;
-use f3l_core::BasicFloat;
+use f3l_core::{serde::{self, Serialize, Deserialize}, BasicFloat};
 use f3l_search_tree::{KdTree, TreeSearch};
 
 /// Compute k-neighbors of all points, then compute mean and variance
@@ -16,6 +16,8 @@ use f3l_search_tree::{KdTree, TreeSearch};
 /// filter.set_negative(true);
 /// let out = filter.filter_instance();
 /// ```
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate="self::serde")]
 pub struct StatisticalOutlierRemoval<'a, P, T: BasicFloat, const D: usize>
 where
     P: Into<[T; D]> + Clone + Copy + Index<usize, Output = T>,
@@ -23,8 +25,11 @@ where
     pub negative: bool,
     pub multiply: T,
     pub k_neighbors: usize,
-    data: Option<&'a [P]>,
-    tree: KdTree<'a, T, D, P>,
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
+    tree: KdTree<'a, T, P>,
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     inlier: Vec<bool>,
 }
 
@@ -38,16 +43,9 @@ where
             negative: false,
             multiply,
             k_neighbors,
-            data: None,
-            tree: KdTree::<'a, T, D, P>::new(),
+            tree: KdTree::<T, P>::new(D),
             inlier: vec![],
         }
-    }
-
-    pub fn with_data(multiply: T, k_neighbors: usize, data: &'a [P]) -> Self {
-        let mut entity = Self::new(multiply, k_neighbors);
-        entity.set_data(data);
-        entity
     }
 
     #[inline]
@@ -56,8 +54,7 @@ where
     }
 }
 
-impl<'a, P, T: BasicFloat, const D: usize> F3lFilter<'a, P>
-    for StatisticalOutlierRemoval<'a, P, T, D>
+impl<'a, P, T: BasicFloat, const D: usize> F3lFilterInverse for StatisticalOutlierRemoval<'a, P, T, D>
 where
     P: Into<[T; D]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
     [T; D]: Into<P>,
@@ -65,14 +62,17 @@ where
     fn set_negative(&mut self, negative: bool) {
         self.negative = negative;
     }
+}
 
-    fn set_data(&mut self, data: &'a [P]) {
-        self.data = Some(data);
+impl<'a, P, T: BasicFloat, const D: usize> F3lFilter<'a, P, D>
+    for StatisticalOutlierRemoval<'a, P, T, D>
+where
+    P: Into<[T; D]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
+    [T; D]: Into<P>,
+{
+    fn filter(&mut self, data: &'a Vec<P>) -> Vec<usize> {
         self.tree.set_data(data);
-    }
-
-    fn filter(&mut self) -> Vec<usize> {
-        self.apply_filter();
+        self.apply_filter(data);
 
         self.inlier
             .iter()
@@ -82,10 +82,10 @@ where
             .collect()
     }
 
-    fn filter_instance(&mut self) -> Vec<P> {
-        self.apply_filter();
+    fn filter_instance(&mut self, data: &'a Vec<P>) -> Vec<P> {
+        self.tree.set_data(data);
+        self.apply_filter(data);
 
-        let data = self.data.unwrap();
         self.inlier
             .iter()
             .enumerate()
@@ -94,17 +94,11 @@ where
             .collect()
     }
 
-    fn apply_filter(&mut self) -> bool {
-        if self.tree.data.is_none() {
+    fn apply_filter(&mut self, data: &'a Vec<P>) -> bool {
+        if self.tree.data.is_empty() {
             return false;
         }
         self.tree.build();
-
-        let data = if let Some(data) = self.data {
-            data
-        } else {
-            return false;
-        };
 
         use std::sync::{Arc, Mutex};
         let nb_valid = Arc::new(Mutex::new(0usize));
@@ -150,4 +144,21 @@ where
 
         true
     }
+}
+
+#[test]
+fn serde() {
+    let model = StatisticalOutlierRemoval::<[f32; 3], f32, 3>::new(2f32, 20_usize);
+    let content = serde_json::to_string(&model).unwrap();
+    println!("{}", content);
+
+    let text = r#"{
+        "negative":false,
+        "multiply":2.0,
+        "k_neighbors":20
+    }"#;
+    let model_de: StatisticalOutlierRemoval<[f32;3],f32,3> = serde_json::from_str(text).unwrap();
+    assert_eq!(model.negative, model_de.negative);
+    assert_eq!(model.multiply, model_de.multiply);
+    assert_eq!(model.k_neighbors, model_de.k_neighbors);
 }
