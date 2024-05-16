@@ -3,7 +3,10 @@ use std::ops::{Bound, Range};
 use crate::F3lFilterInverse;
 
 use super::F3lFilter;
-use f3l_core::{serde::{self, Serialize, Deserialize}, BasicFloat};
+use f3l_core::{
+    serde::{self, Deserialize, Serialize},
+    BasicFloat,
+};
 
 /// Target `Dimension` to filter with `Upper-Bound` and `Lower-Bound`
 ///
@@ -25,9 +28,8 @@ use f3l_core::{serde::{self, Serialize, Deserialize}, BasicFloat};
 /// ```
 ///
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
-pub struct PassThrough<T: BasicFloat>
-{
+#[serde(crate = "self::serde")]
+pub struct PassThrough<T: BasicFloat> {
     pub negative: bool,
     pub dim: usize,
     pub bound: Option<Range<Bound<T>>>,
@@ -36,8 +38,7 @@ pub struct PassThrough<T: BasicFloat>
     inliers: Vec<usize>,
 }
 
-impl<T: BasicFloat> Default for PassThrough<T>
-{
+impl<T: BasicFloat> Default for PassThrough<T> {
     fn default() -> Self {
         Self {
             negative: false,
@@ -48,8 +49,7 @@ impl<T: BasicFloat> Default for PassThrough<T>
     }
 }
 
-impl<T: BasicFloat> PassThrough<T>
-{
+impl<T: BasicFloat> PassThrough<T> {
     pub fn with_data(bound: Range<Bound<T>>, dim: usize) -> Self {
         Self {
             negative: false,
@@ -66,7 +66,6 @@ impl<T: BasicFloat> PassThrough<T>
 }
 
 impl<T: BasicFloat> F3lFilterInverse for PassThrough<T> {
-
     fn set_negative(&mut self, negative: bool) {
         self.negative = negative;
     }
@@ -140,7 +139,7 @@ fn serde() {
         bound: Some(Range {
             start: Bound::Included(0f32),
             end: Bound::Included(0.5),
-        },),
+        }),
         inliers: vec![],
     };
     let content = serde_json::to_string(&model).unwrap();
@@ -157,5 +156,4 @@ fn serde() {
     assert_eq!(model.dim, model_de.dim);
     assert_eq!(model.bound, model_de.bound);
     assert_eq!(model.inliers, model_de.inliers);
-
 }

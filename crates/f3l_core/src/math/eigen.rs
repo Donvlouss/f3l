@@ -29,8 +29,7 @@ impl<T: BasicFloat, const D: usize> Default for Eigen<T, D> {
 /// See [`Eigen`]
 #[derive(Debug, Clone, Copy, Serialize)]
 pub struct EigenSet<T: BasicFloat, const D: usize, const N: usize>(
-    #[serde(with = "serde_arrays")]
-    pub [Eigen<T, D>; N]
+    #[serde(with = "serde_arrays")] pub [Eigen<T, D>; N],
 );
 
 impl<T: BasicFloat, const D: usize, const N: usize> From<[[T; D]; N]> for EigenSet<T, D, N> {

@@ -1,4 +1,8 @@
-use f3l_core::{apply_both, apply_each, find_circle, project_vector, BasicFloat, SimpleSliceMath, serde::{self, Deserialize, Serialize}};
+use f3l_core::{
+    apply_both, apply_each, find_circle, project_vector,
+    serde::{self, Deserialize, Serialize},
+    BasicFloat, SimpleSliceMath,
+};
 use std::marker::PhantomData;
 
 use super::{ModelCoefficient, SacModel};
@@ -18,9 +22,9 @@ where
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct Circle3dCoefficient<T: BasicFloat> {
-    pub coefficients: ([T; 3], [T; 3], T)
+    pub coefficients: ([T; 3], [T; 3], T),
 }
 
 impl<T: BasicFloat> ModelCoefficient for Circle3dCoefficient<T> {

@@ -1,4 +1,7 @@
-use f3l_core::{serde::{self, Deserialize, Serialize}, BasicFloat};
+use f3l_core::{
+    serde::{self, Deserialize, Serialize},
+    BasicFloat,
+};
 use std::{borrow::Cow, ops::Index};
 
 use crate::Convex;
@@ -8,7 +11,7 @@ const EPS: f32 = 1e-5;
 /// Convex Hull of 2d data.
 /// A `QuickHull` implement.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct ConvexHull2D<'a, T: BasicFloat, P>
 where
     P: Into<[T; 2]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
@@ -124,7 +127,7 @@ where
     fn new() -> Self {
         Self {
             data: Cow::Owned(vec![]),
-            hulls: vec![]
+            hulls: vec![],
         }
     }
 
@@ -193,7 +196,7 @@ where
 
         f3l_core::rayon::join(
             || self.compute_recursive(&side_a, &[0, 1], &mut hull_a),
-            || self.compute_recursive(&side_b, &[0, 1], &mut hull_b)
+            || self.compute_recursive(&side_b, &[0, 1], &mut hull_b),
         );
 
         let nb_hull_b = hull_b.len();

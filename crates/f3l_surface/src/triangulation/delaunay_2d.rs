@@ -1,6 +1,14 @@
-use std::{borrow::Cow, collections::{HashMap, HashSet}, fmt::Debug};
+use std::{
+    borrow::Cow,
+    collections::{HashMap, HashSet},
+    fmt::Debug,
+};
 
-use f3l_core::{find_circle, get_minmax, EdgeLinker, Line, serde::{self, Deserialize, Serialize}};
+use f3l_core::{
+    find_circle, get_minmax,
+    serde::{self, Deserialize, Serialize},
+    EdgeLinker, Line,
+};
 
 use crate::Delaunay2DShape;
 
@@ -16,7 +24,7 @@ use super::{BasicFloat, FaceIdType, SubTriangle};
 /// 6. Classify contours to each shapes.
 // #[derive(Debug, Clone)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct Delaunay2D<'a, T: BasicFloat, P: Clone> {
     // pub data: &'a [P],
     pub data: Cow<'a, Vec<P>>,
@@ -26,9 +34,8 @@ pub struct Delaunay2D<'a, T: BasicFloat, P: Clone> {
 
 // #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
-pub struct Delaunay2DSerde<'a, T: BasicFloat, P: Clone>
-{
+#[serde(crate = "self::serde")]
+pub struct Delaunay2DSerde<'a, T: BasicFloat, P: Clone> {
     pub data: Cow<'a, Vec<P>>,
     pub super_triangle: [[T; 2]; 3],
     pub shapes: Vec<Delaunay2DShape>,

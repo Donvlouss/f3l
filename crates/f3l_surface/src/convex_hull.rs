@@ -56,7 +56,7 @@ use f3l_core::serde::{self, Deserialize, Serialize};
 /// };
 /// ```
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct ConvexHull<'a, T: f3l_core::BasicFloat, P, const D: usize, CVH>
 where
     P: Into<[T; D]> + Clone + Copy + Send + Sync + std::ops::Index<usize, Output = T>,
@@ -73,7 +73,7 @@ where
 
 /// Represent Convex Hull result of Ids.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub enum ConvexHullId {
     D2(Vec<usize>),
     D3(Vec<FaceIdType>),
@@ -87,7 +87,7 @@ impl Default for ConvexHullId {
 
 /// Represent Convex Hull result of data.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub enum ConvexHullInstance<P: Copy> {
     D2(Vec<P>),
     D3(Vec<FaceInstanceType<P>>),
@@ -218,9 +218,10 @@ pub trait Convex<'a, P> {
 
 #[test]
 fn serde() {
-
-    let cvh2: ConvexHull<f32, [f32; 2], 2, ConvexHull2D<f32, [f32; 2]>> = serde_json::from_str(&r#"{"dim":2}"#).unwrap();
-    let cvh3: ConvexHull<f32, [f32; 3], 3, ConvexHull3D<f32, [f32; 3]>> = serde_json::from_str(&r#"{"dim":3}"#).unwrap();
+    let cvh2: ConvexHull<f32, [f32; 2], 2, ConvexHull2D<f32, [f32; 2]>> =
+        serde_json::from_str(&r#"{"dim":2}"#).unwrap();
+    let cvh3: ConvexHull<f32, [f32; 3], 3, ConvexHull3D<f32, [f32; 3]>> =
+        serde_json::from_str(&r#"{"dim":3}"#).unwrap();
 
     println!("{:?}", cvh2);
     println!("{:?}", cvh3);

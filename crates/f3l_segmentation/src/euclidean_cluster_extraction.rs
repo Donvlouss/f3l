@@ -1,6 +1,9 @@
 use std::ops::Index;
 
-use f3l_core::{serde::{self, Deserialize, Serialize}, BasicFloat};
+use f3l_core::{
+    serde::{self, Deserialize, Serialize},
+    BasicFloat,
+};
 use f3l_search_tree::{KdTree, SearchBy, TreeRadiusResult, TreeResult};
 
 use crate::{F3lCluster, F3lClusterParameter};
@@ -25,7 +28,7 @@ use crate::{F3lCluster, F3lClusterParameter};
 ///     .collect::<Vec<_>>();
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct EuclideanClusterExtractor<'a, T, P, const D: usize>
 where
     T: BasicFloat,
@@ -144,7 +147,10 @@ where
             ));
         }
         let cluster = &self.clusters[id];
-        let data = cluster.iter().map(|&i| self.tree.data[i]).collect::<Vec<_>>();
+        let data = cluster
+            .iter()
+            .map(|&i| self.tree.data[i])
+            .collect::<Vec<_>>();
         Ok(data)
     }
 
@@ -155,7 +161,8 @@ where
 
 #[test]
 fn serde() {
-    let cluster: EuclideanClusterExtractor<f32, [f32; 3], 3> = EuclideanClusterExtractor::new(F3lClusterParameter::default());
+    let cluster: EuclideanClusterExtractor<f32, [f32; 3], 3> =
+        EuclideanClusterExtractor::new(F3lClusterParameter::default());
     let text = r#"{
         "parameter":{
             "tolerance":0.0,
@@ -165,6 +172,7 @@ fn serde() {
             "max_nb_cluster":0
         }
     }"#;
-    let cluster_serde: EuclideanClusterExtractor<f32, [f32; 3], 3> = serde_json::from_str(&text).unwrap();
+    let cluster_serde: EuclideanClusterExtractor<f32, [f32; 3], 3> =
+        serde_json::from_str(&text).unwrap();
     assert_eq!(cluster.parameter, cluster_serde.parameter);
 }

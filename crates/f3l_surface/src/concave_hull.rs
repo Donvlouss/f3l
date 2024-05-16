@@ -1,4 +1,8 @@
-use f3l_core::{apply_each, SimpleSliceMath, serde::{self, Deserialize, Serialize}};
+use f3l_core::{
+    apply_each,
+    serde::{self, Deserialize, Serialize},
+    SimpleSliceMath,
+};
 use f3l_segmentation::{
     sac_algorithm::{SacAlgorithm, SacAlgorithmParameter},
     sac_model::SacModel,
@@ -27,27 +31,29 @@ use crate::{Delaunay2D, Delaunay2DShape};
 /// assert_eq!(d3[0].mesh[0].point, [2, 0, 1]);
 /// ```
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
-pub struct ConcaveHull<const D: usize>
-{
+#[serde(crate = "self::serde")]
+pub struct ConcaveHull<const D: usize> {
     pub dim: usize,
     #[serde(skip_serializing)]
     #[serde(skip_deserializing)]
-    pub shapes: Vec<Delaunay2DShape>
+    pub shapes: Vec<Delaunay2DShape>,
 }
 
 impl<const D: usize> ConcaveHull<D> {
     pub fn new() -> Self {
         Self {
             dim: D,
-            shapes: vec![]
+            shapes: vec![],
         }
     }
 }
 
-impl ConcaveHull<2>
-{
-    pub fn compute<'a, T: f3l_core::BasicFloat, P>(&mut self, data: &'a Vec<P>, alpha: T) -> Vec<Delaunay2DShape>
+impl ConcaveHull<2> {
+    pub fn compute<'a, T: f3l_core::BasicFloat, P>(
+        &mut self,
+        data: &'a Vec<P>,
+        alpha: T,
+    ) -> Vec<Delaunay2DShape>
     where
         P: Into<[T; 2]> + Copy + std::ops::Index<usize, Output = T>,
         [T; 2]: Into<P>,
@@ -58,12 +64,15 @@ impl ConcaveHull<2>
     }
 }
 
-impl ConcaveHull<3>
-{
+impl ConcaveHull<3> {
     /// Compute with default [`SacAlgorithmParameter`].
     ///
     /// See [`ConcaveHull::compute_with_parameter`]
-    pub fn compute<'a, T: f3l_core::BasicFloat, P>(&mut self, data: &'a [P], alpha: T) -> Vec<Delaunay2DShape>
+    pub fn compute<'a, T: f3l_core::BasicFloat, P>(
+        &mut self,
+        data: &'a [P],
+        alpha: T,
+    ) -> Vec<Delaunay2DShape>
     where
         P: Into<[T; 3]> + Copy + std::ops::Index<usize, Output = T> + Send + Sync,
         [T; 3]: Into<P>,
@@ -76,7 +85,7 @@ impl ConcaveHull<3>
     /// 1. Find plane of data.
     /// 2. Compute `Axis Angle` of `Normal` to `+Z`, then rotate data, get `XY`, ignore `Z`.
     /// 3. Compute Concave Hull of 2d.
-    pub fn compute_with_parameter<T: f3l_core::BasicFloat, P> (
+    pub fn compute_with_parameter<T: f3l_core::BasicFloat, P>(
         &mut self,
         data: &[P],
         alpha: T,
@@ -161,8 +170,7 @@ fn serde() {
 
     let d2 = concave2d.compute(&p2, 1.0);
     assert_eq!(d2[0].mesh[0].point, [2, 0, 1]);
-    
+
     let d3 = concave3d.compute(&p3, 1.0);
     assert_eq!(d3[0].mesh[0].point, [2, 0, 1]);
-    
 }

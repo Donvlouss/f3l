@@ -1,12 +1,18 @@
-#[cfg(all(feature="core", not(feature="pure")))]
-use f3l_core::{BasicFloat, serde::{self, Deserialize, Serialize}};
-#[cfg(all(feature="pure", not(feature="core")))]
-use crate::{BasicFloat, serde::{self, Deserialize, Serialize}};
+#[cfg(all(feature = "pure", not(feature = "core")))]
+use crate::{
+    serde::{self, Deserialize, Serialize},
+    BasicFloat,
+};
+#[cfg(all(feature = "core", not(feature = "pure")))]
+use f3l_core::{
+    serde::{self, Deserialize, Serialize},
+    BasicFloat,
+};
 
 use crate::{OcDistance, OcFeature};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct OcLeaf<T: BasicFloat> {
     /// Root Leaf id
     pub root: Option<usize>,

@@ -1,6 +1,10 @@
 use std::ops::Index;
 
-use f3l_core::{rayon::iter::FromParallelIterator, BasicFloat, serde::{self, Deserialize, Serialize}};
+use f3l_core::{
+    rayon::iter::FromParallelIterator,
+    serde::{self, Deserialize, Serialize},
+    BasicFloat,
+};
 use f3l_search_tree::{KdTree, SearchBy, TreeRadiusResult, TreeResult};
 
 use crate::{F3lCluster, F3lClusterParameter};
@@ -26,7 +30,7 @@ use crate::{F3lCluster, F3lClusterParameter};
 ///     .collect::<Vec<_>>();
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct DBScan<'a, T, P, const D: usize>
 where
     T: BasicFloat,
@@ -165,7 +169,10 @@ where
             ));
         }
         let cluster = &self.clusters[id];
-        let data = cluster.iter().map(|&i| self.tree.data[i]).collect::<Vec<_>>();
+        let data = cluster
+            .iter()
+            .map(|&i| self.tree.data[i])
+            .collect::<Vec<_>>();
         Ok(data)
     }
 

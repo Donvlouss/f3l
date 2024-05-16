@@ -2,7 +2,10 @@ use std::ops::Index;
 
 use crate::{F3lFilter, F3lFilterInverse};
 use f3l_core::rayon::prelude::*;
-use f3l_core::{serde::{self, Serialize, Deserialize}, BasicFloat};
+use f3l_core::{
+    serde::{self, Deserialize, Serialize},
+    BasicFloat,
+};
 use f3l_search_tree::{KdTree, TreeSearch};
 
 /// Compute k-neighbors of all points, then compute mean and variance
@@ -17,7 +20,7 @@ use f3l_search_tree::{KdTree, TreeSearch};
 /// let out = filter.filter_instance();
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct StatisticalOutlierRemoval<'a, P, T: BasicFloat, const D: usize>
 where
     P: Into<[T; D]> + Clone + Copy + Index<usize, Output = T>,
@@ -54,7 +57,8 @@ where
     }
 }
 
-impl<'a, P, T: BasicFloat, const D: usize> F3lFilterInverse for StatisticalOutlierRemoval<'a, P, T, D>
+impl<'a, P, T: BasicFloat, const D: usize> F3lFilterInverse
+    for StatisticalOutlierRemoval<'a, P, T, D>
 where
     P: Into<[T; D]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
     [T; D]: Into<P>,
@@ -101,7 +105,7 @@ where
             self.tree = KdTree::<T, P>::new(D);
         }
         self.tree.set_data(data);
-        
+
         self.tree.build();
 
         use std::sync::{Arc, Mutex};
@@ -161,7 +165,7 @@ fn serde() {
         "multiply":2.0,
         "k_neighbors":20
     }"#;
-    let model_de: StatisticalOutlierRemoval<[f32;3],f32,3> = serde_json::from_str(text).unwrap();
+    let model_de: StatisticalOutlierRemoval<[f32; 3], f32, 3> = serde_json::from_str(text).unwrap();
     assert_eq!(model.negative, model_de.negative);
     assert_eq!(model.multiply, model_de.multiply);
     assert_eq!(model.k_neighbors, model_de.k_neighbors);

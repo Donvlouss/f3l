@@ -1,7 +1,10 @@
 use std::ops::Index;
 
 use f3l_core::rayon::prelude::*;
-use f3l_core::{serde::{self, Serialize, Deserialize}, BasicFloat};
+use f3l_core::{
+    serde::{self, Deserialize, Serialize},
+    BasicFloat,
+};
 use f3l_search_tree::{KdTree, SearchBy, TreeRadiusResult, TreeResult};
 
 use crate::{F3lFilter, F3lFilterInverse};
@@ -17,7 +20,7 @@ use crate::{F3lFilter, F3lFilterInverse};
 /// let out = filter.filter_instance();
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct RadiusOutlierRemoval<'a, P, T: BasicFloat, const D: usize>
 where
     P: Into<[T; D]> + Clone + Copy + Index<usize, Output = T>,
@@ -101,7 +104,7 @@ where
             self.tree = KdTree::<T, P>::new(D);
         }
         self.tree.set_data(data);
-        
+
         self.tree.build();
         let capacity = self.tree.data.len() / 10;
         let capacity = if capacity > 10 { capacity } else { 10 };
@@ -146,7 +149,7 @@ fn serde() {
         "radius":0.03,
         "threshold":20
     }"#;
-    let model_de: RadiusOutlierRemoval<[f32;3],f32,3> = serde_json::from_str(text).unwrap();
+    let model_de: RadiusOutlierRemoval<[f32; 3], f32, 3> = serde_json::from_str(text).unwrap();
     assert_eq!(model.negative, model_de.negative);
     assert_eq!(model.radius, model_de.radius);
     assert_eq!(model.threshold, model_de.threshold);

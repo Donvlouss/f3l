@@ -1,13 +1,13 @@
 use crate::F3lFilterInverse;
 
 use super::F3lFilter;
+use f3l_core::serde::{self, Deserialize, Serialize};
 use f3l_core::{get_minmax, BasicFloat};
-use f3l_core::serde::{self, Serialize, Deserialize};
 use std::{collections::HashMap, fmt::Debug};
 
 /// Build a `Dimension-wise` grid, compute mean of points per grid.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct VoxelGridParameter<T: BasicFloat, const D: usize> {
     bound: Vec<(T, T)>,
     inverse_div: Vec<T>,
@@ -25,9 +25,8 @@ impl<T: BasicFloat, const D: usize> VoxelGridParameter<T, D> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
-pub struct VoxelGrid<T: BasicFloat, const D: usize>
-{
+#[serde(crate = "self::serde")]
+pub struct VoxelGrid<T: BasicFloat, const D: usize> {
     pub leaf: Vec<T>,
     #[serde(skip_serializing)]
     #[serde(skip_deserializing)]
@@ -37,15 +36,13 @@ pub struct VoxelGrid<T: BasicFloat, const D: usize>
     voxel_map: HashMap<usize, Vec<usize>>,
 }
 
-impl<T: BasicFloat, const D: usize> Default for VoxelGrid<T, D>
-{
+impl<T: BasicFloat, const D: usize> Default for VoxelGrid<T, D> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T: BasicFloat, const D: usize> VoxelGrid<T, D>
-{
+impl<T: BasicFloat, const D: usize> VoxelGrid<T, D> {
     pub fn new() -> Self {
         Self {
             leaf: vec![T::zero(); D],
@@ -54,7 +51,7 @@ impl<T: BasicFloat, const D: usize> VoxelGrid<T, D>
         }
     }
 
-    pub fn with_data<P: Into<[T; D]>+ Copy>(leaf: &P) -> Self {
+    pub fn with_data<P: Into<[T; D]> + Copy>(leaf: &P) -> Self {
         let leaf: [T; D] = (*leaf).into();
         Self {
             leaf: leaf.iter().copied().collect(),
@@ -72,9 +69,9 @@ impl<T: BasicFloat, const D: usize> VoxelGrid<T, D>
         (0..D).for_each(|i| self.leaf[i] = leaf[i]);
     }
 
-    fn compute_bound<'a, P: Into<[T; D]>+Copy>(&mut self, data: &'a [P])
+    fn compute_bound<'a, P: Into<[T; D]> + Copy>(&mut self, data: &'a [P])
     where
-        [T; D]: Into<P>
+        [T; D]: Into<P>,
     {
         if data.is_empty() {
             return;
@@ -84,9 +81,9 @@ impl<T: BasicFloat, const D: usize> VoxelGrid<T, D>
         self.parameter.bound = min.into_iter().zip(max).map(|bd| bd).collect();
     }
 
-    pub fn leaf_check<'a, P: Into<[T; D]>+Copy>(&mut self, data: &'a [P]) -> bool
+    pub fn leaf_check<'a, P: Into<[T; D]> + Copy>(&mut self, data: &'a [P]) -> bool
     where
-        [T; D]: Into<P>
+        [T; D]: Into<P>,
     {
         if self.parameter.bound.is_empty() {
             self.compute_bound(data);

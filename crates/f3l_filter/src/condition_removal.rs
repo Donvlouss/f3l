@@ -3,7 +3,10 @@ use std::ops::{Bound, Range};
 use crate::F3lFilterInverse;
 
 use super::F3lFilter;
-use f3l_core::{serde::{self, Serialize, Deserialize}, BasicFloat};
+use f3l_core::{
+    serde::{self, Deserialize, Serialize},
+    BasicFloat,
+};
 
 type DirectionRange<T> = Vec<(usize, Range<Bound<T>>)>;
 
@@ -24,9 +27,8 @@ type DirectionRange<T> = Vec<(usize, Range<Bound<T>>)>;
 /// ```
 ///
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
-pub struct ConditionRemoval<T: BasicFloat>
-{
+#[serde(crate = "self::serde")]
+pub struct ConditionRemoval<T: BasicFloat> {
     pub negative: bool,
     pub bound: DirectionRange<T>,
     #[serde(skip_serializing)]
@@ -34,8 +36,7 @@ pub struct ConditionRemoval<T: BasicFloat>
     inliers: Vec<usize>,
 }
 
-impl<T: BasicFloat> Default for ConditionRemoval<T>
-{
+impl<T: BasicFloat> Default for ConditionRemoval<T> {
     fn default() -> Self {
         Self {
             negative: false,
@@ -45,8 +46,7 @@ impl<T: BasicFloat> Default for ConditionRemoval<T>
     }
 }
 
-impl<T: BasicFloat> ConditionRemoval<T>
-{
+impl<T: BasicFloat> ConditionRemoval<T> {
     // pub fn with_data(data: &'a Vec<P>, bound: &'a Vec<(usize, Bound<T>, Bound<T>)>) -> Self {
     pub fn with_data(bound: &DirectionRange<T>) -> Self {
         Self {
@@ -62,7 +62,6 @@ impl<T: BasicFloat> ConditionRemoval<T>
 }
 
 impl<T: BasicFloat> F3lFilterInverse for ConditionRemoval<T> {
-
     fn set_negative(&mut self, negative: bool) {
         self.negative = negative;
     }
@@ -89,7 +88,6 @@ where
     }
 
     fn apply_filter(&mut self, data: &'a Vec<P>) -> bool {
-
         use f3l_core::rayon::prelude::*;
         self.inliers = data
             .par_iter()

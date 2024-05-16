@@ -1,4 +1,7 @@
-use f3l_core::{BasicFloat, serde::{self, Deserialize, Serialize}};
+use f3l_core::{
+    serde::{self, Deserialize, Serialize},
+    BasicFloat,
+};
 use rand::Rng;
 
 mod sac_model_circle3d;
@@ -11,7 +14,7 @@ pub use sac_model_plane::*;
 pub use sac_model_sphere::*;
 
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub enum SacModelType {
     #[default]
     SacModelPlane,

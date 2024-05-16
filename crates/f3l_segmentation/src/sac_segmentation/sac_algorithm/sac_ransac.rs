@@ -1,6 +1,9 @@
 use std::sync::{Arc, Mutex};
 
-use f3l_core::{serde::{self, Deserialize, Serialize}, BasicFloat};
+use f3l_core::{
+    serde::{self, Deserialize, Serialize},
+    BasicFloat,
+};
 
 use super::{SacAlgorithm, SacAlgorithmGetSet, SacAlgorithmParameter};
 use crate::sac_model::SacModel;
@@ -9,7 +12,7 @@ use crate::sac_model::SacModel;
 ///
 /// See [`SacAlgorithmParameter`]
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct SacRansac {
     pub parameter: SacAlgorithmParameter,
     pub inliers: Vec<usize>,
@@ -18,14 +21,14 @@ pub struct SacRansac {
 impl SacAlgorithmGetSet for SacRansac {
     fn with_parameter(parameter: SacAlgorithmParameter) -> Self {
         Self {
-            parameter, inliers: vec![]
+            parameter,
+            inliers: vec![],
         }
     }
 
     fn get_inliers(&self) -> &Vec<usize> {
         &self.inliers
     }
-    
 }
 
 impl<'a, P: Copy, T, R> SacAlgorithm<'a, P, T, R> for SacRansac

@@ -3,15 +3,18 @@ mod kd_leaf;
 pub use kd_features::KdFeature;
 pub use kd_leaf::KdLeaf;
 
+#[cfg(all(feature = "pure", not(feature = "core")))]
 use crate::{
-    SearchBy, 
-    TreeHeapElement, TreeKnnResult, TreeRadiusResult,
-    TreeResult, TreeSearch,
+    serde::{self, Deserialize, Serialize},
+    BasicFloat,
 };
-#[cfg(all(feature="core", not(feature="pure")))]
-use f3l_core::{BasicFloat, rayon, serde::{self, Deserialize, Serialize}};
-#[cfg(all(feature="pure", not(feature="core")))]
-use crate::{BasicFloat, serde::{self, Deserialize, Serialize}};
+use crate::{SearchBy, TreeHeapElement, TreeKnnResult, TreeRadiusResult, TreeResult, TreeSearch};
+#[cfg(all(feature = "core", not(feature = "pure")))]
+use f3l_core::{
+    rayon,
+    serde::{self, Deserialize, Serialize},
+    BasicFloat,
+};
 use std::{borrow::Cow, cmp::Reverse, collections::BinaryHeap, ops::Index};
 
 /// KD-Tree Implement
@@ -100,7 +103,7 @@ where
 
         (node.left, node.right) = rayon::join(
             || Some(self.build_recursive(&mut data_l)),
-            || Some(self.build_recursive(&mut data_r))
+            || Some(self.build_recursive(&mut data_r)),
         );
         node.feature = split;
 
@@ -193,10 +196,8 @@ where
     }
 
     pub fn search<R: TreeResult>(&self, data: P, by: SearchBy, result: &mut R) {
-        let mut search_queue = BinaryHeap::with_capacity(std::cmp::max(
-            10,
-            (self.data.len() as f32).sqrt() as usize,
-        ));
+        let mut search_queue =
+            BinaryHeap::with_capacity(std::cmp::max(10, (self.data.len() as f32).sqrt() as usize));
 
         if self.root.is_none() {
             return;
@@ -296,10 +297,9 @@ where
 #[inline]
 fn distance<T: BasicFloat, P>(a: P, b: P, dim: usize) -> T
 where
-    P: Index<usize, Output = T> + Copy
+    P: Index<usize, Output = T> + Copy,
 {
-    (0..dim)
-        .fold(T::zero(), |acc,i| acc + (a[i] - b[i]).powi(2))
+    (0..dim).fold(T::zero(), |acc, i| acc + (a[i] - b[i]).powi(2))
 }
 
 impl<'a, T: BasicFloat, P> TreeSearch<P> for KdTree<'a, T, P>

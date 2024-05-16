@@ -1,19 +1,19 @@
 mod oc_features;
 mod oc_leaf;
 
-use std::{borrow::Cow, cmp::Reverse, collections::BinaryHeap, ops::Index};
-#[cfg(all(feature="core", not(feature="pure")))]
-use f3l_core::{get_minmax, BasicFloat, serde};
-#[cfg(all(feature="pure", not(feature="core")))]
-use crate::{BasicFloat, get_minmax};
+#[cfg(all(feature = "pure", not(feature = "core")))]
+use crate::{get_minmax, BasicFloat};
+#[cfg(all(feature = "core", not(feature = "pure")))]
+use f3l_core::{get_minmax, serde, BasicFloat};
 pub use oc_features::*;
 pub use oc_leaf::*;
+use std::{borrow::Cow, cmp::Reverse, collections::BinaryHeap, ops::Index};
 
 use crate::{SearchBy, TreeHeapElement, TreeKnnResult, TreeRadiusResult, TreeResult, TreeSearch};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(crate="serde")]
+#[serde(crate = "serde")]
 pub struct OcTree<'a, T: BasicFloat, P>
 where
     P: Index<usize, Output = T> + Clone + Copy + Serialize,
@@ -29,7 +29,7 @@ where
 impl<'a, T: BasicFloat, P> OcTree<'a, T, P>
 where
     P: Into<[T; 3]> + Index<usize, Output = T> + Clone + Copy + Serialize,
-    [T; 3]: Into<P>
+    [T; 3]: Into<P>,
 {
     pub fn new(max_points: usize, depth: usize) -> Self {
         Self {
@@ -69,7 +69,6 @@ where
     }
 
     pub fn build(&mut self) {
-
         self.compute_bounds();
         let root = OcLeaf {
             root: None,
@@ -98,9 +97,7 @@ where
         match self.nodes[i_node].feature {
             OcFeature::Split(nodes) => {
                 // Unwrap the option, cause this node must be a `Split` type.
-                let id = self.nodes[i_node]
-                    .locate_at(self.data[i_point])
-                    .unwrap();
+                let id = self.nodes[i_node].locate_at(self.data[i_point]).unwrap();
                 self.insert(i_point, depth + 1, nodes[id]);
             }
             OcFeature::Leaf => {
@@ -228,7 +225,11 @@ where
         // } else {
         //     return;
         // };
-        let data = if !self.data.is_empty() { &self.data } else {return;};
+        let data = if !self.data.is_empty() {
+            &self.data
+        } else {
+            return;
+        };
         let mut search_queue =
             BinaryHeap::with_capacity(std::cmp::max(10, (data.len() as f32).sqrt() as usize));
 

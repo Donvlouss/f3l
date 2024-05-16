@@ -1,9 +1,12 @@
 use std::ops::Index;
 
 use f3l_core::{
-    compute_covariance_matrix, glam::Vec3, matrix3x3::*, rayon::prelude::*, BasicFloat,
-    GenericArray,
-    serde::{self, Deserialize, Serialize}
+    compute_covariance_matrix,
+    glam::Vec3,
+    matrix3x3::*,
+    rayon::prelude::*,
+    serde::{self, Deserialize, Serialize},
+    BasicFloat, GenericArray,
 };
 use f3l_search_tree::*;
 
@@ -31,7 +34,7 @@ use f3l_search_tree::*;
 /// ```
 ///
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct NormalEstimation<'a, P, T: BasicFloat>
 where
     P: Into<[T; 3]> + Clone + Copy + Index<usize, Output = T>,
@@ -127,7 +130,8 @@ where
 
 #[test]
 fn serde() {
-    let estimator_r: NormalEstimation<[f32; 3], f32> = NormalEstimation::new(SearchBy::Radius(0.1f32));
+    let estimator_r: NormalEstimation<[f32; 3], f32> =
+        NormalEstimation::new(SearchBy::Radius(0.1f32));
     let estimator_c: NormalEstimation<[f32; 3], f32> = NormalEstimation::new(SearchBy::Count(10));
 
     let text_r = r#"{"method":{"Radius":0.1},"fast":true}"#;

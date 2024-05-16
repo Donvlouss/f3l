@@ -1,5 +1,9 @@
 use super::{ModelCoefficient, SacModel};
-use f3l_core::{apply_both, serde::{self, Deserialize, Serialize}, BasicFloat, SimpleSliceMath};
+use f3l_core::{
+    apply_both,
+    serde::{self, Deserialize, Serialize},
+    BasicFloat, SimpleSliceMath,
+};
 
 /// Compute a 3d plane model.
 /// Any 3 points(not overlay or parallel) span a plane.
@@ -15,7 +19,7 @@ where
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct PlaneCoefficient<T: BasicFloat> {
     pub coefficients: [T; 4],
 }

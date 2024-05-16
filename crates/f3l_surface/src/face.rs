@@ -2,7 +2,7 @@ use f3l_core::serde::{self, Deserialize, Serialize};
 
 /// Face Types.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub enum FaceType<T> {
     /// Vertex Id of data.
     Id(usize),
@@ -12,21 +12,21 @@ pub enum FaceType<T> {
 
 /// Generic Face object.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct Face<T> {
     pub point: [FaceType<T>; 3],
 }
 
 /// Face Instance object.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct FaceInstanceType<P: Copy> {
     pub point: [P; 3],
 }
 
 /// Face Id object.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct FaceIdType {
     pub point: [usize; 3],
 }

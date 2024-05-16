@@ -1,8 +1,14 @@
 use std::{
-    borrow::Cow, collections::{HashMap, HashSet}, ops::Index
+    borrow::Cow,
+    collections::{HashMap, HashSet},
+    ops::Index,
 };
 
-use f3l_core::{apply_both, serde::{self, Deserialize, Serialize}, BasicFloat, Line, SimpleSliceMath};
+use f3l_core::{
+    apply_both,
+    serde::{self, Deserialize, Serialize},
+    BasicFloat, Line, SimpleSliceMath,
+};
 
 use crate::{Convex, ConvexHull3D2D, ConvexHullId, FaceIdType};
 
@@ -11,7 +17,7 @@ const EPS: f32 = 1e-5;
 /// Convex Hull of 3d data.
 /// A `QuickHull` implement.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct ConvexHull3D<'a, T: BasicFloat, P>
 where
     P: Into<[T; 3]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
@@ -419,7 +425,7 @@ where
     fn new() -> Self {
         Self {
             data: Cow::Owned(vec![]),
-            hulls: ConvexHullId::D3(vec![])
+            hulls: ConvexHullId::D3(vec![]),
         }
     }
 
@@ -429,7 +435,7 @@ where
             hulls: ConvexHullId::D3(vec![]),
         }
     }
-    
+
     fn set_data(&mut self, data: &'a Vec<P>) {
         self.data = Cow::Borrowed(data);
     }

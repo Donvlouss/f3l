@@ -1,4 +1,7 @@
-use f3l_core::{BasicFloat, SimpleSliceMath, serde::{self, Deserialize, Serialize}};
+use f3l_core::{
+    serde::{self, Deserialize, Serialize},
+    BasicFloat, SimpleSliceMath,
+};
 
 use super::{ModelCoefficient, SacModel};
 
@@ -15,9 +18,9 @@ where
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct LineCoefficient<T: BasicFloat> {
-    pub coefficients: ([T; 3], [T; 3])
+    pub coefficients: ([T; 3], [T; 3]),
 }
 
 impl<T: BasicFloat> ModelCoefficient for LineCoefficient<T> {

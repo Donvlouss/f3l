@@ -1,5 +1,9 @@
 use f3l_core::{
-    compute_covariance_matrix, glam::{Mat3A, Vec3A}, jacobi_eigen_square_n, serde::{self, Deserialize, Serialize}, BasicFloat, EigenSet, F3lCast, SimpleSliceMath
+    compute_covariance_matrix,
+    glam::{Mat3A, Vec3A},
+    jacobi_eigen_square_n,
+    serde::{self, Deserialize, Serialize},
+    BasicFloat, EigenSet, F3lCast, SimpleSliceMath,
 };
 use std::{borrow::Cow, ops::Index};
 
@@ -7,7 +11,7 @@ use crate::{Convex, ConvexHull2D, ConvexHullId};
 
 /// This structure is using to process 3D data which is near a plane.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[serde(crate="self::serde")]
+#[serde(crate = "self::serde")]
 pub struct ConvexHull3D2D<'a, T: BasicFloat, P>
 where
     P: Into<[T; 3]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
