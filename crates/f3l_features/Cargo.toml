@@ -29,7 +29,7 @@ rand = "0.8"
 
 kiss3d = { version = "0.35.0", optional = true }
 nalgebra   = { version = "0.32", features = ["rand", "glam025"], optional = true}
-f3l_segmentation = { path = "../f3l_segmentation", optional = true}
+f3l_segmentation = { path = "../f3l_segmentation", version = "0.2", optional = true}
 
 [dev-dependencies]
 ply-rs = "0.1.3"
