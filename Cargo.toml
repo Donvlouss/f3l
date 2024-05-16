@@ -2,6 +2,14 @@
 name = "f3l"
 version = "0.3.0"
 edition = "2021"
+authors = ["Donvlouss"]
+
+license = "MIT OR Apache-2.0"
+description = "3D Point Cloud Library"
+readme = "README.md"
+repository = "https://github.com/Donvlouss/f3l"
+keywords = ["3d", "pointcloud", "point-cloud"]
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -35,13 +43,13 @@ members = [
 ]
 
 [dependencies]
-f3l_core ={ path = "crates/f3l_core", optional = true }
-f3l_features ={ path = "crates/f3l_features", optional = true }
-f3l_filter ={ path = "crates/f3l_filter", optional = true }
-f3l_glam ={ path = "crates/f3l_glam", optional = true }
-f3l_search_tree ={ path = "crates/f3l_search_tree", optional = true }
-f3l_segmentation ={ path = "crates/f3l_segmentation", optional = true }
-f3l_surface ={ path = "crates/f3l_surface", optional = true }
+f3l_core ={ path = "crates/f3l_core", version = "0.3", optional = true }
+f3l_features ={ path = "crates/f3l_features", version = "0.2", optional = true }
+f3l_filter ={ path = "crates/f3l_filter", version = "0.2", optional = true }
+f3l_glam ={ path = "crates/f3l_glam", version = "0.1", optional = true }
+f3l_search_tree ={ path = "crates/f3l_search_tree", version = "0.3", optional = true }
+f3l_segmentation ={ path = "crates/f3l_segmentation", version = "0.2", optional = true }
+f3l_surface ={ path = "crates/f3l_surface", version = "0.2", optional = true }
 
 [dev-dependencies]
 criterion = "0.5.1"

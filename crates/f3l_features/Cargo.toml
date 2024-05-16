@@ -16,8 +16,8 @@ app_kiss3d = [
 ]
 
 [dependencies]
-f3l_core = { path = "../f3l_core"}
-f3l_search_tree = { path = "../f3l_search_tree" }
+f3l_core = { path = "../f3l_core", version = "0.3"}
+f3l_search_tree = { path = "../f3l_search_tree", version = "0.3"}
 rand = "0.8"
 
 kiss3d = { version = "0.35.0", optional = true }
