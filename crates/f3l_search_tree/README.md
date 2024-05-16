@@ -21,23 +21,21 @@ pub enum SearchBy {
 ## Data
 * Array
 ```rust
-#[test]
-        pub fn test_insert_data_array() {
-            let mut tree = KdTree::<f32, 3>::new();
-            tree.set_data(&vec![[1f32, 2f32, 3f32], [4f32, 5f32, 6f32]]);
+pub fn test_insert_data_array() {
+    let mut tree = KdTree::<f32, 3>::new();
+    tree.set_data(&vec![[1f32, 2f32, 3f32], [4f32, 5f32, 6f32]]);
 
-            let mut d = 1.0f32;
-            tree.data.iter().for_each(|element| {
-                element.iter().for_each(|e| {
-                    assert_relative_eq!(d, e);
-                    d += 1f32;
-                })
-            });
-        }
+    let mut d = 1.0f32;
+    tree.data.iter().for_each(|element| {
+        element.iter().for_each(|e| {
+            assert_relative_eq!(d, e);
+            d += 1f32;
+        })
+    });
+}
 ```
 * Glam:
 ```rust
-#[test]
 pub fn test_insert_data_glam() {
     let mut tree = KdTree::<f32, 3>::new();
     tree.set_data(&vec![Vec3::new(1.0, 2.0, 3.0), Vec3::new(4.0, 5.0, 6.0)]);
@@ -53,7 +51,6 @@ pub fn test_insert_data_glam() {
 ```
 * Nalgebra:
 ```rust
-#[test]
 pub fn test_insert_data_nalgebra() {
     let mut tree = KdTree::<f32, 3>::new();
     tree.set_data(&vec![
@@ -97,7 +94,7 @@ impl From<MyStruct> for [f32; 3] {
 
 #[test]
 pub fn test_insert_data_custom() {
-    let mut tree = KdTree::<f32, 3>::new();
+    let mut tree = KdTree::<f32, MyStruct>::new();
     tree.set_data(&vec![
         MyStruct {
             x: 1.0f32,

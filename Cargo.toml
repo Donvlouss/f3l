@@ -1,6 +1,6 @@
 [package]
 name = "f3l"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -11,12 +11,11 @@ doctest = false
 [features]
 default = ["all"]
 all = [
-    "f3l_core",
-    "f3l_features",
-    "f3l_filter",
-    "f3l_glam",
-    "f3l_search_tree",
-    "f3l_segmentation",
+    "core",
+    "features",
+    "filter",
+    "segmentation",
+    "surface"
 ]
 core = ["f3l_core", "f3l_glam", "f3l_search_tree"]
 filter = ["f3l_filter", "f3l_core", "f3l_glam", "f3l_search_tree"]

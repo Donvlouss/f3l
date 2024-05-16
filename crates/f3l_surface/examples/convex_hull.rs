@@ -36,7 +36,7 @@ fn main() {
         })
         .collect::<Vec<_>>();
 
-    let mut cvh = ConvexHull::new(&points);
+    let mut cvh = ConvexHull::with_data(&points);
     cvh.compute();
 
     let hulls = if let ConvexHullId::D2(hulls) = cvh.hulls() {

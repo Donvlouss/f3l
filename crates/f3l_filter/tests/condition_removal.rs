@@ -12,8 +12,8 @@ mod filter {
         fn condition_removal_1d() {
             let data = (0..10usize).map(|i| [i as f32]).collect::<Vec<_>>();
             let bound = vec![(0, (Bound::Included(0.)..Bound::Excluded(6.)))];
-            let mut filter = ConditionRemoval::with_data(&data, &bound);
-            let out = filter.filter();
+            let mut filter = ConditionRemoval::with_data(&bound);
+            let out = filter.filter(&data);
             assert_eq!(out.len(), 6);
         }
 
@@ -24,8 +24,8 @@ mod filter {
                 (0, (Bound::Included(0.)..Bound::Excluded(6.))),
                 (0, (Bound::Included(4.)..Bound::Unbounded)),
             ];
-            let mut filter = ConditionRemoval::with_data(&data, &bound);
-            let out = filter.filter();
+            let mut filter = ConditionRemoval::with_data(&bound);
+            let out = filter.filter(&data);
             assert_eq!(out.len(), 2);
         }
     }
@@ -55,8 +55,8 @@ mod filter {
                 (2, Bound::Included(60.)..Bound::Unbounded),
             ];
 
-            let mut filter = ConditionRemoval::with_data(&data, &range);
-            let out = filter.filter();
+            let mut filter = ConditionRemoval::with_data(&range);
+            let out = filter.filter(&data);
 
             assert_eq!(out.len(), size);
         }

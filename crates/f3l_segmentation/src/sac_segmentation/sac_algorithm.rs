@@ -1,19 +1,24 @@
 mod sac_ransac;
 pub use sac_ransac::*;
 
-use f3l_core::BasicFloat;
+use f3l_core::{
+    serde::{self, Deserialize, Serialize},
+    BasicFloat,
+};
 
 use super::sac_model::SacModel;
 
 /// Algorithm of Optimization
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(crate = "self::serde")]
 pub enum SacAlgorithmType {
     #[default]
     RANSAC,
 }
 
 /// Parameter of algorithm of Optimization
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[serde(crate = "self::serde")]
 pub struct SacAlgorithmParameter {
     /// Probability: default `0.99`
     pub probability: f32,
@@ -37,12 +42,13 @@ impl Default for SacAlgorithmParameter {
 }
 
 /// A trait to get inliers data.
-pub trait SacAlgorithmGetter {
+pub trait SacAlgorithmGetSet {
+    fn with_parameter(parameter: SacAlgorithmParameter) -> Self;
     fn get_inliers(&self) -> &Vec<usize>;
 }
 
 /// A trait to support algorithm computing.
-pub trait SacAlgorithm<'a, P: Copy, T, R>: SacAlgorithmGetter
+pub trait SacAlgorithm<'a, P: Copy, T, R>: SacAlgorithmGetSet
 where
     T: BasicFloat,
     R: SacModel<'a, P, T>,

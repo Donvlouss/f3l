@@ -55,11 +55,11 @@ fn main() {
 
     let vertices = load_ply("../../data/table_scene_lms400.ply");
 
-    let mut filter = VoxelGrid::with_data(&vertices, &[0.05; 3]);
+    let mut filter = VoxelGrid::with_data(&[0.05; 3]);
     use std::time::Instant;
     let start = Instant::now();
 
-    let out = filter.filter_instance();
+    let out = filter.filter_instance(&vertices);
 
     let end = start.elapsed().as_millis();
     println!("Elapsed: {}", end);

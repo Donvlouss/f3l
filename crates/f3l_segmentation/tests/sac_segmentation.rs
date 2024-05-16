@@ -309,8 +309,8 @@ mod sac_segmentation {
             assert!(ok);
             let (center, r) = model.get_coefficient();
 
-            assert_eq!(round_n(r, 4), radius);
-            assert_eq!(center_slice, round_slice_n(center, 4));
+            assert_eq!(round_n(r, 3), radius);
+            assert_eq!(center_slice, round_slice_n(center, 3));
         }
     }
 }

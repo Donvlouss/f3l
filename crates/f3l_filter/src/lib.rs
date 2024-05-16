@@ -4,18 +4,20 @@ mod radius_outlier_removal;
 mod statistical_outlier_removal;
 mod voxel_grid;
 
-/// A Trait for Filters
-pub trait F3lFilter<'a, P> {
+pub trait F3lFilterInverse {
     /// if true, get outlier else inlier
     fn set_negative(&mut self, negative: bool);
-    fn set_data(&mut self, data: &'a [P]);
+}
+
+/// A Trait for Filters
+pub trait F3lFilter<'a, P, const D: usize>: F3lFilterInverse {
     /// Return: Indices of inlier or outlier
-    fn filter(&mut self) -> Vec<usize>;
+    fn filter(&mut self, data: &'a Vec<P>) -> Vec<usize>;
     /// Return: data of inlier or outlier
-    fn filter_instance(&mut self) -> Vec<P>;
+    fn filter_instance(&mut self, data: &'a Vec<P>) -> Vec<P>;
     /// Call by `filter` or `filter_instance`.
     /// Use `filter` or `filter_instance` directly instead of call this.
-    fn apply_filter(&mut self) -> bool;
+    fn apply_filter(&mut self, data: &'a Vec<P>) -> bool;
 }
 
 pub use condition_removal::ConditionRemoval;

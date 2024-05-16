@@ -51,8 +51,8 @@ mod filter {
         #[test]
         fn radius_outlier_removal() {
             let data = vec![[1f32], [3.], [4.], [5.], [7.]];
-            let mut filter = RadiusOutlierRemoval::with_data(1.5f32, 2, &data);
-            let out = filter.filter_instance();
+            let mut filter = RadiusOutlierRemoval::new(1.5f32, 2);
+            let out = filter.filter_instance(&data);
             let mut count = 3f32 + 4. + 5.;
             out.into_iter().for_each(|v| count -= v[0]);
             assert_relative_eq!(count, 0f32);
@@ -71,8 +71,8 @@ mod filter {
             let threshold = 5usize;
 
             let mut brute_force_result = brute_force(&data, r, threshold);
-            let mut filter = RadiusOutlierRemoval::with_data(r, threshold, &data);
-            let mut out = filter.filter();
+            let mut filter = RadiusOutlierRemoval::new(r, threshold);
+            let mut out = filter.filter(&data);
 
             brute_force_result.sort();
             out.sort();
@@ -130,8 +130,8 @@ mod filter {
                 return;
             }
             let vertices = load_ply("../../data/table_scene_lms400.ply");
-            let mut filter = RadiusOutlierRemoval::with_data(0.003f32, 5, &vertices);
-            let out = filter.filter_instance();
+            let mut filter = RadiusOutlierRemoval::new(0.003f32, 5);
+            let out = filter.filter_instance(&vertices);
 
             assert!(!out.is_empty());
         }

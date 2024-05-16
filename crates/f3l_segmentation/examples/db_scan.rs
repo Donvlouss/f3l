@@ -89,8 +89,8 @@ fn main() {
         max_nb_data: vertices.len(),
         max_nb_cluster: 5,
     };
-    let mut extractor = DBScan::with_data(parameter, &vertices);
-    let clusters = extractor.extract();
+    let mut extractor = DBScan::new(parameter);
+    let clusters = extractor.extract(&vertices);
 
     let colors = (0..clusters.len())
         .map(|_| random_color())

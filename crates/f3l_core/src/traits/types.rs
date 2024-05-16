@@ -1,8 +1,9 @@
 use std::ops::{Index, IndexMut};
 
 use num_traits::{Float, Num, NumAssign, NumOps};
+use serde::Serialize;
 
-pub trait BasicFloat: Float + NumOps + NumAssign + Send + Sync + Copy + Clone {}
+pub trait BasicFloat: Float + NumOps + NumAssign + Send + Sync + Copy + Clone + Serialize {}
 impl BasicFloat for f32 {}
 impl BasicFloat for f64 {}
 

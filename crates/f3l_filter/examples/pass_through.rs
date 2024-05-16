@@ -57,14 +57,13 @@ fn main() {
     let vertices = load_ply("../../data/table_scene_lms400.ply");
 
     let mut filter = PassThrough::with_data(
-        &vertices,
         Range {
             start: Bound::Included(0.),
             end: Bound::Included(0.5),
         },
         0,
     );
-    let out = filter.filter_instance();
+    let out = filter.filter_instance(&vertices);
 
     while window.render() {
         out.iter().for_each(|v| {

@@ -1,4 +1,8 @@
-use f3l_core::{apply_each, SimpleSliceMath};
+use f3l_core::{
+    apply_each,
+    serde::{self, Deserialize, Serialize},
+    SimpleSliceMath,
+};
 use f3l_segmentation::{
     sac_algorithm::{SacAlgorithm, SacAlgorithmParameter},
     sac_model::SacModel,
@@ -18,52 +22,62 @@ use crate::{Delaunay2D, Delaunay2DShape};
 /// let p2 = [Vec2::ZERO, Vec2::X, Vec2::Y];
 /// let p3 = [[1_f32, 0., 0.], [0., 1., 0.], [0., 0., 1.]];
 ///
-/// let mut concave2d = ConcaveHull::new_2d(&p2);
-/// let d2 = concave2d.compute(1.0);
+/// let mut concave2d = ConcaveHull::<2>::new();
+/// let d2 = concave2d.compute(&p2, 1.0);
 /// assert_eq!(d2[0].mesh[0].point, [2, 0, 1]);
 ///
-/// let mut concave3d = ConcaveHull::new_3d(&p3);
-/// let d3 = concave3d.compute(1.0);
+/// let mut concave3d = ConcaveHull::<3>::new();
+/// let d3 = concave3d.compute(&p3, 1.0);
 /// assert_eq!(d3[0].mesh[0].point, [2, 0, 1]);
 /// ```
-#[derive(Debug, Clone)]
-pub struct ConcaveHull<'a, T: f3l_core::BasicFloat, P, const D: usize>
-where
-    P: Into<[T; D]> + Copy + std::ops::Index<usize, Output = T>,
-{
-    data: &'a [P],
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(crate = "self::serde")]
+pub struct ConcaveHull<const D: usize> {
+    pub dim: usize,
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
+    pub shapes: Vec<Delaunay2DShape>,
 }
 
-impl<'a, T: f3l_core::BasicFloat, P> ConcaveHull<'a, T, P, 2>
-where
-    P: Into<[T; 2]> + Copy + std::ops::Index<usize, Output = T>,
-    [T; 2]: Into<P>,
-{
-    pub fn new_2d(data: &'a [P]) -> Self {
-        Self { data }
+impl<const D: usize> ConcaveHull<D> {
+    pub fn new() -> Self {
+        Self {
+            dim: D,
+            shapes: vec![],
+        }
     }
+}
 
-    pub fn compute(&mut self, alpha: T) -> Vec<Delaunay2DShape> {
-        let mut delaunay = Delaunay2D::new(self.data);
+impl ConcaveHull<2> {
+    pub fn compute<T: f3l_core::BasicFloat, P>(
+        &mut self,
+        data: &Vec<P>,
+        alpha: T,
+    ) -> Vec<Delaunay2DShape>
+    where
+        P: Into<[T; 2]> + Copy + std::ops::Index<usize, Output = T>,
+        [T; 2]: Into<P>,
+    {
+        let mut delaunay = Delaunay2D::new(data);
         delaunay.compute(alpha);
         delaunay.shapes
     }
 }
 
-impl<'a, T: f3l_core::BasicFloat, P> ConcaveHull<'a, T, P, 3>
-where
-    P: Into<[T; 3]> + Copy + std::ops::Index<usize, Output = T> + Send + Sync,
-    [T; 3]: Into<P>,
-{
-    pub fn new_3d(data: &'a [P]) -> Self {
-        Self { data }
-    }
-
+impl ConcaveHull<3> {
     /// Compute with default [`SacAlgorithmParameter`].
     ///
     /// See [`ConcaveHull::compute_with_parameter`]
-    pub fn compute(&mut self, alpha: T) -> Vec<Delaunay2DShape> {
-        self.compute_with_parameter(alpha, SacAlgorithmParameter::default())
+    pub fn compute<T: f3l_core::BasicFloat, P>(
+        &mut self,
+        data: &[P],
+        alpha: T,
+    ) -> Vec<Delaunay2DShape>
+    where
+        P: Into<[T; 3]> + Copy + std::ops::Index<usize, Output = T> + Send + Sync,
+        [T; 3]: Into<P>,
+    {
+        self.compute_with_parameter(data, alpha, SacAlgorithmParameter::default())
     }
 
     /// Compute concave hull with parameter of plane.
@@ -71,13 +85,18 @@ where
     /// 1. Find plane of data.
     /// 2. Compute `Axis Angle` of `Normal` to `+Z`, then rotate data, get `XY`, ignore `Z`.
     /// 3. Compute Concave Hull of 2d.
-    pub fn compute_with_parameter(
+    pub fn compute_with_parameter<T: f3l_core::BasicFloat, P>(
         &mut self,
+        data: &[P],
         alpha: T,
         parameter: SacAlgorithmParameter,
-    ) -> Vec<Delaunay2DShape> {
+    ) -> Vec<Delaunay2DShape>
+    where
+        P: Into<[T; 3]> + Copy + std::ops::Index<usize, Output = T> + Send + Sync,
+        [T; 3]: Into<P>,
+    {
         use f3l_core::glam::{Mat3A, Vec3, Vec3A};
-        let mut model = f3l_segmentation::sac_model::SacModelPlane::with_data(&self.data);
+        let mut model = f3l_segmentation::sac_model::SacModelPlane::with_data(data);
         let mut algorithm = f3l_segmentation::sac_algorithm::SacRansac {
             parameter,
             inliers: vec![],
@@ -106,8 +125,7 @@ where
             ),
             angle.to_f32().unwrap(),
         );
-        let points = self
-            .data
+        let points = data
             .iter()
             .map(|p| {
                 let p = mat
@@ -129,14 +147,30 @@ where
 #[test]
 fn test() {
     use f3l_core::glam::Vec2;
-    let p2 = [Vec2::ZERO, Vec2::X, Vec2::Y];
-    let p3 = [[1_f32, 0., 0.], [0., 1., 0.], [0., 0., 1.]];
+    let p2 = vec![Vec2::ZERO, Vec2::X, Vec2::Y];
+    let p3 = vec![[1_f32, 0., 0.], [0., 1., 0.], [0., 0., 1.]];
 
-    let mut concave2d = ConcaveHull::new_2d(&p2);
-    let d2 = concave2d.compute(1.0);
+    let mut concave2d = ConcaveHull::<2>::new();
+    let d2 = concave2d.compute(&p2, 1.0);
     assert_eq!(d2[0].mesh[0].point, [2, 0, 1]);
 
-    let mut concave3d = ConcaveHull::new_3d(&p3);
-    let d3 = concave3d.compute(1.0);
+    let mut concave3d = ConcaveHull::<3>::new();
+    let d3 = concave3d.compute(&p3, 1.0);
+    assert_eq!(d3[0].mesh[0].point, [2, 0, 1]);
+}
+
+#[test]
+fn serde() {
+    use f3l_core::glam::Vec2;
+    let p2 = vec![Vec2::ZERO, Vec2::X, Vec2::Y];
+    let p3 = vec![[1_f32, 0., 0.], [0., 1., 0.], [0., 0., 1.]];
+
+    let mut concave2d: ConcaveHull<2> = serde_json::from_str(r#"{"dim":2}"#).unwrap();
+    let mut concave3d: ConcaveHull<3> = serde_json::from_str(r#"{"dim":3}"#).unwrap();
+
+    let d2 = concave2d.compute(&p2, 1.0);
+    assert_eq!(d2[0].mesh[0].point, [2, 0, 1]);
+
+    let d3 = concave3d.compute(&p3, 1.0);
     assert_eq!(d3[0].mesh[0].point, [2, 0, 1]);
 }

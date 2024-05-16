@@ -9,8 +9,8 @@ mod filter {
         #[test]
         fn voxel_grid_1d() {
             let data = (0..10).map(|i| [i as f32]).collect::<Vec<_>>();
-            let mut filter = VoxelGrid::with_data(&data, &[2f32]);
-            let out = filter.filter_instance();
+            let mut filter = VoxelGrid::with_data(&[2f32]);
+            let out = filter.filter_instance(&data);
 
             assert_eq!(out.len(), 5);
             (0..5).for_each(|i| {
@@ -40,8 +40,8 @@ mod filter {
             let leaf = [5f32; 3];
             let size = (100f32 / 5.0).powi(3) as usize;
 
-            let mut filter = VoxelGrid::with_data(&data, &leaf.into());
-            let out = filter.filter_instance();
+            let mut filter = VoxelGrid::with_data(&leaf);
+            let out = filter.filter_instance(&data);
 
             assert_eq!(size, out.len());
         }

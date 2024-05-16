@@ -1,6 +1,6 @@
 [package]
 name = "f3l_segmentation"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -24,6 +24,7 @@ nalgebra   = { version = "0.32", features = ["rand", "glam025"], optional = true
 
 [dev-dependencies]
 ply-rs = "0.1.3"
+serde_json = "1"
 
 [[example]]
 name = "euclidean_cluster_extraction"

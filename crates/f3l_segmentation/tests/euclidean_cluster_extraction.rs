@@ -17,8 +17,8 @@ mod segmentation {
                 max_nb_cluster: 10,
             };
 
-            let mut extractor = EuclideanClusterExtractor::with_data(parameter, &data);
-            let cluster = extractor.extract();
+            let mut extractor = EuclideanClusterExtractor::new(parameter);
+            let cluster = extractor.extract(&data);
             assert_eq!(cluster.len(), 3);
         }
     }
@@ -75,8 +75,8 @@ mod segmentation {
                 max_nb_data: 25000,
                 max_nb_cluster: 5,
             };
-            let mut extractor = EuclideanClusterExtractor::with_data(parameter, &vertices);
-            let clusters = extractor.extract();
+            let mut extractor = EuclideanClusterExtractor::new(parameter);
+            let clusters = extractor.extract(&vertices);
             assert_eq!(clusters.len(), 5);
         }
     }

@@ -87,7 +87,7 @@ fn main() {
     let vertices = load_ply("../../data/table_voxel_down.ply");
 
     // Use Wrapper to handle 2d or 3d
-    let mut cvh = ConvexHull::new(&vertices);
+    let mut cvh = ConvexHull::with_data(&vertices);
 
     // Or use `ConvexHull3D` directly.
     // let mut cvh = ConvexHull3D::new(&vertices);

@@ -1,6 +1,6 @@
 [package]
 name = "f3l_search_tree"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -10,7 +10,7 @@ doctest = false
 [features]
 default = ["core"]
 core = ["f3l_core"]
-pure = ["num-traits", "rayon"]
+pure = ["num-traits", "rayon", "serde"]
 app_kiss3d = [
     "kiss3d",
     "nalgebra",
@@ -24,12 +24,14 @@ kiss3d = { version = "0.35.0", optional = true }
 
 num-traits = {version = "0.2.17", optional = true}
 rayon = {version = "1.8", optional = true}
+serde = {version = "1.0", features = ["serde_derive"], optional = true}
 
 [dev-dependencies]
 nalgebra = { version = "0.32", features = ["glam025"]}
 approx = "0.5"
 ply-rs = "0.1.3"
 rand = "0.8"
+serde_json = "1"
 
 [[example]]
 name = "search_colorize"

@@ -28,13 +28,13 @@ let p7 = p4 + obb.tertiary * obb.length[2] * 2.;
 Normal Search Method [KDTree]
 ```rust
 // Radius
-let mut estimator = NormalEstimation::with_data(SearchBy::Radius(0.08f32), &vertices);
+let mut estimator = NormalEstimation::new(SearchBy::Radius(0.08f32));
 // KNN
-let mut estimator = NormalEstimation::with_data(SearchBy::Count(10), &vertices);
+let mut estimator = NormalEstimation::new(SearchBy::Count(10));
 ```
 ```rust
 // Compute!
-if !estimator.compute() {
+if !estimator.compute(&vertices) {
     println!("Compute Normal Failed. Exit...");
     return;
 }

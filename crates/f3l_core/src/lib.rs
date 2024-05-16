@@ -11,5 +11,7 @@ pub use utils::*;
 pub use f3l_glam::glam;
 pub use f3l_glam::*;
 pub use rayon;
+pub use serde;
+pub use serde_arrays;
 
 pub type Line = (usize, usize);

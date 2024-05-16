@@ -3,15 +3,19 @@ mod kd_leaf;
 pub use kd_features::KdFeature;
 pub use kd_leaf::KdLeaf;
 
+#[cfg(all(feature = "pure", not(feature = "core")))]
 use crate::{
-    SearchBy, SearchQueue, TreeFarthestSearch, TreeHeapElement, TreeKnnResult, TreeRadiusResult,
-    TreeResult, TreeSearch,
+    serde::{self, Deserialize, Serialize},
+    BasicFloat,
 };
-#[cfg(all(feature="core", not(feature="pure")))]
-use f3l_core::{BasicFloat, rayon};
-#[cfg(all(feature="pure", not(feature="core")))]
-use crate::BasicFloat;
-use std::{cmp::Reverse, collections::BinaryHeap, ops::Index};
+use crate::{SearchBy, TreeHeapElement, TreeKnnResult, TreeRadiusResult, TreeResult, TreeSearch};
+#[cfg(all(feature = "core", not(feature = "pure")))]
+use f3l_core::{
+    rayon,
+    serde::{self, Deserialize, Serialize},
+    BasicFloat,
+};
+use std::{borrow::Cow, cmp::Reverse, collections::BinaryHeap, ops::Index};
 
 /// KD-Tree Implement
 ///
@@ -40,47 +44,49 @@ use std::{cmp::Reverse, collections::BinaryHeap, ops::Index};
 /// assert_relative_eq!(nearest_data, 5f32);
 /// assert_relative_eq!(nearest_distance, 0.1f32);
 /// ```
-#[derive(Debug, Clone, Default)]
-pub struct KdTree<'a, T: BasicFloat, const D: usize, P>
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(crate = "self::serde")]
+pub struct KdTree<'a, T: BasicFloat, P>
 where
-    P: Into<[T; D]> + Index<usize, Output = T> + Clone + Copy,
+    P: Index<usize, Output = T> + Clone + Copy,
 {
     pub root: Option<Box<KdLeaf>>,
     pub dim: usize,
-    pub data: Option<&'a [P]>,
+    pub data: Cow<'a, Vec<P>>,
 }
 
-impl<'a, T: BasicFloat, const D: usize, P> KdTree<'a, T, D, P>
+impl<'a, T: BasicFloat, P> KdTree<'a, T, P>
 where
-    P: Into<[T; D]> + Index<usize, Output = T> + Clone + Copy + Send + Sync,
-    [T; D]: Into<P>,
+    P: Index<usize, Output = T> + Clone + Copy + Send + Sync,
 {
-    pub fn new() -> Self {
+    pub fn new(dim: usize) -> Self {
         Self {
             root: None,
-            dim: D,
-            data: None,
+            dim,
+            data: Cow::Owned(vec![]),
         }
     }
 
-    pub fn with_data(data: &'a [P]) -> Self {
+    pub fn with_data(dim: usize, data: &'a Vec<P>) -> Self {
         Self {
             root: None,
-            dim: D,
-            data: Some(data),
+            dim,
+            data: Cow::Borrowed(data),
         }
     }
 
-    pub fn set_data(&mut self, data: &'a [P]) {
-        self.data = Some(data);
+    pub fn clear(&mut self) {
+        // self.data.clear();
+        self.root = None;
+    }
+
+    pub fn set_data(&mut self, data: &'a Vec<P>) {
+        self.clear();
+        self.data = Cow::Borrowed(data);
     }
 
     pub fn build(&mut self) {
-        let n = if let Some(data) = self.data {
-            data.len()
-        } else {
-            return;
-        };
+        let n = self.data.len();
         self.root = Some(self.build_recursive(&mut (0..n).collect::<Vec<usize>>()));
     }
 
@@ -97,7 +103,7 @@ where
 
         (node.left, node.right) = rayon::join(
             || Some(self.build_recursive(&mut data_l)),
-            || Some(self.build_recursive(&mut data_r))
+            || Some(self.build_recursive(&mut data_r)),
         );
         node.feature = split;
 
@@ -110,7 +116,7 @@ where
         let mut mean = vec![T::zero(); self.dim];
         indices.iter().for_each(|&i| {
             (0..self.dim).for_each(|j| {
-                mean[j] += self.data.unwrap()[i][j] * factor;
+                mean[j] += self.data[i][j] * factor;
             })
         });
 
@@ -118,7 +124,7 @@ where
         let mut var = vec![T::zero(); self.dim];
         indices.iter().for_each(|&i| {
             (0..self.dim).for_each(|j| {
-                let dist = self.data.unwrap()[i][j] - mean[j];
+                let dist = self.data[i][j] - mean[j];
                 var[j] += dist * dist;
             })
         });
@@ -157,10 +163,10 @@ where
         let mut right = indices.len() - 1;
 
         loop {
-            while left <= right && self.data.unwrap()[indices[left]][split_dim] < split_val {
+            while left <= right && self.data[indices[left]][split_dim] < split_val {
                 left += 1;
             }
-            while left < right && self.data.unwrap()[indices[right]][split_dim] >= split_val {
+            while left < right && self.data[indices[right]][split_dim] >= split_val {
                 right -= 1;
             }
             if left >= right {
@@ -173,10 +179,10 @@ where
         let lim1 = left;
         right = indices.len() - 1;
         loop {
-            while left <= right && self.data.unwrap()[indices[left]][split_dim] <= split_val {
+            while left <= right && self.data[indices[left]][split_dim] <= split_val {
                 left += 1;
             }
-            while left <= right && self.data.unwrap()[indices[right]][split_dim] > split_val {
+            while left <= right && self.data[indices[right]][split_dim] > split_val {
                 right -= 1;
             }
             if left >= right {
@@ -190,10 +196,8 @@ where
     }
 
     pub fn search<R: TreeResult>(&self, data: P, by: SearchBy, result: &mut R) {
-        let mut search_queue = BinaryHeap::with_capacity(std::cmp::max(
-            10,
-            (self.data.unwrap().len() as f32).sqrt() as usize,
-        ));
+        let mut search_queue =
+            BinaryHeap::with_capacity(std::cmp::max(10, (self.data.len() as f32).sqrt() as usize));
 
         if self.root.is_none() {
             return;
@@ -208,15 +212,8 @@ where
                 &mut search_queue,
             );
 
-            while let Some(node) = search_queue.pop() {
-                match node {
-                    SearchQueue::MaxHeap(node) => {
-                        self.search_(result, node.raw, &data, by, node.order, &mut search_queue)
-                    }
-                    SearchQueue::MinHeap(Reverse(node)) => {
-                        self.search_(result, node.raw, &data, by, node.order, &mut search_queue)
-                    }
-                };
+            while let Some(Reverse(node)) = search_queue.pop() {
+                self.search_(result, node.raw, &data, by, node.order, &mut search_queue)
             }
         };
     }
@@ -228,7 +225,8 @@ where
         data: &P,
         by: SearchBy,
         min_dist: f32,
-        queue: &mut BinaryHeap<SearchQueue<TreeHeapElement<&'a Box<KdLeaf>, f32>>>,
+        // queue: &mut BinaryHeap<SearchQueue<TreeHeapElement<&'a Box<KdLeaf>, f32>>>,
+        queue: &mut BinaryHeap<Reverse<TreeHeapElement<&'a Box<KdLeaf>, f32>>>,
     ) {
         let is_farthest = result.is_farthest();
         if match is_farthest {
@@ -237,7 +235,8 @@ where
         } {
             return;
         }
-        let p: [T; D] = (*data).into();
+        // let p: [T; D] = (*data).into();
+        let p = data;
 
         let near;
         let far;
@@ -245,7 +244,7 @@ where
         let d: T;
         match node.feature {
             KdFeature::Leaf(leaf) => {
-                let dist = distance(&self.data.unwrap()[leaf].into(), &p);
+                let dist = distance(self.data[leaf], *p, self.dim);
                 result.add(leaf, dist.to_f32().unwrap());
                 return;
             }
@@ -285,10 +284,7 @@ where
                     raw: far,
                     order: min_dist + (d * d).to_f32().unwrap(),
                 };
-                queue.push(match result.is_farthest() {
-                    true => SearchQueue::MaxHeap(node),
-                    false => SearchQueue::MinHeap(Reverse(node)),
-                });
+                queue.push(Reverse(node));
             }
         }
 
@@ -299,15 +295,16 @@ where
 }
 
 #[inline]
-fn distance<T: BasicFloat, const D: usize>(a: &[T; D], b: &[T; D]) -> T {
-    a.iter()
-        .zip(b)
-        .fold(T::zero(), |acc, (a, b)| acc + (*a - *b).powi(2))
-}
-impl<'a, T: BasicFloat, const D: usize, P> TreeSearch<P> for KdTree<'a, T, D, P>
+fn distance<T: BasicFloat, P>(a: P, b: P, dim: usize) -> T
 where
-    P: Into<[T; D]> + Send + Sync + Clone + Copy + Index<usize, Output = T>,
-    [T; D]: Into<P>,
+    P: Index<usize, Output = T> + Copy,
+{
+    (0..dim).fold(T::zero(), |acc, i| acc + (a[i] - b[i]).powi(2))
+}
+
+impl<'a, T: BasicFloat, P> TreeSearch<P> for KdTree<'a, T, P>
+where
+    P: Send + Sync + Clone + Copy + Index<usize, Output = T>,
 {
     fn search_knn(&self, point: &P, k: usize) -> Vec<(P, f32)> {
         let by = if k == 0 {
@@ -320,7 +317,7 @@ where
         result
             .result()
             .iter()
-            .map(|&(i, d)| (self.data.unwrap()[i], d.sqrt()))
+            .map(|&(i, d)| (self.data[i], d.sqrt()))
             .collect::<Vec<(P, f32)>>()
     }
 
@@ -332,7 +329,7 @@ where
         };
         let mut result = TreeRadiusResult::new(radius * radius);
         self.search(*point, by, &mut result);
-        result.data.iter().map(|&i| self.data.unwrap()[i]).collect()
+        result.data.iter().map(|&i| self.data[i]).collect()
     }
 
     fn search_knn_ids(&self, point: &P, k: usize) -> Vec<usize> {
@@ -355,39 +352,5 @@ where
         let mut result = TreeRadiusResult::new(radius * radius);
         self.search(*point, by, &mut result);
         result.data
-    }
-}
-
-impl<'a, T: BasicFloat, const D: usize, P> TreeFarthestSearch<P> for KdTree<'a, T, D, P>
-where
-    P: Into<[T; D]> + Send + Sync + Clone + Copy + Index<usize, Output = T>,
-    [T; D]: Into<P>,
-{
-    fn search_kfn_ids(&self, point: &P, k: usize) -> Vec<usize> {
-        let by = if k == 0 {
-            SearchBy::Count(1)
-        } else {
-            SearchBy::Count(k)
-        };
-        let mut result = TreeKnnResult::new(k);
-        result.set_search_farthest(true);
-        self.search(*point, by, &mut result);
-        result.data.iter().map(|&(i, _)| i).collect()
-    }
-
-    fn search_kfn(&self, point: &P, k: usize) -> Vec<(P, f32)> {
-        let by = if k == 0 {
-            SearchBy::Count(1)
-        } else {
-            SearchBy::Count(k)
-        };
-        let mut result = TreeKnnResult::new(k);
-        result.set_search_farthest(true);
-        self.search(*point, by, &mut result);
-        result
-            .result()
-            .iter()
-            .map(|&(i, d)| (self.data.unwrap()[i], d.sqrt()))
-            .collect::<Vec<(P, f32)>>()
     }
 }

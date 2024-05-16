@@ -212,7 +212,7 @@ impl<'a> EdgeLinker<'a> {
         });
 
         if per_closed.is_empty() {
-            let shape = profile.map.into_iter().map(|(k, _)| k).collect::<Vec<_>>();
+            let shape = profile.map.into_keys().collect::<Vec<_>>();
             partial_closed.push(shape);
             return;
         }

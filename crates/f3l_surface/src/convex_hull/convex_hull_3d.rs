@@ -1,9 +1,14 @@
 use std::{
+    borrow::Cow,
     collections::{HashMap, HashSet},
     ops::Index,
 };
 
-use f3l_core::{apply_both, BasicFloat, Line, SimpleSliceMath};
+use f3l_core::{
+    apply_both,
+    serde::{self, Deserialize, Serialize},
+    BasicFloat, Line, SimpleSliceMath,
+};
 
 use crate::{Convex, ConvexHull3D2D, ConvexHullId, FaceIdType};
 
@@ -11,12 +16,13 @@ const EPS: f32 = 1e-5;
 
 /// Convex Hull of 3d data.
 /// A `QuickHull` implement.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(crate = "self::serde")]
 pub struct ConvexHull3D<'a, T: BasicFloat, P>
 where
     P: Into<[T; 3]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
 {
-    pub data: &'a [P],
+    pub data: Cow<'a, Vec<P>>,
     pub hulls: ConvexHullId,
 }
 
@@ -103,7 +109,7 @@ where
     /// Return XYZ min max ids.
     #[inline]
     fn find_extremum(&self) -> [usize; 6] {
-        let data = self.data;
+        let data = &self.data;
         let mut extremum = [0usize; 6];
         let mut extremum_value = [
             data[0][0], data[0][1], data[0][2], data[0][0], data[0][1], data[0][2],
@@ -406,7 +412,7 @@ where
 
     /// Compute 2D Convex using [`ConvexHull3D2D`]
     fn compute_2d(&mut self) {
-        let mut cvh = ConvexHull3D2D::new(self.data);
+        let mut cvh = ConvexHull3D2D::with_data(&self.data);
         cvh.compute();
         self.hulls = cvh.hulls;
     }
@@ -416,11 +422,22 @@ impl<'a, T: BasicFloat, P> Convex<'a, P> for ConvexHull3D<'a, T, P>
 where
     P: Into<[T; 3]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
 {
-    fn new(data: &'a [P]) -> Self {
+    fn new() -> Self {
         Self {
-            data,
+            data: Cow::Owned(vec![]),
             hulls: ConvexHullId::D3(vec![]),
         }
+    }
+
+    fn with_data(data: &'a Vec<P>) -> Self {
+        Self {
+            data: Cow::Borrowed(data),
+            hulls: ConvexHullId::D3(vec![]),
+        }
+    }
+
+    fn set_data(&mut self, data: &'a Vec<P>) {
+        self.data = Cow::Borrowed(data);
     }
 
     /// 1. Find extremum, 6 ids.
@@ -430,7 +447,7 @@ where
     ///     * Some(id): id as top point of tetrahedron.
     ///     * None: Data is near a plane, align cloud to XY then compute 2D.
     fn compute(&mut self) {
-        let data = self.data;
+        let data = &self.data;
 
         // Get Min Max in three dimension.
         let extremum = self.find_extremum();

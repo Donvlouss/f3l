@@ -1,22 +1,25 @@
 mod oc_features;
 mod oc_leaf;
 
-use std::{cmp::Reverse, collections::BinaryHeap, ops::Index};
-#[cfg(all(feature="core", not(feature="pure")))]
-use f3l_core::{get_minmax, BasicFloat};
-#[cfg(all(feature="pure", not(feature="core")))]
-use crate::{BasicFloat, get_minmax};
+#[cfg(all(feature = "pure", not(feature = "core")))]
+use crate::{get_minmax, BasicFloat};
+#[cfg(all(feature = "core", not(feature = "pure")))]
+use f3l_core::{get_minmax, serde, BasicFloat};
 pub use oc_features::*;
 pub use oc_leaf::*;
+use std::{borrow::Cow, cmp::Reverse, collections::BinaryHeap, ops::Index};
 
 use crate::{SearchBy, TreeHeapElement, TreeKnnResult, TreeRadiusResult, TreeResult, TreeSearch};
+use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate = "serde")]
 pub struct OcTree<'a, T: BasicFloat, P>
 where
-    P: Into<[T; 3]> + Index<usize, Output = T> + Clone + Copy,
+    P: Index<usize, Output = T> + Clone + Copy + Serialize,
 {
     pub bounds: Option<(P, P)>,
-    pub data: Option<&'a [P]>,
+    pub data: Cow<'a, Vec<P>>,
     pub max_points: usize,
     pub depth: usize,
     pub nodes: Vec<OcLeaf<T>>,
@@ -25,49 +28,47 @@ where
 // Build
 impl<'a, T: BasicFloat, P> OcTree<'a, T, P>
 where
-    P: Into<[T; 3]> + Index<usize, Output = T> + Clone + Copy + 'a,
+    P: Into<[T; 3]> + Index<usize, Output = T> + Clone + Copy + Serialize,
     [T; 3]: Into<P>,
 {
     pub fn new(max_points: usize, depth: usize) -> Self {
         Self {
             bounds: None,
-            data: None,
+            data: Cow::Owned(vec![]),
             max_points,
             depth,
             nodes: Vec::with_capacity(8_usize.pow(3)),
         }
     }
 
-    pub fn with_data(data: &'a [P], max_points: usize, depth: usize) -> Self {
+    pub fn with_data(data: &'a Vec<P>, max_points: usize, depth: usize) -> Self {
         Self {
             bounds: None,
-            data: Some(data),
+            data: Cow::Borrowed(data),
             max_points,
             depth,
             nodes: Vec::with_capacity(8_usize.pow(depth as u32)),
         }
     }
 
-    pub fn set_data(&mut self, data: &'a [P]) {
+    pub fn clear(&mut self) {
+        self.bounds = None;
+        self.nodes.clear();
+    }
+
+    pub fn set_data(&mut self, data: &'a Vec<P>) {
+        self.clear();
         if !data.is_empty() {
-            self.data = Some(data);
+            self.data = Cow::Borrowed(data);
         }
     }
 
     fn compute_bounds(&mut self) {
-        if let Some(data) = self.data {
-            let bdx = get_minmax(data);
-            self.bounds = Some(bdx);
-        };
+        let bdx = get_minmax(&self.data);
+        self.bounds = Some(bdx);
     }
 
     pub fn build(&mut self) {
-        let data = if let Some(data) = self.data {
-            data
-        } else {
-            return;
-        };
-
         self.compute_bounds();
         let root = OcLeaf {
             root: None,
@@ -79,7 +80,7 @@ where
         };
         self.nodes.push(root);
 
-        (0..data.len()).for_each(|i| {
+        (0..self.data.len()).for_each(|i| {
             self.insert(i, 0, 0);
         });
     }
@@ -96,9 +97,7 @@ where
         match self.nodes[i_node].feature {
             OcFeature::Split(nodes) => {
                 // Unwrap the option, cause this node must be a `Split` type.
-                let id = self.nodes[i_node]
-                    .locate_at(self.data.unwrap()[i_point])
-                    .unwrap();
+                let id = self.nodes[i_node].locate_at(self.data[i_point]).unwrap();
                 self.insert(i_point, depth + 1, nodes[id]);
             }
             OcFeature::Leaf => {
@@ -218,12 +217,16 @@ where
 // Search
 impl<'a, T: BasicFloat, P> OcTree<'a, T, P>
 where
-    P: Into<[T; 3]> + Index<usize, Output = T> + Clone + Copy + 'a,
-    [T; 3]: Into<P>,
+    P: Into<[T; 3]> + Index<usize, Output = T> + Clone + Copy + Serialize,
 {
     pub fn search<R: TreeResult>(&self, point: P, by: SearchBy, result: &mut R) {
-        let data = if let Some(data) = self.data {
-            data
+        // let data = if let Some(data) = self.data {
+        //     data
+        // } else {
+        //     return;
+        // };
+        let data = if !self.data.is_empty() {
+            &self.data
         } else {
             return;
         };
@@ -262,7 +265,7 @@ where
             }
             OcFeature::Leaf => {
                 node.points.iter().for_each(|&i| {
-                    let p = self.data.unwrap()[i];
+                    let p = self.data[i];
                     let distance = Self::distance_square(*data, p);
                     result.add(i, distance);
                 });
@@ -312,8 +315,7 @@ where
 
 impl<'a, T: BasicFloat, P> TreeSearch<P> for OcTree<'a, T, P>
 where
-    P: Into<[T; 3]> + Index<usize, Output = T> + Clone + Copy + 'a,
-    [T; 3]: Into<P>,
+    P: Into<[T; 3]> + Index<usize, Output = T> + Clone + Copy + Serialize,
 {
     fn search_knn_ids(&self, point: &P, k: usize) -> Vec<usize> {
         let by = if k == 0 {
@@ -348,7 +350,7 @@ where
         result
             .result()
             .iter()
-            .map(|&(i, d)| (self.data.unwrap()[i], d.sqrt()))
+            .map(|&(i, d)| (self.data[i], d.sqrt()))
             .collect::<Vec<(P, f32)>>()
     }
 
@@ -360,7 +362,7 @@ where
         };
         let mut result = TreeRadiusResult::new(radius * radius);
         self.search(*point, by, &mut result);
-        result.data.iter().map(|&i| self.data.unwrap()[i]).collect()
+        result.data.iter().map(|&i| self.data[i]).collect()
     }
 }
 

@@ -1,7 +1,9 @@
 use f3l_core::{
     compute_covariance_matrix, get_minmax,
     glam::{Mat3A, Vec2, Vec3A},
-    jacobi_eigen_square_n, BasicFloat, EigenSet, F3lCast,
+    jacobi_eigen_square_n,
+    serde::{self, Deserialize, Serialize},
+    BasicFloat, EigenSet, F3lCast,
 };
 
 /// Compute AABB. A wrapper of [`get_minmax`].
@@ -29,7 +31,8 @@ where
 /// let obb = OBB::compute(&vertices);
 /// ```
 ///
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(crate = "self::serde")]
 pub struct OBB<T: BasicFloat, const D: usize, P>
 where
     P: Into<[T; D]> + Clone + Copy + Send + Sync + std::ops::Index<usize, Output = T>,

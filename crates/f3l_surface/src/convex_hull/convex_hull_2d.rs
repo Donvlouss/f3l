@@ -1,5 +1,8 @@
-use f3l_core::BasicFloat;
-use std::ops::Index;
+use f3l_core::{
+    serde::{self, Deserialize, Serialize},
+    BasicFloat,
+};
+use std::{borrow::Cow, ops::Index};
 
 use crate::Convex;
 
@@ -7,12 +10,13 @@ const EPS: f32 = 1e-5;
 
 /// Convex Hull of 2d data.
 /// A `QuickHull` implement.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(crate = "self::serde")]
 pub struct ConvexHull2D<'a, T: BasicFloat, P>
 where
     P: Into<[T; 2]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
 {
-    pub data: &'a [P],
+    pub data: Cow<'a, Vec<P>>,
     pub hulls: Vec<usize>,
 }
 
@@ -120,18 +124,29 @@ impl<'a, T: BasicFloat, P> Convex<'a, P> for ConvexHull2D<'a, T, P>
 where
     P: Into<[T; 2]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
 {
-    fn new(data: &'a [P]) -> Self {
+    fn new() -> Self {
         Self {
-            data,
+            data: Cow::Owned(vec![]),
             hulls: vec![],
         }
+    }
+
+    fn with_data(data: &'a Vec<P>) -> Self {
+        Self {
+            data: Cow::Borrowed(data),
+            hulls: vec![],
+        }
+    }
+
+    fn set_data(&mut self, data: &'a Vec<P>) {
+        self.data = Cow::Borrowed(data);
     }
 
     /// 1. Find min max of xy, got 4 ids
     /// 2. Find longest distance between ids as edge.
     /// 3. Split data to upper and lower data, compute recursive to insert hulls.
     fn compute(&mut self) {
-        let data = self.data;
+        let data = &self.data;
         assert!(data.len() >= 3);
 
         let mut min_id = [0usize; 2];
@@ -181,7 +196,7 @@ where
 
         f3l_core::rayon::join(
             || self.compute_recursive(&side_a, &[0, 1], &mut hull_a),
-            || self.compute_recursive(&side_b, &[0, 1], &mut hull_b)
+            || self.compute_recursive(&side_b, &[0, 1], &mut hull_b),
         );
 
         let nb_hull_b = hull_b.len();
@@ -204,7 +219,7 @@ fn convex_hull_2d() {
         [1., 3.],
         [0.5, 2.],
     ];
-    let mut cvh = ConvexHull2D::new(&points);
+    let mut cvh = ConvexHull2D::with_data(&points);
     cvh.compute();
     assert_eq!(cvh.hulls, [0_usize, 1, 2, 3, 4, 5, 6]);
 }
