@@ -69,7 +69,7 @@ impl<T: BasicFloat, const D: usize> VoxelGrid<T, D> {
         (0..D).for_each(|i| self.leaf[i] = leaf[i]);
     }
 
-    fn compute_bound<'a, P: Into<[T; D]> + Copy>(&mut self, data: &'a [P])
+    fn compute_bound<P: Into<[T; D]> + Copy>(&mut self, data: &[P])
     where
         [T; D]: Into<P>,
     {
@@ -78,10 +78,10 @@ impl<T: BasicFloat, const D: usize> VoxelGrid<T, D> {
         }
         let (min, max) = get_minmax(data);
         let (min, max): ([T; D], [T; D]) = (min.into(), max.into());
-        self.parameter.bound = min.into_iter().zip(max).map(|bd| bd).collect();
+        self.parameter.bound = min.into_iter().zip(max).collect();
     }
 
-    pub fn leaf_check<'a, P: Into<[T; D]> + Copy>(&mut self, data: &'a [P]) -> bool
+    pub fn leaf_check<P: Into<[T; D]> + Copy>(&mut self, data: &[P]) -> bool
     where
         [T; D]: Into<P>,
     {

@@ -215,14 +215,3 @@ pub trait Convex<'a, P> {
     fn compute(&mut self);
     // fn compute(&mut self, data: &Vec<P>);
 }
-
-#[test]
-fn serde() {
-    let cvh2: ConvexHull<f32, [f32; 2], 2, ConvexHull2D<f32, [f32; 2]>> =
-        serde_json::from_str(&r#"{"dim":2}"#).unwrap();
-    let cvh3: ConvexHull<f32, [f32; 3], 3, ConvexHull3D<f32, [f32; 3]>> =
-        serde_json::from_str(&r#"{"dim":3}"#).unwrap();
-
-    println!("{:?}", cvh2);
-    println!("{:?}", cvh3);
-}

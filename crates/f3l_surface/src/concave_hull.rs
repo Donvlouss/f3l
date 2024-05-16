@@ -49,9 +49,9 @@ impl<const D: usize> ConcaveHull<D> {
 }
 
 impl ConcaveHull<2> {
-    pub fn compute<'a, T: f3l_core::BasicFloat, P>(
+    pub fn compute<T: f3l_core::BasicFloat, P>(
         &mut self,
-        data: &'a Vec<P>,
+        data: &Vec<P>,
         alpha: T,
     ) -> Vec<Delaunay2DShape>
     where
@@ -68,9 +68,9 @@ impl ConcaveHull<3> {
     /// Compute with default [`SacAlgorithmParameter`].
     ///
     /// See [`ConcaveHull::compute_with_parameter`]
-    pub fn compute<'a, T: f3l_core::BasicFloat, P>(
+    pub fn compute<T: f3l_core::BasicFloat, P>(
         &mut self,
-        data: &'a [P],
+        data: &[P],
         alpha: T,
     ) -> Vec<Delaunay2DShape>
     where
