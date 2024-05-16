@@ -15,9 +15,9 @@ use f3l_search_tree::{KdTree, TreeSearch};
 /// ```
 /// let vertices = load_ply("../../data/table_scene_lms400.ply");
 /// // To filter k-neighbor=50 and mean +- 1 * std
-/// let mut filter = StatisticalOutlierRemoval::with_data(1., 50, &vertices);
+/// let mut filter = StatisticalOutlierRemoval::with_data(1., 50);
 /// filter.set_negative(true);
-/// let out = filter.filter_instance();
+/// let out = filter.filter_instance(&vertices);
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(crate = "self::serde")]

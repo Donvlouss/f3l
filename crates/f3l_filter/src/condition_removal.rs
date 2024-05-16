@@ -21,9 +21,9 @@ type DirectionRange<T> = Vec<(usize, Range<Bound<T>>)>;
 ///     (1, Bound::Included(0.)..Bound::Included(0.8)),
 ///     (2, Bound::Included(-1.4)..Bound::Included(-1.3)),
 /// ];
-/// let mut filter = ConditionRemoval::with_data(&vertices, &range);
+/// let mut filter = ConditionRemoval::with_data(&range);
 ///
-/// let out = filter.filter_instance();
+/// let out = filter.filter_instance(&vertices);
 /// ```
 ///
 #[derive(Debug, Clone, Serialize, Deserialize)]

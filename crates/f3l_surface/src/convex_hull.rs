@@ -35,7 +35,7 @@ use f3l_core::serde::{self, Deserialize, Serialize};
 ///     }
 /// }).collect::<Vec<_>>();
 ///
-/// let mut cvh = ConvexHull::new(&points);
+/// let mut cvh = ConvexHull::with_data(&points);
 /// cvh.compute();
 ///
 /// let hulls = if let ConvexHullId::D2(hulls) = cvh.hulls() {
@@ -47,7 +47,7 @@ use f3l_core::serde::{self, Deserialize, Serialize};
 /// * 3d
 /// ```rust
 /// let vertices = load_ply("../../data/table_voxel_down.ply");
-/// let mut cvh = ConvexHull::new(&points);
+/// let mut cvh = ConvexHull::with_data(&points);
 /// cvh.compute();
 /// let hulls = if let ConvexHullId::D2(hulls) = cvh.hulls() {
 /// hulls

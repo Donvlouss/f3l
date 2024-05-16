@@ -6,6 +6,17 @@ use f3l_core::{get_minmax, BasicFloat};
 use std::{collections::HashMap, fmt::Debug};
 
 /// Build a `Dimension-wise` grid, compute mean of points per grid.
+/// 
+/// # Examples
+/// ```rust
+/// let vertices = load_ply("../../data/table_scene_lms400.ply");
+/// 
+/// let mut filter = VoxelGrid::with_data(&[0.05; 3]);
+/// use std::time::Instant;
+/// let start = Instant::now();
+/// 
+/// let out = filter.filter_instance(&vertices);
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(crate = "self::serde")]
 pub struct VoxelGridParameter<T: BasicFloat, const D: usize> {

@@ -15,7 +15,6 @@ use f3l_core::{
 /// let vertices = load_ply("../../data/table_scene_lms400.ply");
 ///
 /// let mut filter = PassThrough::with_data(
-///     &vertices,
 ///     Range {
 ///         start: Bound::Included(0.),
 ///         end: Bound::Included(0.5),
@@ -24,7 +23,7 @@ use f3l_core::{
 /// );
 /// let start = Instant::now();
 ///
-/// let out = filter.filter_instance();
+/// let out = filter.filter_instance(&vertices);
 /// ```
 ///
 #[derive(Debug, Clone, Serialize, Deserialize)]

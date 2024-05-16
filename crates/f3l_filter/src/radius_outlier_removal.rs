@@ -14,10 +14,10 @@ use crate::{F3lFilter, F3lFilterInverse};
 /// # Examples
 /// ```
 /// let vertices = load_ply("../../data/table_scene_lms400.ply");
-/// let mut filter = RadiusOutlierRemoval::with_data(0.03f32, 20, &vertices);
+/// let mut filter = RadiusOutlierRemoval::with_data(0.03f32, 20);
 /// // set true to get outlier instead of inliers
 /// //filter.set_negative(true);
-/// let out = filter.filter_instance();
+/// let out = filter.filter_instance(&vertices);
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(crate = "self::serde")]

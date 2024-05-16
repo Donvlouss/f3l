@@ -23,8 +23,8 @@ use crate::{F3lCluster, F3lClusterParameter};
 ///     max_nb_data: vertices.len(),
 ///     max_nb_cluster: 5,
 /// };
-/// let mut extractor = DBScan::with_data(parameter, &vertices);
-/// let clusters = extractor.extract();
+/// let mut extractor = DBScan::new(parameter);
+/// let clusters = extractor.extract(&vertices);
 /// let clusters = (0..clusters.len())
 ///     .map(|i| extractor.at(i).unwrap())
 ///     .collect::<Vec<_>>();

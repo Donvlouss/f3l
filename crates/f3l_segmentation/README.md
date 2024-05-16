@@ -13,9 +13,9 @@ let parameter = F3lClusterParameter {
     max_nb_cluster: 5,
 };
 // New and insert data.
-let mut extractor = EuclideanClusterExtractor::with_data(parameter, &vertices);
+let mut extractor = EuclideanClusterExtractor::new(parameter);
 // Start extracting.
-let clusters = extractor.extract();
+let clusters = extractor.extract(&vertices);
 // Random color for each cluster.
 let colors = (0..clusters.len())
     .map(|_| random_color())
@@ -53,8 +53,8 @@ let parameter = F3lClusterParameter {
     max_nb_data: 25000,
     max_nb_cluster: 5,
 };
-let mut extractor = EuclideanClusterExtractor::with_data(parameter, &vertices);
-let clusters = extractor.extract();
+let mut extractor = EuclideanClusterExtractor::with_data(parameter);
+let clusters = extractor.extract(&vertices);
 let clusters = (0..clusters.len())
     .map(|i| extractor.at(i).unwrap())
     .collect::<Vec<_>>();
@@ -70,8 +70,8 @@ let parameter = F3lClusterParameter {
     max_nb_data: vertices.len(),
     max_nb_cluster: 5,
 };
-let mut extractor = DBScan::with_data(parameter, &vertices);
-let clusters = extractor.extract();
+let mut extractor = DBScan::with_data(parameter);
+let clusters = extractor.extract(&vertices);
 let clusters = (0..clusters.len())
     .map(|i| extractor.at(i).unwrap())
     .collect::<Vec<_>>();

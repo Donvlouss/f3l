@@ -21,8 +21,8 @@ use crate::{F3lCluster, F3lClusterParameter};
 ///     max_nb_data: 25000,
 ///     max_nb_cluster: 5,
 /// };
-/// let mut extractor = EuclideanClusterExtractor::with_data(parameter, &vertices);
-/// let clusters = extractor.extract();
+/// let mut extractor = EuclideanClusterExtractor::new(parameter);
+/// let clusters = extractor.extract(&vertices);
 /// let clusters = (0..clusters.len())
 ///     .map(|i| extractor.at(i).unwrap())
 ///     .collect::<Vec<_>>();

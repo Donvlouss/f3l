@@ -23,7 +23,7 @@ use f3l_search_tree::*;
 /// let normal_len = 0.02f32;
 ///
 /// // Use Radius Search
-/// // let mut estimator = NormalEstimation::with_data(SearchBy::Radius(0.08f32), &vertices);
+/// // let mut estimator = NormalEstimation::new(SearchBy::Radius(0.08f32));
 /// // Use KNN Search
 /// let mut estimator = NormalEstimation::new(SearchBy::Count(10));
 /// if !estimator.compute(&vertices) {

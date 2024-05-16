@@ -6,6 +6,8 @@ Some features could also use on 2d.
 
 See more for each `README.md` of crates.
 
+`serde` support.
+
 | crate | description |
 |-------|-------------|
 |f3l_glam| Some trait and implement for glam types.|
