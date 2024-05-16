@@ -13,6 +13,15 @@ pub enum SearchBy {
     Radius(f32),
 }
 
+#[test]
+fn test() {
+    let count = SearchBy::Count(1);
+    let radius = SearchBy::Radius(0.1);
+
+    println!("Count: {}", serde_json::to_string(&count).unwrap());
+    println!("Radius: {}", serde_json::to_string(&radius).unwrap());
+}
+
 /// Search `KNN` and `Radius`
 pub trait TreeSearch<P> {
     fn search_knn_ids(&self, point: &P, k: usize) -> Vec<usize>;

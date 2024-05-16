@@ -5,7 +5,7 @@ mod euclidean_cluster_extraction;
 mod sac_segmentation;
 
 /// Cluster Extractor parameter
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq)]
 #[serde(crate="self::serde")]
 pub struct F3lClusterParameter<T: BasicFloat> {
     /// `K`-NN or `Radius` search
@@ -39,12 +39,12 @@ pub trait F3lCluster<'a, T: BasicFloat, P> {
     /// Get [`F3lClusterParameter`]
     fn parameter(&self) -> F3lClusterParameter<T>;
 
-    fn set_data(&mut self, data: &'a Vec<P>);
+    // fn set_data(&mut self, data: &'a Vec<P>);
     fn clusters(&self) -> usize;
     /// vector of points of clusters
-    fn extract(&mut self) -> Vec<Vec<usize>>;
+    fn extract(&mut self, data: &'a Vec<P>) -> Vec<Vec<usize>>;
     /// Use `extract` directly, not call this.
-    fn apply_extract(&mut self) -> bool;
+    fn apply_extract(&mut self, data: &'a Vec<P>) -> bool;
     /// Get data from Target cluster
     fn at(&self, id: usize) -> Result<Vec<P>, String>;
     /// Get maximum data one of clusters

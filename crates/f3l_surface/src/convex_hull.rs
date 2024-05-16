@@ -62,22 +62,41 @@ where
     P: Into<[T; D]> + Clone + Copy + Send + Sync + std::ops::Index<usize, Output = T>,
     CVH: Convex<'a, P>,
 {
+    dim: usize,
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     cvh: CVH,
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     _marker: PhantomData<(T, &'a P)>,
 }
 
 /// Represent Convex Hull result of Ids.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate="self::serde")]
 pub enum ConvexHullId {
     D2(Vec<usize>),
     D3(Vec<FaceIdType>),
 }
 
+impl Default for ConvexHullId {
+    fn default() -> Self {
+        Self::D2(vec![])
+    }
+}
+
 /// Represent Convex Hull result of data.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate="self::serde")]
 pub enum ConvexHullInstance<P: Copy> {
     D2(Vec<P>),
     D3(Vec<FaceInstanceType<P>>),
+}
+
+impl<P: Copy> Default for ConvexHullInstance<P> {
+    fn default() -> Self {
+        Self::D2(vec![])
+    }
 }
 
 impl<'a, T: f3l_core::BasicFloat, P> Convex<'a, P>
@@ -85,12 +104,23 @@ impl<'a, T: f3l_core::BasicFloat, P> Convex<'a, P>
 where
     P: Into<[T; 2]> + Clone + Copy + Send + Sync + std::ops::Index<usize, Output = T>,
 {
-    /// Return `ConvexHull<ConvexHull2D>` wrapper
-    fn new(data: &'a [P]) -> Self {
+    fn new() -> Self {
         Self {
-            cvh: ConvexHull2D::new(data),
+            dim: 2,
+            cvh: ConvexHull2D::new(),
             _marker: PhantomData,
         }
+    }
+    fn with_data(data: &'a Vec<P>) -> Self {
+        Self {
+            dim: 2,
+            cvh: ConvexHull2D::with_data(data),
+            _marker: PhantomData,
+        }
+    }
+
+    fn set_data(&mut self, data: &'a Vec<P>) {
+        self.cvh.set_data(data);
     }
 
     fn compute(&mut self) {
@@ -117,11 +147,23 @@ where
     P: Into<[T; 3]> + Clone + Copy + Send + Sync + std::ops::Index<usize, Output = T>,
 {
     /// Return `ConvexHull<ConvexHull3D>` wrapper
-    fn new(data: &'a [P]) -> Self {
+    fn new() -> Self {
         Self {
-            cvh: ConvexHull3D::new(data),
+            dim: 3,
+            cvh: ConvexHull3D::new(),
             _marker: PhantomData,
         }
+    }
+    fn with_data(data: &'a Vec<P>) -> Self {
+        Self {
+            dim: 3,
+            cvh: ConvexHull3D::with_data(data),
+            _marker: PhantomData,
+        }
+    }
+
+    fn set_data(&mut self, data: &'a Vec<P>) {
+        self.cvh.set_data(data);
     }
 
     fn compute(&mut self) {
@@ -166,6 +208,20 @@ where
 
 /// Convex Hull Trait.
 pub trait Convex<'a, P> {
-    fn new(data: &'a [P]) -> Self;
+    // fn new(data: &'a Vec<P>) -> Self;
+    fn new() -> Self;
+    fn with_data(data: &'a Vec<P>) -> Self;
+    fn set_data(&mut self, data: &'a Vec<P>);
     fn compute(&mut self);
+    // fn compute(&mut self, data: &Vec<P>);
+}
+
+#[test]
+fn serde() {
+
+    let cvh2: ConvexHull<f32, [f32; 2], 2, ConvexHull2D<f32, [f32; 2]>> = serde_json::from_str(&r#"{"dim":2}"#).unwrap();
+    let cvh3: ConvexHull<f32, [f32; 3], 3, ConvexHull3D<f32, [f32; 3]>> = serde_json::from_str(&r#"{"dim":3}"#).unwrap();
+
+    println!("{:?}", cvh2);
+    println!("{:?}", cvh3);
 }

@@ -10,7 +10,7 @@ pub use sac_model_line::*;
 pub use sac_model_plane::*;
 pub use sac_model_sphere::*;
 
-#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(crate="self::serde")]
 pub enum SacModelType {
     #[default]

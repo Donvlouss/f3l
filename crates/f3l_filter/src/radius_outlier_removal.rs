@@ -71,7 +71,6 @@ where
     [T; D]: Into<P>,
 {
     fn filter(&mut self, data: &'a Vec<P>) -> Vec<usize> {
-        self.tree.set_data(data);
         self.apply_filter(data);
 
         self.inlier
@@ -83,7 +82,6 @@ where
     }
 
     fn filter_instance(&mut self, data: &'a Vec<P>) -> Vec<P> {
-        self.tree.set_data(data);
         self.apply_filter(data);
 
         self.inlier
@@ -95,9 +93,15 @@ where
     }
 
     fn apply_filter(&mut self, data: &'a Vec<P>) -> bool {
-        if self.tree.data.is_empty() {
+        if data.is_empty() {
             return false;
         }
+        // Check Tree dimension correct, cause skip deserialize would be 0.
+        if self.tree.dim != D {
+            self.tree = KdTree::<T, P>::new(D);
+        }
+        self.tree.set_data(data);
+        
         self.tree.build();
         let capacity = self.tree.data.len() / 10;
         let capacity = if capacity > 10 { capacity } else { 10 };

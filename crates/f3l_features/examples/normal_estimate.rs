@@ -63,9 +63,9 @@ fn main() {
 
     // Use radius or knn to search neighbors
     // let mut estimator = NormalEstimation::with_data(SearchBy::Radius(0.08f32), &vertices);
-    let mut estimator = NormalEstimation::with_data(SearchBy::Count(10), &vertices);
+    let mut estimator = NormalEstimation::new(SearchBy::Count(10));
 
-    if !estimator.compute(None) {
+    if !estimator.compute(&vertices) {
         println!("Compute Normal Failed. Exit...");
         return;
     }

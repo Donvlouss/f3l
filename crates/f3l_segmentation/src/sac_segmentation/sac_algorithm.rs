@@ -6,7 +6,7 @@ use f3l_core::{BasicFloat, serde::{self, Deserialize, Serialize}};
 use super::sac_model::SacModel;
 
 /// Algorithm of Optimization
-#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(crate="self::serde")]
 pub enum SacAlgorithmType {
     #[default]
@@ -14,7 +14,7 @@ pub enum SacAlgorithmType {
 }
 
 /// Parameter of algorithm of Optimization
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 #[serde(crate="self::serde")]
 pub struct SacAlgorithmParameter {
     /// Probability: default `0.99`

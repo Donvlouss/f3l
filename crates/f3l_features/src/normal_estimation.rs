@@ -22,8 +22,8 @@ use f3l_search_tree::*;
 /// // Use Radius Search
 /// // let mut estimator = NormalEstimation::with_data(SearchBy::Radius(0.08f32), &vertices);
 /// // Use KNN Search
-/// let mut estimator = NormalEstimation::with_data(SearchBy::Count(10), &vertices);
-/// if !estimator.compute() {
+/// let mut estimator = NormalEstimation::new(SearchBy::Count(10));
+/// if !estimator.compute(&vertices) {
 ///     println!("Compute Normal Failed. Exit...");
 ///     return;
 /// }
@@ -42,8 +42,12 @@ where
     /// Use more rigorous methods or not. Default: true.
     /// - true  : use fast method.
     /// - false : rigorous method.
-    fast: bool,
+    pub fast: bool,
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     tree: KdTree<'a, T, P>,
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     normals: Vec<Option<Vec3>>,
 }
 
@@ -69,12 +73,6 @@ where
         self.fast = use_fast;
     }
 
-    pub fn with_data(method: SearchBy, data: &'a Vec<P>) -> Self {
-        let mut entity = Self::new(method);
-        entity.set_data(data);
-        entity
-    }
-
     pub fn set_data(&mut self, data: &'a Vec<P>) {
         self.tree.set_data(data);
     }
@@ -83,16 +81,12 @@ where
         self.normals.clone()
     }
 
-    pub fn compute(&mut self, data: Option<&'a [P]>) -> bool {
-        if self.tree.data.is_empty() {
-            return false;
-        };
+    pub fn compute(&mut self, data: &'a Vec<P>) -> bool {
+        if self.tree.dim != 3 {
+            self.tree = KdTree::<T, P>::new(3);
+        }
+        self.tree.set_data(data);
         self.tree.build();
-        let data = if let Some(data) = data {
-            data
-        } else {
-            &self.tree.data
-        };
 
         let normals = (0..data.len())
             .into_par_iter()
@@ -129,4 +123,21 @@ where
         });
         true
     }
+}
+
+#[test]
+fn serde() {
+    let estimator_r: NormalEstimation<[f32; 3], f32> = NormalEstimation::new(SearchBy::Radius(0.1f32));
+    let estimator_c: NormalEstimation<[f32; 3], f32> = NormalEstimation::new(SearchBy::Count(10));
+
+    let text_r = r#"{"method":{"Radius":0.1},"fast":true}"#;
+    let text_c = r#"{"method":{"Count":10},"fast":true} "#;
+
+    let serde_r: NormalEstimation<[f32; 3], f32> = serde_json::from_str(&text_r).unwrap();
+    let serde_c: NormalEstimation<[f32; 3], f32> = serde_json::from_str(&text_c).unwrap();
+
+    assert_eq!(estimator_c.method, serde_c.method);
+    assert_eq!(estimator_c.fast, serde_c.fast);
+    assert_eq!(estimator_r.method, serde_r.method);
+    assert_eq!(estimator_r.fast, serde_r.fast);
 }

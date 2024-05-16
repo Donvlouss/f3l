@@ -38,6 +38,8 @@ pub struct SacSegment<M: sac_model::ModelCoefficient> {
     pub model: M,
     pub algorithm: sac_algorithm::SacAlgorithmType,
     pub algorithm_parameter: sac_algorithm::SacAlgorithmParameter,
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     pub inliers: Vec<usize>
 }
 
@@ -161,4 +163,128 @@ fn segment_sphere() {
 
     assert_eq!(round_slice_n(center, 4), [0f32, 0., 0.]);
     assert_eq!(round_n(radius, 4), radius);
+}
+
+mod test_serde {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[allow(unused_macros)]
+    macro_rules! serde_convert {
+        ($target: expr, $text: ident, $type: ty) => {
+            let sac = $target;
+            let sac_serde: $type = serde_json::from_str($text).unwrap();
+
+            assert_eq!(sac.model.coefficients, sac_serde.model.coefficients);
+            assert_eq!(sac.algorithm, sac_serde.algorithm);
+            assert_eq!(sac.algorithm_parameter, sac_serde.algorithm_parameter);
+        };
+    }
+
+    #[test]
+    fn serde_plane() {
+
+        let text = r#"{
+            "model":{
+                "coefficients":[0.0,0.0,0.0,0.0]},
+                "algorithm":"RANSAC",
+                "algorithm_parameter":{
+                    "probability":0.99,
+                    "threshold":0.1,
+                    "max_iterations":1000,
+                    "threads":1
+                }
+            }"#;
+
+        serde_convert!(
+            SacSegment {
+                model: PlaneCoefficient::<f32>::default(),
+                ..Default::default()
+            },
+            text,
+            SacSegment<PlaneCoefficient<f32>>
+        );
+    }
+
+    #[test]
+    fn serde_line() {
+        let text = r#"{
+            "model":{
+                "coefficients":[
+                    [0.0,0.0,0.0],
+                    [0.0,0.0,0.0]
+                    ]
+                },
+                "algorithm":"RANSAC",
+                "algorithm_parameter":{
+                    "probability":0.99,
+                    "threshold":0.1,
+                    "max_iterations":1000,
+                    "threads":1
+                }
+            }"#;
+
+        serde_convert!(
+            SacSegment {
+                model: LineCoefficient::<f32>::default(),
+                ..Default::default()
+            },
+            text,
+            SacSegment<LineCoefficient<f32>>
+        );
+    }
+
+    #[test]
+    fn serde_circle3d() {
+        let text = r#"{
+            "model":{
+                "coefficients":[
+                    [0.0,0.0,0.0],
+                    [0.0,0.0,0.0],
+                    0.0
+                    ]
+                },
+                "algorithm":"RANSAC",
+                "algorithm_parameter":{
+                    "probability":0.99,
+                    "threshold":0.1,
+                    "max_iterations":1000,
+                    "threads":1
+                }
+            }"#;
+        serde_convert!(
+            SacSegment {
+                model: Circle3dCoefficient::<f32>::default(),
+                ..Default::default()
+            },
+            text,
+            SacSegment<Circle3dCoefficient<f32>>
+        );
+    }
+
+    #[test]
+    fn serde_sphere() {
+        let text = r#"{
+            "model":{
+                "coefficients":[
+                    [0.0,0.0,0.0],
+                    0.0]
+                },
+                "algorithm":"RANSAC",
+                "algorithm_parameter":{
+                    "probability":0.99,
+                    "threshold":0.1,
+                    "max_iterations":1000,
+                    "threads":1
+                }
+            }"#;
+        serde_convert!(
+            SacSegment {
+                model: SphereCoefficient::<f32>::default(),
+                ..Default::default()
+            },
+            text,
+            SacSegment<SphereCoefficient<f32>>
+        );
+    }
 }

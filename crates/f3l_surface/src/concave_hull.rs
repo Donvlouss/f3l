@@ -18,23 +18,21 @@ use crate::{Delaunay2D, Delaunay2DShape};
 /// let p2 = [Vec2::ZERO, Vec2::X, Vec2::Y];
 /// let p3 = [[1_f32, 0., 0.], [0., 1., 0.], [0., 0., 1.]];
 ///
-/// let mut concave2d = ConcaveHull::new_2d(&p2);
-/// let d2 = concave2d.compute(1.0);
+/// let mut concave2d = ConcaveHull::<2>::new();
+/// let d2 = concave2d.compute(&p2, 1.0);
 /// assert_eq!(d2[0].mesh[0].point, [2, 0, 1]);
 ///
-/// let mut concave3d = ConcaveHull::new_3d(&p3);
-/// let d3 = concave3d.compute(1.0);
+/// let mut concave3d = ConcaveHull::<3>::new();
+/// let d3 = concave3d.compute(&p3, 1.0);
 /// assert_eq!(d3[0].mesh[0].point, [2, 0, 1]);
 /// ```
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(crate="self::serde")]
-// pub struct ConcaveHull<'a, T: f3l_core::BasicFloat, P, const D: usize>
-// pub struct ConcaveHull<T: f3l_core::BasicFloat, P, const D: usize>
 pub struct ConcaveHull<const D: usize>
-// where
-//     P: Into<[T; D]> + Copy + std::ops::Index<usize, Output = T>,
 {
     pub dim: usize,
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     pub shapes: Vec<Delaunay2DShape>
 }
 
@@ -47,8 +45,6 @@ impl<const D: usize> ConcaveHull<D> {
     }
 }
 
-// impl<'a, T: f3l_core::BasicFloat, P> ConcaveHull<'a, T, P, 2>
-// impl<'a, T: f3l_core::BasicFloat, P> ConcaveHull<T, P, 2>
 impl ConcaveHull<2>
 {
     pub fn compute<'a, T: f3l_core::BasicFloat, P>(&mut self, data: &'a Vec<P>, alpha: T) -> Vec<Delaunay2DShape>
@@ -152,4 +148,21 @@ fn test() {
     let mut concave3d = ConcaveHull::<3>::new();
     let d3 = concave3d.compute(&p3, 1.0);
     assert_eq!(d3[0].mesh[0].point, [2, 0, 1]);
+}
+
+#[test]
+fn serde() {
+    use f3l_core::glam::Vec2;
+    let p2 = vec![Vec2::ZERO, Vec2::X, Vec2::Y];
+    let p3 = vec![[1_f32, 0., 0.], [0., 1., 0.], [0., 0., 1.]];
+
+    let mut concave2d: ConcaveHull<2> = serde_json::from_str(r#"{"dim":2}"#).unwrap();
+    let mut concave3d: ConcaveHull<3> = serde_json::from_str(r#"{"dim":3}"#).unwrap();
+
+    let d2 = concave2d.compute(&p2, 1.0);
+    assert_eq!(d2[0].mesh[0].point, [2, 0, 1]);
+    
+    let d3 = concave3d.compute(&p3, 1.0);
+    assert_eq!(d3[0].mesh[0].point, [2, 0, 1]);
+    
 }

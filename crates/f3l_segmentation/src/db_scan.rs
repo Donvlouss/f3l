@@ -33,7 +33,11 @@ where
     P: Into<[T; D]> + Clone + Copy + Index<usize, Output = T>,
 {
     pub parameter: F3lClusterParameter<T>,
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     tree: KdTree<'a, T, P>,
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     clusters: Vec<Vec<usize>>,
 }
 
@@ -49,12 +53,6 @@ where
             tree: KdTree::<T, P>::new(D),
             clusters: vec![],
         }
-    }
-
-    pub fn with_data(parameter: F3lClusterParameter<T>, data: &'a Vec<P>) -> Self {
-        let mut entity = Self::new(parameter);
-        entity.set_data(data);
-        entity
     }
 }
 
@@ -72,23 +70,26 @@ where
         self.parameter
     }
 
-    fn set_data(&mut self, data: &'a Vec<P>) {
-        self.tree.set_data(data);
-    }
-
     fn clusters(&self) -> usize {
         self.clusters.len()
     }
 
-    fn extract(&mut self) -> Vec<Vec<usize>> {
-        if !self.apply_extract() {
+    fn extract(&mut self, data: &'a Vec<P>) -> Vec<Vec<usize>> {
+        if data.is_empty() {
+            return vec![];
+        }
+        if !self.apply_extract(data) {
             return vec![];
         }
 
         self.clusters.clone()
     }
 
-    fn apply_extract(&mut self) -> bool {
+    fn apply_extract(&mut self, data: &'a Vec<P>) -> bool {
+        if self.tree.dim != D {
+            self.tree = KdTree::<T, P>::new(D);
+        }
+        self.tree.set_data(data);
         self.tree.build();
         let data = &self.tree.data;
 
@@ -171,4 +172,20 @@ where
     fn max_cluster(&self) -> Vec<P> {
         self.at(0).unwrap()
     }
+}
+
+#[test]
+fn serde() {
+    let cluster: DBScan<f32, [f32; 3], 3> = DBScan::new(F3lClusterParameter::default());
+    let text = r#"{
+        "parameter":{
+            "tolerance":0.0,
+            "nb_in_tolerance":0,
+            "min_nb_data":0,
+            "max_nb_data":0,
+            "max_nb_cluster":0
+        }
+    }"#;
+    let cluster_serde: DBScan<f32, [f32; 3], 3> = serde_json::from_str(&text).unwrap();
+    assert_eq!(cluster.parameter, cluster_serde.parameter);
 }
