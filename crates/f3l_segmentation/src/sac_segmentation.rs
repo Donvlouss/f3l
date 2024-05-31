@@ -38,6 +38,8 @@ use sac_model::*;
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(crate = "self::serde")]
 pub struct SacSegment<M: sac_model::ModelCoefficient> {
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     pub model: M,
     pub algorithm: sac_algorithm::SacAlgorithmType,
     pub algorithm_parameter: sac_algorithm::SacAlgorithmParameter,
@@ -62,6 +64,7 @@ macro_rules! impl_compute {
                 assert!($model_struct::<'a, P, T>::NB_SAMPLE <= data.len());
                 let b = algorithm.compute(&mut model);
                 self.model.coefficients = model.get_coefficient();
+                self.inliers = algorithm.get_inliers().clone();
                 b
             }
         }
@@ -165,8 +168,6 @@ mod test_serde {
     #[test]
     fn serde_plane() {
         let text = r#"{
-            "model":{
-                "coefficients":[0.0,0.0,0.0,0.0]},
                 "algorithm":"RANSAC",
                 "algorithm_parameter":{
                     "probability":0.99,
@@ -177,10 +178,7 @@ mod test_serde {
             }"#;
 
         serde_convert!(
-            SacSegment {
-                model: PlaneCoefficient::<f32>::default(),
-                ..Default::default()
-            },
+            SacSegment::<PlaneCoefficient<f32>>::default(),
             text,
             SacSegment<PlaneCoefficient<f32>>
         );
