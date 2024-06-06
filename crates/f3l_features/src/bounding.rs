@@ -75,44 +75,48 @@ where
         }
         .normalize();
 
-        let mut third = if D == 3 {
+        let third = if D == 3 {
             major.cross(second)
         } else {
             Vec3A::Z
         }
         .normalize();
-        let mut second = third.cross(major);
-        let mut major = second.cross(third);
+        let second = third.cross(major);
+        let major = second.cross(third);
 
-        (0..D - 1).for_each(|i| {
-            major[i] *= -1f32;
-            second[i] *= -1f32;
-            third[i] *= -1f32;
+        let mat = Mat3A::from_cols(major, second, third);//.inverse();
+
+        let mut mean = Vec3A::ZERO;
+        let mut min = Vec3A::MAX;
+        let mut max = Vec3A::MIN;
+
+        cloud.iter().for_each(|p| {
+            mean[0] += p[0].to_f32().unwrap();
+            mean[1] += p[1].to_f32().unwrap();
+            mean[2] += p[2].to_f32().unwrap();
         });
+        mean /= cloud.len() as f32;
 
-        let mat = Mat3A::from_cols(major, second, third).inverse();
+        cloud.iter().for_each(|p| {
+            let p = Vec3A::new(
+                p[0].to_f32().unwrap(),
+                p[1].to_f32().unwrap(),
+                p[2].to_f32().unwrap(),
+            );
+            let x = (p - mean).dot(major);
+            let y = (p - mean).dot(second);
+            let z = (p - mean).dot(third);
 
-        let align = cloud
-            .iter()
-            .map(|&p| {
-                if D == 3 {
-                    mat.mul_vec3a(Vec3A::new(
-                        p[0].to_f32().unwrap(),
-                        p[1].to_f32().unwrap(),
-                        p[2].to_f32().unwrap(),
-                    ))
-                } else {
-                    mat.mul_vec3a(Vec3A::new(
-                        p[0].to_f32().unwrap(),
-                        p[1].to_f32().unwrap(),
-                        0f32,
-                    ))
-                }
-            })
-            .collect::<Vec<Vec3A>>();
-        let (min, max) = aabb::<Vec3A, f32, 3>(&align);
-        let aligned_center = mat.mul_vec3a((max + min) * 0.5f32);
+            min.x = min.x.min(x);
+            min.y = min.y.min(y);
+            min.z = min.z.min(z);
+            max.x = max.x.max(x);
+            max.y = max.y.max(y);
+            max.z = max.z.max(z);
+        });
+        let shift = (max + min) * 0.5f32;
 
+        let aligned_center = mean + mat.mul_vec3a(shift);
         let mut center = [T::zero(); D];
         let mut primary = [T::zero(); D];
         let mut secondary = [T::zero(); D];
@@ -123,7 +127,7 @@ where
             primary[i] = T::from(major[i]).unwrap();
             secondary[i] = T::from(second[i]).unwrap();
             tertiary[i] = T::from(third[i]).unwrap();
-            length[i] = T::from((max[i] - min[i]) / 2f32).unwrap().abs();
+            length[i] = T::from((max[i] - min[i]) * 0.5f32).unwrap().abs();
         });
 
         Self {
