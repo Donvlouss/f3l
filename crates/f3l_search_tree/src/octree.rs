@@ -23,6 +23,8 @@ where
     pub max_points: usize,
     pub depth: usize,
     pub nodes: Vec<OcLeaf<T>>,
+    pub ignores: Vec<usize>,
+    pub enable_ignore: bool,
 }
 
 // Build
@@ -38,6 +40,8 @@ where
             max_points,
             depth,
             nodes: Vec::with_capacity(8_usize.pow(3)),
+            ignores: vec![],
+            enable_ignore: false,
         }
     }
 
@@ -48,6 +52,8 @@ where
             max_points,
             depth,
             nodes: Vec::with_capacity(8_usize.pow(depth as u32)),
+            ignores: vec![],
+            enable_ignore: false,
         }
     }
 
@@ -265,6 +271,9 @@ where
             }
             OcFeature::Leaf => {
                 node.points.iter().for_each(|&i| {
+                    if self.enable_ignore && self.ignores.contains(&i) {
+                        return;
+                    }
                     let p = self.data[i];
                     let distance = Self::distance_square(*data, p);
                     result.add(i, distance);
@@ -363,6 +372,18 @@ where
         let mut result = TreeRadiusResult::new(radius * radius);
         self.search(*point, by, &mut result);
         result.data.iter().map(|&i| self.data[i]).collect()
+    }
+    
+    fn add_ignore(&mut self, idx: usize) {
+        self.ignores.push(idx);
+    }
+    
+    fn add_ignores(&mut self, idx: &[usize]) {
+        idx.iter().for_each(|&i| self.ignores.push(i));
+    }
+    
+    fn set_ignore(&mut self, enable: bool) {
+        self.enable_ignore = enable;
     }
 }
 
