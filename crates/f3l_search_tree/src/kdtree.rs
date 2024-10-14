@@ -182,7 +182,7 @@ where
             while left <= right && self.data[indices[left]][split_dim] <= split_val {
                 left += 1;
             }
-            while left <= right && self.data[indices[right]][split_dim] > split_val {
+            while left < right && self.data[indices[right]][split_dim] > split_val {
                 right -= 1;
             }
             if left >= right {
