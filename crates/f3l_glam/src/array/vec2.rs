@@ -88,8 +88,3 @@ impl super::ArrayDimensions for glam::Vec2 {
     }
 }
 impl super::GenericArray for glam::Vec2 {}
-
-#[test]
-fn tt() {
-
-}
