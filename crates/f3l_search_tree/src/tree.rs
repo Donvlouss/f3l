@@ -24,6 +24,10 @@ fn test() {
 
 /// Search `KNN` and `Radius`
 pub trait TreeSearch<P> {
+    fn add_ignore(&mut self, idx: usize);
+    fn add_ignores(&mut self, idx: &[usize]);
+    fn set_ignore(&mut self, enable: bool);
+
     fn search_knn_ids(&self, point: &P, k: usize) -> Vec<usize>;
     fn search_radius_ids(&self, point: &P, radius: f32) -> Vec<usize>;
 

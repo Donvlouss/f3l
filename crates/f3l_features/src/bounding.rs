@@ -56,7 +56,7 @@ where
     [T; D]: Into<P>,
 {
     pub fn compute(cloud: &[P]) -> Self {
-        assert!(D <= 3);
+        assert!(D == 2 || D == 3);
 
         let (cov, _) = compute_covariance_matrix(cloud);
 
@@ -91,18 +91,18 @@ where
         let mut max = Vec3A::MIN;
 
         cloud.iter().for_each(|p| {
-            mean[0] += p[0].to_f32().unwrap();
-            mean[1] += p[1].to_f32().unwrap();
-            mean[2] += p[2].to_f32().unwrap();
+            for i in 0..D {
+                mean[i] += p[i].to_f32().unwrap();
+            }
         });
         mean /= cloud.len() as f32;
 
         cloud.iter().for_each(|p| {
-            let p = Vec3A::new(
-                p[0].to_f32().unwrap(),
-                p[1].to_f32().unwrap(),
-                p[2].to_f32().unwrap(),
-            );
+            let mut slice = [0f32, 0., 0.];
+            for i in 0..D {
+                slice[i] = p[i].to_f32().unwrap();
+            }
+            let p: Vec3A = slice.into();
             let x = (p - mean).dot(major);
             let y = (p - mean).dot(second);
             let z = (p - mean).dot(third);
@@ -147,5 +147,5 @@ fn obb_2d() {
     let result = OBB::compute(&cloud);
 
     assert_eq!([1.5f32, 1.5], round_slice_n(result.center, 4));
-    assert_eq!([0.7071, 1.4142], round_slice_n(result.length, 4));
+    assert_eq!([1.4142, 0.7071], round_slice_n(result.length, 4));
 }

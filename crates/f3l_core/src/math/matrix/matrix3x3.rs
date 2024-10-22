@@ -22,7 +22,6 @@ where
 ///
 /// Input: Symmetric Matrix (3 x 3 Only)
 pub fn compute_eigenvalues<T: BasicFloat>(cov: Mat3) -> [T; 3] {
-    assert!(cov.to_cols_array().iter().all(|&v| v.is_finite()));
     let [m00, m10, m20, m01, m11, m21, m02, m12, m22] = cov.to_cols_array();
 
     let lambda_2 = -m00 - m11 - m22;
@@ -62,6 +61,9 @@ pub fn compute_eigenvalues<T: BasicFloat>(cov: Mat3) -> [T; 3] {
 ///
 /// get eigenvector from product 2 rows
 pub fn compute_eigenvector(cov: Mat3, eigenvalue: f32) -> Vec3 {
+    if eigenvalue == 0f32 {
+        return Vec3::ZERO;
+    }
     let mat = cov - eigenvalue * Mat3::IDENTITY;
     let cross_product = [
         mat.row(0).cross(mat.row(1)),
