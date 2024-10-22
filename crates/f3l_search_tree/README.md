@@ -159,3 +159,26 @@ pub struct TreeRadiusResult {
     pub size: Option<usize>,
 }
 ```
+
+## Ignore
+Add Ignore to `Search Trees`. Could use to sort from first target.
+
+```rust
+let first = // first element.
+let mut sorted = vec![first];
+let mut tree = KdTree::new(3);
+tree.set_data(cloud);
+tree.build();
+tree.set_ignore(true);
+tree.add_ignore(first);
+
+while sorted.len() < cloud.len() {
+    let src = sorted.last().unwrap();
+    let pts = tree.search_knn_ids(&cloud[*src], 1);
+    assert!(!pts.is_empty(), "Should at least 1 point.");
+    let p = pts[0];
+    sorted.push(p);
+    tree.add_ignore(p);
+}
+
+```
