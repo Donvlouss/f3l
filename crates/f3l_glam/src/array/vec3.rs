@@ -65,7 +65,7 @@ impl super::ArrayRowMajor for glam::Vec3 {
 
     #[inline]
     fn from_cols_array_2d(m: &Self::Mat) -> Self {
-        Self::new(m[0][0], m[0][1], m[0][2])
+        Self::new(m[0][0], m[1][0], m[2][0])
     }
 
     #[inline]
