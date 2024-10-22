@@ -181,7 +181,7 @@ mod sac_segmentation {
                     let rad = d.to_radians();
                     [c[0] + rad.sin() * r, c[1] + rad.cos() * r, c[2]].into()
                 })
-                .collect::<Vec<Vec3A>>();
+                .collect::<Vec<Vec3>>();
 
             let mat = Mat3::from_euler(
                 f3l_core::glam::EulerRot::XYZ,
@@ -196,10 +196,10 @@ mod sac_segmentation {
 
             let point = point
                 .iter()
-                .map(|&v| (mat4 * Vec4::from((v, 1f32))).into())
-                .collect::<Vec<Vec3A>>();
+                .map(|&v| (mat4 * Vec4::from((v, 1f32))).truncate())
+                .collect::<Vec<Vec3>>();
             let c = mat4.project_point3(c.into());
-            let n = mat * Vec3A::Z;
+            let n = mat * Vec3::Z;
             let n = n.normalize();
 
             let [p1, p2, p3] = [point[0].into(), point[1].into(), point[2].into()];
