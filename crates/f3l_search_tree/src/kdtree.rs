@@ -362,15 +362,15 @@ where
         self.search(*point, by, &mut result);
         result.data
     }
-    
+
     fn add_ignore(&mut self, idx: usize) {
         self.ignores.push(idx);
     }
-    
+
     fn add_ignores(&mut self, idx: &[usize]) {
         idx.iter().for_each(|&i| self.ignores.push(i));
     }
-    
+
     fn set_ignore(&mut self, enable: bool) {
         self.enable_ignore = enable;
     }
