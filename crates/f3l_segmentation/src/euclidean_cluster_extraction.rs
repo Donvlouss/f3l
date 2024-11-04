@@ -76,7 +76,7 @@ where
         self.clusters.len()
     }
 
-    fn extract(&mut self, data: &'a Vec<P>) -> Vec<Vec<usize>> {
+    fn extract(&mut self, data: &'a [P]) -> Vec<Vec<usize>> {
         if data.is_empty() {
             return vec![];
         }
@@ -87,13 +87,12 @@ where
         self.clusters.clone()
     }
 
-    fn apply_extract(&mut self, data: &'a Vec<P>) -> bool {
+    fn apply_extract(&mut self, data: &'a [P]) -> bool {
         if self.tree.dim != D {
             self.tree = KdTree::<T, P>::new(D);
         }
         self.tree.set_data(data);
         self.tree.build();
-        let data = &self.tree.data;
 
         let radius = self.parameter.tolerance.to_f32().unwrap();
         let radius = radius * radius;
@@ -149,7 +148,7 @@ where
         let cluster = &self.clusters[id];
         let data = cluster
             .iter()
-            .map(|&i| self.tree.data[i])
+            .map(|&i| self.tree.data.unwrap()[i])
             .collect::<Vec<_>>();
         Ok(data)
     }

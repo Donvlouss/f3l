@@ -45,9 +45,9 @@ pub trait F3lCluster<'a, T: BasicFloat, P> {
     // fn set_data(&mut self, data: &'a Vec<P>);
     fn clusters(&self) -> usize;
     /// vector of points of clusters
-    fn extract(&mut self, data: &'a Vec<P>) -> Vec<Vec<usize>>;
+    fn extract(&mut self, data: &'a [P]) -> Vec<Vec<usize>>;
     /// Use `extract` directly, not call this.
-    fn apply_extract(&mut self, data: &'a Vec<P>) -> bool;
+    fn apply_extract(&mut self, data: &'a [P]) -> bool;
     /// Get data from Target cluster
     fn at(&self, id: usize) -> Result<Vec<P>, String>;
     /// Get maximum data one of clusters
