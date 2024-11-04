@@ -17,7 +17,7 @@ mod kd_tree {
             let tree = KdTree::with_data(3, &data);
 
             let mut d = 1.0f32;
-            tree.data.iter().for_each(|element| {
+            tree.data.unwrap().iter().for_each(|element| {
                 (0..3).for_each(|i| {
                     assert_relative_eq!(d, element[i]);
                     d += 1f32;
@@ -33,7 +33,7 @@ mod kd_tree {
             let tree = KdTree::with_data(3, &data);
 
             let mut d = 1.0f32;
-            tree.data.iter().for_each(|element| {
+            tree.data.unwrap().iter().for_each(|element| {
                 (0..3).for_each(|i| {
                     assert_relative_eq!(d, element[i]);
                     d += 1f32;
@@ -94,7 +94,7 @@ mod kd_tree {
             let tree = KdTree::with_data(3, &data);
 
             let mut d = 1.0f32;
-            tree.data.iter().for_each(|element| {
+            tree.data.unwrap().iter().for_each(|element| {
                 (0..3).for_each(|i| {
                     assert_relative_eq!(d, element[i]);
                     d += 1f32;
@@ -108,7 +108,7 @@ mod kd_tree {
             let tree = KdTree::with_data(3, &data);
 
             let mut d = 1.0f32;
-            tree.data.iter().for_each(|element| {
+            tree.data.unwrap().iter().for_each(|element| {
                 (0..3).for_each(|i| {
                     assert_relative_eq!(d, element[i]);
                     d += 1f32;
