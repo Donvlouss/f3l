@@ -7,7 +7,7 @@ use crate::{get_minmax, BasicFloat};
 use f3l_core::{get_minmax, serde, BasicFloat};
 pub use oc_features::*;
 pub use oc_leaf::*;
-use std::{borrow::Cow, cmp::Reverse, collections::BinaryHeap, ops::Index};
+use std::{cmp::Reverse, collections::BinaryHeap, ops::Index};
 
 use crate::{SearchBy, TreeHeapElement, TreeKnnResult, TreeRadiusResult, TreeResult, TreeSearch};
 use serde::{Deserialize, Serialize};
@@ -19,12 +19,16 @@ where
     P: Index<usize, Output = T> + Clone + Copy + Serialize,
 {
     pub bounds: Option<(P, P)>,
-    pub data: Cow<'a, Vec<P>>,
     pub max_points: usize,
     pub depth: usize,
-    pub nodes: Vec<OcLeaf<T>>,
     pub ignores: Vec<usize>,
     pub enable_ignore: bool,
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
+    pub nodes: Vec<OcLeaf<T>>,
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
+    pub data: Option<&'a [P]>,
 }
 
 // Build
@@ -36,7 +40,7 @@ where
     pub fn new(max_points: usize, depth: usize) -> Self {
         Self {
             bounds: None,
-            data: Cow::Owned(vec![]),
+            data: None,
             max_points,
             depth,
             nodes: Vec::with_capacity(8_usize.pow(3)),
@@ -45,10 +49,10 @@ where
         }
     }
 
-    pub fn with_data(data: &'a Vec<P>, max_points: usize, depth: usize) -> Self {
+    pub fn with_data(data: &'a [P], max_points: usize, depth: usize) -> Self {
         Self {
             bounds: None,
-            data: Cow::Borrowed(data),
+            data: Some(data),
             max_points,
             depth,
             nodes: Vec::with_capacity(8_usize.pow(depth as u32)),
@@ -62,37 +66,39 @@ where
         self.nodes.clear();
     }
 
-    pub fn set_data(&mut self, data: &'a Vec<P>) {
+    pub fn set_data(&mut self, data: &'a [P]) {
         self.clear();
         if !data.is_empty() {
-            self.data = Cow::Borrowed(data);
+            self.data = Some(data);
         }
     }
 
-    fn compute_bounds(&mut self) {
-        let bdx = get_minmax(&self.data);
+    fn compute_bounds(&mut self, data: &[P]) {
+        let bdx = get_minmax(data);
         self.bounds = Some(bdx);
     }
 
     pub fn build(&mut self) {
-        self.compute_bounds();
-        let root = OcLeaf {
-            root: None,
-            position: 0,
-            lower: self.bounds.unwrap().0.into(),
-            upper: self.bounds.unwrap().1.into(),
-            feature: OcFeature::Leaf,
-            points: vec![],
-        };
-        self.nodes.push(root);
+        if let Some(data) = self.data {
+            self.compute_bounds(data);
+            let root = OcLeaf {
+                root: None,
+                position: 0,
+                lower: self.bounds.unwrap().0.into(),
+                upper: self.bounds.unwrap().1.into(),
+                feature: OcFeature::Leaf,
+                points: vec![],
+            };
+            self.nodes.push(root);
 
-        (0..self.data.len()).for_each(|i| {
-            self.insert(i, 0, 0);
-        });
+            (0..data.len()).for_each(|i| {
+                self.insert(i, 0, 0, data);
+            });
+        }
     }
 
     ///
-    fn insert(&mut self, i_point: usize, depth: usize, i_node: usize) {
+    fn insert(&mut self, i_point: usize, depth: usize, i_node: usize, data: &[P]) {
         if depth == self.depth {
             let node = &mut self.nodes[i_node];
             node.feature = OcFeature::Leaf;
@@ -103,8 +109,8 @@ where
         match self.nodes[i_node].feature {
             OcFeature::Split(nodes) => {
                 // Unwrap the option, cause this node must be a `Split` type.
-                let id = self.nodes[i_node].locate_at(self.data[i_point]).unwrap();
-                self.insert(i_point, depth + 1, nodes[id]);
+                let id = self.nodes[i_node].locate_at(data[i_point]).unwrap();
+                self.insert(i_point, depth + 1, nodes[id], data);
             }
             OcFeature::Leaf => {
                 let full = self.nodes[i_node].points.len() >= self.max_points;
@@ -122,9 +128,9 @@ where
                     node.points = vec![];
 
                     points.into_iter().for_each(|ii_point| {
-                        self.insert(ii_point, depth, i_node);
+                        self.insert(ii_point, depth, i_node, data);
                     });
-                    self.insert(i_point, depth, i_node);
+                    self.insert(i_point, depth, i_node, data);
                 } else {
                     let node = &mut self.nodes[i_node];
                     node.points.push(i_point);
@@ -226,13 +232,8 @@ where
     P: Into<[T; 3]> + Index<usize, Output = T> + Clone + Copy + Serialize,
 {
     pub fn search<R: TreeResult>(&self, point: P, by: SearchBy, result: &mut R) {
-        // let data = if let Some(data) = self.data {
-        //     data
-        // } else {
-        //     return;
-        // };
-        let data = if !self.data.is_empty() {
-            &self.data
+        let data = if let Some(data) = self.data {
+            data
         } else {
             return;
         };
@@ -274,7 +275,7 @@ where
                     if self.enable_ignore && self.ignores.contains(&i) {
                         return;
                     }
-                    let p = self.data[i];
+                    let p = self.data.unwrap()[i];
                     let distance = Self::distance_square(*data, p);
                     result.add(i, distance);
                 });
@@ -327,6 +328,9 @@ where
     P: Into<[T; 3]> + Index<usize, Output = T> + Clone + Copy + Serialize,
 {
     fn search_knn_ids(&self, point: &P, k: usize) -> Vec<usize> {
+        if self.data.is_none() {
+            return vec![];
+        }
         let by = if k == 0 {
             SearchBy::Count(1)
         } else {
@@ -338,6 +342,9 @@ where
     }
 
     fn search_radius_ids(&self, point: &P, radius: f32) -> Vec<usize> {
+        if self.data.is_none() {
+            return vec![];
+        }
         let by = if radius == 0.0 {
             SearchBy::Count(1)
         } else {
@@ -349,6 +356,9 @@ where
     }
 
     fn search_knn(&self, point: &P, k: usize) -> Vec<(P, f32)> {
+        if self.data.is_none() {
+            return vec![];
+        }
         let by = if k == 0 {
             SearchBy::Count(1)
         } else {
@@ -359,11 +369,14 @@ where
         result
             .result()
             .iter()
-            .map(|&(i, d)| (self.data[i], d.sqrt()))
+            .map(|&(i, d)| (self.data.unwrap()[i], d.sqrt()))
             .collect::<Vec<(P, f32)>>()
     }
 
     fn search_radius(&self, point: &P, radius: f32) -> Vec<P> {
+        if self.data.is_none() {
+            return vec![];
+        }
         let by = if radius == 0.0 {
             SearchBy::Count(1)
         } else {
@@ -371,7 +384,7 @@ where
         };
         let mut result = TreeRadiusResult::new(radius * radius);
         self.search(*point, by, &mut result);
-        result.data.iter().map(|&i| self.data[i]).collect()
+        result.data.iter().map(|&i| self.data.unwrap()[i]).collect()
     }
 
     fn add_ignore(&mut self, idx: usize) {

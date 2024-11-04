@@ -76,7 +76,7 @@ where
         self.fast = use_fast;
     }
 
-    pub fn set_data(&mut self, data: &'a Vec<P>) {
+    pub fn set_data(&mut self, data: &'a [P]) {
         self.tree.set_data(data);
     }
 
@@ -84,7 +84,7 @@ where
         self.normals.clone()
     }
 
-    pub fn compute(&mut self, data: &'a Vec<P>) -> bool {
+    pub fn compute(&mut self, data: &'a [P]) -> bool {
         if self.tree.dim != 3 {
             self.tree = KdTree::<T, P>::new(3);
         }
