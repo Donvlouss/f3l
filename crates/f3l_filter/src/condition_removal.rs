@@ -72,14 +72,14 @@ where
     P: Into<[T; D]> + Clone + Copy + Send + Sync,
     [T; D]: Into<P>,
 {
-    fn filter(&mut self, data: &'a Vec<P>) -> Vec<usize> {
+    fn filter(&mut self, data: &'a [P]) -> Vec<usize> {
         if !self.apply_filter(data) {
             return vec![];
         }
         self.inliers.clone()
     }
 
-    fn filter_instance(&mut self, data: &'a Vec<P>) -> Vec<P> {
+    fn filter_instance(&mut self, data: &'a [P]) -> Vec<P> {
         if !self.apply_filter(data) {
             return vec![];
         }
@@ -87,7 +87,7 @@ where
         self.inliers.iter().map(|i| data[*i]).collect()
     }
 
-    fn apply_filter(&mut self, data: &'a Vec<P>) -> bool {
+    fn apply_filter(&mut self, data: &'a [P]) -> bool {
         use f3l_core::rayon::prelude::*;
         self.inliers = data
             .par_iter()

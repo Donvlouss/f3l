@@ -12,12 +12,12 @@ pub trait F3lFilterInverse {
 /// A Trait for Filters
 pub trait F3lFilter<'a, P, const D: usize>: F3lFilterInverse {
     /// Return: Indices of inlier or outlier
-    fn filter(&mut self, data: &'a Vec<P>) -> Vec<usize>;
+    fn filter(&mut self, data: &'a [P]) -> Vec<usize>;
     /// Return: data of inlier or outlier
-    fn filter_instance(&mut self, data: &'a Vec<P>) -> Vec<P>;
+    fn filter_instance(&mut self, data: &'a [P]) -> Vec<P>;
     /// Call by `filter` or `filter_instance`.
     /// Use `filter` or `filter_instance` directly instead of call this.
-    fn apply_filter(&mut self, data: &'a Vec<P>) -> bool;
+    fn apply_filter(&mut self, data: &'a [P]) -> bool;
 }
 
 pub use condition_removal::ConditionRemoval;

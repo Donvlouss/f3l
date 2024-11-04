@@ -74,7 +74,7 @@ where
     P: Into<[T; D]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
     [T; D]: Into<P>,
 {
-    fn filter(&mut self, data: &'a Vec<P>) -> Vec<usize> {
+    fn filter(&mut self, data: &'a [P]) -> Vec<usize> {
         self.apply_filter(data);
 
         self.inlier
@@ -85,7 +85,7 @@ where
             .collect()
     }
 
-    fn filter_instance(&mut self, data: &'a Vec<P>) -> Vec<P> {
+    fn filter_instance(&mut self, data: &'a [P]) -> Vec<P> {
         self.apply_filter(data);
 
         self.inlier
@@ -96,7 +96,7 @@ where
             .collect()
     }
 
-    fn apply_filter(&mut self, data: &'a Vec<P>) -> bool {
+    fn apply_filter(&mut self, data: &'a [P]) -> bool {
         if data.is_empty() {
             return false;
         }

@@ -73,7 +73,7 @@ where
     P: Into<[T; D]> + Clone + Copy + Send + Sync + Index<usize, Output = T>,
     [T; D]: Into<P>,
 {
-    fn filter(&mut self, data: &'a Vec<P>) -> Vec<usize> {
+    fn filter(&mut self, data: &'a [P]) -> Vec<usize> {
         self.apply_filter(data);
 
         self.inlier
@@ -84,7 +84,7 @@ where
             .collect()
     }
 
-    fn filter_instance(&mut self, data: &'a Vec<P>) -> Vec<P> {
+    fn filter_instance(&mut self, data: &'a [P]) -> Vec<P> {
         self.apply_filter(data);
 
         self.inlier
@@ -95,7 +95,7 @@ where
             .collect()
     }
 
-    fn apply_filter(&mut self, data: &'a Vec<P>) -> bool {
+    fn apply_filter(&mut self, data: &'a [P]) -> bool {
         if data.is_empty() {
             return false;
         }
@@ -106,7 +106,7 @@ where
         self.tree.set_data(data);
 
         self.tree.build();
-        let capacity = self.tree.data.len() / 10;
+        let capacity = data.len() / 10;
         let capacity = if capacity > 10 { capacity } else { 10 };
 
         let r = (self.radius.to_f32().unwrap()).powi(2);
